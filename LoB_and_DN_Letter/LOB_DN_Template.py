@@ -4,8 +4,6 @@ import pandas as pd  # pip install pandas openpyxl
 from docxtpl import DocxTemplate  # pip install docxtpl
 from datetime import datetime
 
-doc = DocxTemplate("template.docx")
-
 base_dir = Path(__file__).parent.parent
 word_template_path = base_dir / "word.docx"  # name of word doc
 excel_path = base_dir / "excel.xlsx"  # name of excel
