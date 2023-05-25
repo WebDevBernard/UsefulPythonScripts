@@ -11,3 +11,5 @@ Install in Powershell
 - `pip install -U pyinstaller`
 - `pip install auto-py-to-exe`
 - `auto-py-to-exe`
+
+- `pip freeze | xargs pip uninstall -y`
