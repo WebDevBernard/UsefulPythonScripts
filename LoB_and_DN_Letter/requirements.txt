@@ -1,0 +1,5 @@
+pyinstaller               5.11.0
+auto-py-to-exe            2.34.0
+openpyxl                  3.1.2
+pandas                    2.0.1
+docxtpl                   0.16.7
