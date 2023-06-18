@@ -20,7 +20,7 @@ df["today"] = datetime.today().strftime("%B %d, %Y")
 # Dictionary
 dictionary = {"Insured's Name": df["insured_name"].values[0],
               "Policy Number": df["policy_number"].values[0],
-              "Address of Property": df["risk_address"].values[0].split(", ")[0],
+              "Address of Property": df["risk_address"].values[0],
               }
 
 reader = PdfReader(pdf_path)

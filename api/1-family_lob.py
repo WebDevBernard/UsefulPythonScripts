@@ -37,7 +37,7 @@ writer.updatePageFormFieldValues(
 )
 
 for record in df.to_dict(orient="records"):
-  output_path = output_dir / f"{record['insured_name']}" / f"{df['insured_name'].values[0]} - {pdf_filename}"
+  output_path = output_dir / f"{df['insured_name'].values[0]} - {pdf_filename}"
   output_path.parent.mkdir(exist_ok=True)
   with open(output_path, "wb") as output_stream:
     writer.write(output_stream)
