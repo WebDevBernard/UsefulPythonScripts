@@ -12,7 +12,7 @@ output_dir = base_dir / "output" # name of output folder
 output_dir.mkdir(exist_ok=True)
 
 #Pandas reading excel file
-df = pd.read_excel(excel_path, sheet_name="Sheet2")
+df = pd.read_excel(excel_path, sheet_name="Sheet3")
 
 # Formats dates to MMM DD, YYYY
 df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")

@@ -11,8 +11,6 @@ Install in Powershell
 - `python.exe -m venv venv`
 - `venv\Scripts\Activate.ps1`
 - `pip install -r requirements.txt`
-- `auto-py-to-exe`
+- `python -m auto_py_to_exe`
 
 - `pip freeze | xargs pip uninstall -y`
-
-- `pip install 'PyPDF2<3.0'`
