@@ -1,0 +1,7 @@
+pyinstaller            
+auto-py-to-exe            
+openpyxl                  
+pandas                    
+docxtpl
+PyPDF2<3.0
+PyCryptodome

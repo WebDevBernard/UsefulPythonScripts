@@ -1,5 +1,0 @@
-pyinstaller            
-auto-py-to-exe            
-openpyxl                  
-pandas                    
-docxtpl               
