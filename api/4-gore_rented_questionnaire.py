@@ -20,14 +20,8 @@ df["today"] = datetime.today().strftime("%B %d, %Y")
 # Dictionary
 dictionary = {"Applicant / Insured": df["insured_name"].values[0],
               "Gore Policy #": df["policy_number"].values[0],
-              "Principal Street": df["mailing_address"].values[0].split(", ")[0],
-              "Principal City": df["mailing_address"].values[0].split(", ")[1],
-              "Principal Province": df["mailing_address"].values[0].split(", ")[2],
-              "Principal Postal Code": df["mailing_address"].values[0].split(", ")[3],
-              "Rental Street": df["risk_address"].values[0].split(", ")[0],
-              "Rental City": df["risk_address"].values[0].split(", ")[1],
-              "Rental Province": df["risk_address"].values[0].split(", ")[2],
-              "Rental Postal Code": df["risk_address"].values[0].split(", ")[3],
+              "Principal Street": df["mailing_address"].values[0],
+              "Rental Street": df["risk_address"].values[0]
               }
 
 reader = PdfReader(pdf_path)

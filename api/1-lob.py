@@ -6,13 +6,13 @@ from datetime import datetime, timedelta
 #Directory Paths for each file
 docx_filename = "Disclosure and LOB"
 base_dir = Path(__file__).parent.parent
-LOB_template_path = base_dir / "input" / "LOB_Disclosure.docx"  # name of LOB doc
-excel_path = base_dir / "LOB.xlsx"  # name of excel
+LOB_template_path = base_dir / "input" / "Disclosure and LOB.docx"  # name of LOB doc
+excel_path = base_dir / "input.xlsx"  # name of excel
 output_dir = base_dir / "output" # name of output folder
 output_dir.mkdir(exist_ok=True)
 
 #Pandas reading excel file
-df = pd.read_excel(excel_path, sheet_name="Sheet1")
+df = pd.read_excel(excel_path, sheet_name="Sheet2")
 
 # Formats dates to MMM DD, YYYY
 df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
