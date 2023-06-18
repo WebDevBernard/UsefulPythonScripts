@@ -4,6 +4,7 @@ from docxtpl import DocxTemplate  # pip install docxtpl
 from datetime import datetime, timedelta
 
 #Directory Paths for each file
+docx_filename = "Disclosure and LOB"
 base_dir = Path(__file__).parent.parent
 LOB_template_path = base_dir / "input" / "LOB_Disclosure.docx"  # name of LOB doc
 excel_path = base_dir / "LOB.xlsx"  # name of excel
@@ -23,5 +24,5 @@ df["today"] = datetime.today().strftime("%B %d, %Y")
 for record in df.to_dict(orient="records"):
     doc = DocxTemplate(LOB_template_path)
     doc.render(record)
-    output_path = output_dir / f"{record['insured_name']} - Disclosure and LOB {record['policy_number']}.docx"
+    output_path = output_dir / f"{record['insured_name']} - {docx_filename} {record['policy_number']}.docx"
     doc.save(output_path)
