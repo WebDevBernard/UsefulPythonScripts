@@ -24,10 +24,9 @@ thirty_before_effective = pd.to_datetime(df["effective_date"], format="%B %d, %Y
 df["thirty_before_effective"] = thirty_before_effective.dt.strftime("%B %d, %Y")
 df["today"] = datetime.today().strftime("%B %d, %Y")
 
-writer = PdfWriter()
-
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
+  writer = PdfWriter()
   pdf_path = base_dir / "input" / pdf
   reader = PdfReader(pdf_path)
   for pageNum in range(reader.numPages):
@@ -54,11 +53,6 @@ for rows in df.to_dict(orient="records"):
                   "wawa rented dwelling Q.pdf",
                   "Wawa Personal Information and Credit Consent Form 8871.pdf"
                   ]
-    if (rows["insurer"] == "Wawanesa"):
-        dictionary = {"Policy  Submission Numbers": rows["policy_number"],
-                    "Insureds Name": rows["insured_name"],
-                    }
-        writeToPdf(pdf_filename[4], dictionary, rows)
     if (rows["insurer"] == "Intact" and rows["type"] == "Rental"):
         doc = DocxTemplate(LOB_template_path)
         doc.render(rows)
@@ -90,4 +84,13 @@ for rows in df.to_dict(orient="records"):
                   "Policy Number": rows["policy_number"],
                   "Address of Property": rows["risk_address"],
                   }
+      dictionary2 = {"Policy  Submission Numbers": rows["policy_number"],
+                    "Insureds Name": rows["insured_name"],
+                  }
       writeToPdf(pdf_filename[3], dictionary, rows)
+      writeToPdf(pdf_filename[4], dictionary2, rows)
+    if (rows["insurer"] == "Wawanesa"):
+      dictionary = {"Policy  Submission Numbers": rows["policy_number"],
+                    "Insureds Name": rows["insured_name"],
+                    }
+      writeToPdf(pdf_filename[4], dictionary, rows)

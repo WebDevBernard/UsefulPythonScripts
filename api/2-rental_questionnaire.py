@@ -21,10 +21,9 @@ thirty_before_effective = pd.to_datetime(df["effective_date"], format="%B %d, %Y
 df["thirty_before_effective"] = thirty_before_effective.dt.strftime("%B %d, %Y")
 df["today"] = datetime.today().strftime("%B %d, %Y")
 
-writer = PdfWriter()
-
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
+  writer = PdfWriter()
   pdf_path = base_dir / "input" / pdf
   reader = PdfReader(pdf_path)
   for pageNum in range(reader.numPages):
