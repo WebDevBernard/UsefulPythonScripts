@@ -17,27 +17,26 @@ df = pd.read_excel(excel_path, sheet_name="Sheet2")
 df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
 df["today"] = datetime.today().strftime("%B %d, %Y")
 
-# Dictionary
-dictionary = {"Name of Insureds": df["insured_name"].values[0],
-              "Address of Insureds": df["mailing_address"].values[0],
-              "Day": df["effective_date"].values[0].split(" ")[1],
-              "Month": df["effective_date"].values[0].split(" ")[0],
-              "Year": df["effective_date"].values[0].split(" ")[2],
-              "Policy Number": df["policy_number"].values[0],
-              }
-
 reader = PdfReader(pdf_path)
 writer = PdfWriter()
 for pageNum in range(reader.numPages):
   page = reader.getPage(pageNum)
   writer.add_page(page)
 
-writer.updatePageFormFieldValues(
+for rows in df.to_dict(orient="records"):
+  # Dictionary
+  dictionary = {"Name of Insureds": rows["insured_name"],
+              "Address of Insureds": rows["mailing_address"],
+              "Day": rows["effective_date"].split(" ")[1],
+              "Month": rows["effective_date"].split(" ")[0],
+              "Year": rows["effective_date"].split(" ")[2],
+              "Policy Number": rows["policy_number"],
+              }
+  writer.updatePageFormFieldValues(
     writer.getPage(0), dictionary
-)
-
-for record in df.to_dict(orient="records"):
-  output_path = output_dir / f"{df['insured_name'].values[0]} - {pdf_filename}"
+  )
+  output_path = output_dir / f"{rows['insured_name']} - {pdf_filename}"
   output_path.parent.mkdir(exist_ok=True)
   with open(output_path, "wb") as output_stream:
     writer.write(output_stream)
+
