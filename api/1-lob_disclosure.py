@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 from PyPDF2 import PdfReader, PdfWriter
 
 #Directory Paths for each file
-
 pdf_filename = "LOB - Family Blank.pdf" #filename
 docx_filename = "Disclosure and LOB"
 
