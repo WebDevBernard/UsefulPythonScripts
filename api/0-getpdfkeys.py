@@ -14,6 +14,6 @@ def readPdf(pdf):
 for pdf in pdf_filename:
   pdf_path = readPdf(pdf)
   reader = PdfReader(pdf_path)
-  fields = [str(x) for x in reader.getFields().keys()]
+  fields = [str(x) for x in reader.getFormTextFields()  ]
   print("<========" + pdf + "========>")
   pprint.pprint(fields)

@@ -28,6 +28,34 @@ thirty_before_effective = pd.to_datetime(df["effective_date"], format="%B %d, %Y
 df["thirty_before_effective"] = thirty_before_effective.dt.strftime("%B %d, %Y")
 df["today"] = datetime.today().strftime("%B %d, %Y")
 
+#Remove white spaces
+def whitespace_remover(dataframe):
+    for i in dataframe.columns:
+      if dataframe[i].dtype == 'object':
+        dataframe[i] = dataframe[i].str.strip()
+      else:
+        pass
+whitespace_remover(df)
+
+#Capitalize Names
+df["insured_name"] = df["insured_name"].str.title()
+df["additional_insured"] = df["additional_insured"].str.title()
+df["insurer"] = df["insurer"].str.title()
+df["type"] = df["type"].str.title()
+df["broker_name"] = df["broker_name"].str.title()
+
+#Checks if there is additonal_insured
+def insuredNames(rows):
+  if (pd.isnull(rows["additional_insured"])):
+    return rows["insured_name"]
+  return rows["insured_name"] + " & " + rows['additional_insured']
+
+#Checks if no risk address, use mailing address as risk address
+def riskAddress(rows):
+  if (pd.isnull(rows["risk_address"])):
+    return rows["mailing_address"]
+  return rows["risk_address"]
+
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
   pdf_path = base_dir / "input" / pdf
@@ -54,13 +82,13 @@ def writeToDocx(docx, rows):
     output_path = output_dir / f"{rows['insured_name']} - {rows['policy_number']} {docx}"
   output_path.parent.mkdir(exist_ok=True)
   doc.save(output_path)
-  
+
 for rows in df.to_dict(orient="records"):
   # Make Disclosure and LOB.docx
   writeToDocx(lob_filename[0],rows)
   # Make LOB - Family Blank.pdf
   if (rows["insurer"] == "Family"):
-    dictionary = {"Name of Insureds": rows["insured_name"],
+    dictionary = {"Name of Insureds": insuredNames(rows),
                   "Address of Insureds": rows["mailing_address"],
                   "Day": rows["effective_date"].split(" ")[1],
                   "Month": rows["effective_date"].split(" ")[0],
@@ -70,32 +98,32 @@ for rows in df.to_dict(orient="records"):
     writeToPdf(lob_filename[1], dictionary, rows)
   #Make LOB - GORE - Rented Questionnaire
   if (rows["insurer"] == "Gore Mutual" and rows["type"] == "Rental"):
-    dictionary = {"Applicant / Insured": rows["insured_name"],
+    dictionary = {"Applicant / Insured": insuredNames(rows),
                   "Gore Policy #": rows["policy_number"],
                   "Principal Street": rows["mailing_address"],
-                  "Rental Street": rows["risk_address"]
+                  "Rental Street": riskAddress(rows)
                   }
     writeToPdf(questionnaire_filename[0], dictionary, rows)
   #Make Questionnaire - Optimum West Rental Q
-  if (rows["insurer"] == "Optimum" and rows["type"] == "Rental"):
+  if (rows["insurer"] == "Optimum West" and rows["type"] == "Rental"):
     dictionary = {"Policy_Number[0]": rows["policy_number"],
-                  "Applicant_Insured[0]": rows["insured_name"],
-                  "Rental_Location_Address[0]": rows["risk_address"],
+                  "Applicant_Insured[0]": insuredNames(rows),
+                  "Rental_Location_Address[0]": riskAddress(rows),
                   }
     writeToPdf(questionnaire_filename[1], dictionary, rows)
   #Make Questionnaire - WAWA Rental Condo Questionnaire
   if (rows["insurer"] == "Wawanesa" and rows["type"] == "Rental"):
-    dictionary = {"Insureds Name": rows["insured_name"],
+    dictionary = {"Insureds Name": insuredNames(rows),
                   "Policy Number": rows["policy_number"],
-                  "Address of Property": rows["risk_address"],
+                  "Address of Property": riskAddress(rows),
                   "Date Coverage is Required": rows["effective_date"],
                   }
     writeToPdf(questionnaire_filename[2], dictionary, rows)
   #Make Questionnaire - wawa rented dwelling Q 
   if (rows["insurer"] == "Wawanesa" and rows["type"] == "Revenue"):
-    dictionary = {"Insured's Name": rows["insured_name"],
+    dictionary = {"Insured's Name": insuredNames(rows),
                   "Policy Number": rows["policy_number"],
-                  "Address of Property": rows["risk_address"],
+                  "Address of Property": riskAddress(rows),
                   }
     writeToPdf(questionnaire_filename[3], dictionary, rows)   
   #Make Questionnaire - Rented Dwelling Quest INTACT 
