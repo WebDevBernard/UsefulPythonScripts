@@ -43,6 +43,18 @@ df["insurer"] = df["insurer"].str.title()
 df["type"] = df["type"].str.title()
 df["broker_name"] = df["broker_name"].str.title()
 
+#Checks if there is additonal_insured
+def insuredNames(rows):
+  if (pd.isnull(rows["additional_insured"])):
+    return rows["insured_name"]
+  return rows["insured_name"] + " & " + rows['additional_insured']
+
+#Checks if no risk address, use mailing address as risk address
+def riskAddress(rows):
+  if (pd.isnull(rows["risk_address"])):
+    return rows["mailing_address"]
+  return rows["risk_address"]
+
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
   pdf_path = base_dir / "input" / pdf
@@ -67,18 +79,6 @@ def writeToDocx(docx, rows):
   output_path = output_dir / f"{rows['insured_name']}" / f"{rows['insured_name']} - {docx}"
   output_path.parent.mkdir(exist_ok=True)
   doc.save(output_path)    
-
-#Checks if there is additonal_insured
-def insuredNames(rows):
-  if (pd.isnull(rows["additional_insured"])):
-    return rows["insured_name"]
-  return rows["insured_name"] + " & " + rows['additional_insured']
-
-#Checks if no risk address, use mailing address as risk address
-def riskAddress(rows):
-  if (pd.isnull(rows["risk_address"])):
-    return rows["mailing_address"]
-  return rows["risk_address"]
 
 for rows in df.to_dict(orient="records"):
   #Makes Disclosure and Waiver
