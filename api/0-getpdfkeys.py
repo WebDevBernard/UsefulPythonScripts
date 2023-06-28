@@ -6,7 +6,9 @@ pdf_filename = ["GORE - Rented Questionnaire.pdf",
                 "Optimum West Rental Q.pdf",
                 "Wawa Personal Information and Credit Consent Form 8871.pdf",
                 "WAWA Rental Condo Questionnaire.pdf",
-                "wawa rented dwelling Q.pdf"]
+                "wawa rented dwelling Q.pdf",
+                "Binder Fee Invoice - Cedar.pdf"
+                ]
 base_dir = Path(__file__).parent.parent
 def readPdf(pdf):
   pdf_path = base_dir / "input" / pdf

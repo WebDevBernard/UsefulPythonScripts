@@ -60,7 +60,7 @@ def writeToPdf(pdf, dictionary, rows):
   writer.updatePageFormFieldValues(
   writer.getPage(0), dictionary
   )
-  output_path = output_dir / f"{rows['insured_name']} - {rows['policy_number']} {pdf}"
+  output_path = output_dir / f"{insuredNames(rows)} - {insuredNames(rows)} {pdf}"
   with open(output_path, "wb") as output_stream:
     writer.write(output_stream)
     
@@ -70,9 +70,9 @@ def writeToDocx(docx, rows):
   doc = DocxTemplate(template_path)
   doc.render(rows)
   if (rows["insurer"] == "Family"):
-    output_path = output_dir / f"{rows['insured_name']} - {rows['policy_number']} Disclosure Notice.docx"
+    output_path = output_dir / f"{insuredNames(rows)} - {rows['policy_number']} Disclosure Notice.docx"
   else:
-    output_path = output_dir / f"{rows['insured_name']} - {rows['policy_number']} {docx}"
+    output_path = output_dir / f"{insuredNames(rows)} - {rows['policy_number']} {docx}"
   output_path.parent.mkdir(exist_ok=True)
   doc.save(output_path)
 
