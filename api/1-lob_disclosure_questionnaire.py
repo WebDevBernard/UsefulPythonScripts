@@ -1,7 +1,7 @@
 import pandas as pd 
 from pathlib import Path
 from docxtpl import DocxTemplate
-from datetime import datetime, timedelta
+from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
 
 #Directory Paths for each file
@@ -24,14 +24,13 @@ df = pd.read_excel(excel_path, sheet_name="Sheet1")
 
 #Format date to MMM DD, YYYY
 df["today"] = datetime.today().strftime("%B %d, %Y")
+df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
 
 #Remove white spaces, capitalize first letter of each word, and format effective date time
 def namesFormatter(df):
     for i in df.columns:
       if df[i].dtype == 'object':
         df[i] = df[i].str.strip()
-      if df["effective_date"].dtype == 'object': 
-        df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
       if df["policy_number"].dtype == 'object':
         df["policy_number"] = df["policy_number"].astype("string")
       if df["type"].dtype == 'object':
@@ -98,9 +97,9 @@ for rows in df.to_dict(orient="records"):
   if (rows["insurer"] == "Family"):
     dictionary = {"Name of Insureds": insuredNames(rows),
                   "Address of Insureds": rows["mailing_address"],
-                  "Day": rows["effective_date"].split(" ")[1],
-                  "Month": rows["effective_date"].split(" ")[0],
-                  "Year": rows["effective_date"].split(" ")[2],
+                  # "Day": rows["effective_date"].split(" ")[1],
+                  # "Month": rows["effective_date"].split(" ")[0],
+                  # "Year": rows["effective_date"].split(" ")[2],
                   "Policy Number": checkPolicyNumber(rows),
                   }
     writeToPdf(lob_filename[1], dictionary, rows)

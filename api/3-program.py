@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from docxtpl import DocxTemplate
-from datetime import datetime, timedelta
+from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
 
 #Directory Paths for each file
@@ -23,7 +23,7 @@ output_dir = base_dir / "output" # name of output folder
 output_dir.mkdir(exist_ok=True)
 
 #Pandas reading excel file
-df = pd.read_excel(excel_path, sheet_name="Sheet2")
+df = pd.read_excel(excel_path, sheet_name="Sheet1")
 
 #Format date to MMM DD, YYYY
 df["today"] = datetime.today().strftime("%B %d, %Y")
@@ -77,7 +77,10 @@ def writeToPdf(pdf, dictionary, rows):
   writer.updatePageFormFieldValues(
   writer.getPage(0), dictionary
   )
-  output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {pdf}"
+  if (rows["type"] == "Lob" and rows["insurer"] == "Family"):
+    output_path = output_dir / f"{insuredNames(rows)} - {insuredNames(rows)} {pdf}"
+  else:
+    output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {pdf}"
   output_path.parent.mkdir(exist_ok=True)
   with open(output_path, "wb") as output_stream:
     writer.write(output_stream)
@@ -87,7 +90,13 @@ def writeToDocx(docx, rows):
   template_path = base_dir / "input" / docx
   doc = DocxTemplate(template_path)
   doc.render(rows)
-  output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {docx}"
+  if (rows["type"] == "Lob"):
+    if (rows["insurer"] == "Family"):
+      output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} Disclosure Notice.docx"
+    else:
+      output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} {docx}"
+  else:
+    output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {docx}"
   output_path.parent.mkdir(exist_ok=True)
   doc.save(output_path)    
 
@@ -148,4 +157,3 @@ for rows in df.to_dict(orient="records"):
     #Make Questionnaire - Rented Dwelling Quest INTACT 
     if (rows["insurer"] == "Intact"):
       writeToDocx(questionnaire_filename[4], rows)
-
