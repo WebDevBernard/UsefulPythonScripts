@@ -16,6 +16,7 @@ questionnaire_filename = ["GORE - Rented Questionnaire.pdf",
 binder_binder_fee = [ "Binder Fee Invoice - Cedar.pdf",
                       "Binder.docx"
                     ]
+cancel_letter = "Cancellation-Mid-Term-or-Flat Letter"
 base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of excel
 output_dir = base_dir / "output" # name of output folder
@@ -24,21 +25,29 @@ output_dir.mkdir(exist_ok=True)
 #Pandas reading excel file
 df = pd.read_excel(excel_path, sheet_name="Sheet2")
 
-# Formats dates to MMM DD, YYYY
-df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
-thirty_before_effective = pd.to_datetime(df["effective_date"], format="%B %d, %Y") - timedelta(days=30)
-df["thirty_before_effective"] = thirty_before_effective.dt.strftime("%B %d, %Y")
+#Format date to MMM DD, YYYY
 df["today"] = datetime.today().strftime("%B %d, %Y")
 
-#Remove white spaces
-def whitespaceRemover(dataframe):
-    for i in dataframe.columns:
-      if dataframe[i].dtype == 'object':
-        dataframe[i] = dataframe[i].str.strip()
+#Remove white spaces, capitalize first letter of each word, and format effective date time
+def namesFormatter(df):
+    for i in df.columns:
+      if df[i].dtype == 'object':
+        df[i] = df[i].str.strip()
+      if df["effective_date"].dtype == 'object': 
+        df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
+      if df["policy_number"].dtype == 'object':
+        df["policy_number"] = df["policy_number"].astype("string")
+      if df["type"].dtype == 'object':
+        df["type"] = df["type"].str.title()
+      if df["insured_name"].dtype == 'object':  
+        df["insured_name"] = df["insured_name"].str.title()
+      if df["insurer"].dtype == 'object':
+        df["insurer"] = df["insurer"].str.title()
+      if df["broker_name"].dtype == 'object':
+        df["broker_name"] = df["broker_name"].str.title()
       else:
         pass
-whitespaceRemover(df)
-df.notnull()
+namesFormatter(df)
 
 #Checks if there is additonal_insured
 def insuredNames(rows):
@@ -51,6 +60,12 @@ def riskAddress(rows):
   if (pd.isnull(rows["risk_address"])):
     return rows["mailing_address"]
   return rows["risk_address"]
+
+#Checks if there is a policy_number
+def checkPolicyNumber(rows):
+  if (pd.isnull(rows["policy_number"])):
+    return ""
+  return rows["policy_number"]
 
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
@@ -80,17 +95,21 @@ def writeToDocx(docx, rows):
 for rows in df.to_dict(orient="records"):
   #Makes Disclosure and Waiver
   writeToDocx(disclosure_filename, rows)
+  
+  # Make Cancel/Lapse Letter
+  if (rows["type"] == "Cancel"):
+    writeToDocx(cancel_letter, rows)
   #Binder Invoice and Binder
   if (rows["type"] == "Binder"):
     dictionary = {'Effective Date': rows["effective_date"],
-                  'Policy Number' : rows["policy_number"],
+                  'Policy Number' : checkPolicyNumber(rows),
                   'Account Number' : rows["client_code"],
                 }
     writeToPdf(binder_binder_fee[0], dictionary, rows)
     writeToDocx(binder_binder_fee[1], rows)
   #Makes Wawa Personal Information and Credit Consent Form 8871
   if (rows["insurer"] == "Wawanesa"):
-    dictionary = {"Policy  Submission Numbers": rows["policy_number"],
+    dictionary = {"Policy  Submission Numbers": checkPolicyNumber(rows),
                   "Date Signed mmddyy" : datetime.today().strftime("%B %d, %Y"),
                   "Insureds Name": rows["insured_name"],
                   "Date Signed mmddyy_3" : datetime.today().strftime("%B %d, %Y")
@@ -100,22 +119,22 @@ for rows in df.to_dict(orient="records"):
     #Make GORE - Rented Questionnaire
     if (rows["insurer"] == "Gore Mutual"):
       dictionary = {"Applicant / Insured": insuredNames(rows),
-                    "Gore Policy #": rows["policy_number"],
+                    "Gore Policy #": checkPolicyNumber(rows),
                     "Principal Street": rows["mailing_address"],
                     "Rental Street": riskAddress(rows)
                   }
       writeToPdf(questionnaire_filename[0], dictionary, rows)
     #Make Questionnaire - Optimum West Rental Q
     if (rows["insurer"] == "Optimum West"):
-      dictionary = {"Policy_Number[0]": insuredNames(rows),
-                    "Applicant_Insured[0]": rows["insured_name"],
+      dictionary = {"Policy_Number[0]": checkPolicyNumber(rows),
+                    "Applicant_Insured[0]": insuredNames(rows),
                     "Rental_Location_Address[0]": riskAddress(rows),
                     }
       writeToPdf(questionnaire_filename[1], dictionary, rows)
     #Make Questionnaire - WAWA Rental Condo Questionnaire
     if (rows["insurer"] == "Wawanesa" and rows["type"] != "Revenue"):
       dictionary = {"Insureds Name": insuredNames(rows),
-                    "Policy Number": rows["policy_number"],
+                    "Policy Number": checkPolicyNumber(rows),
                     "Address of Property": riskAddress(rows),
                     "Date Coverage is Required": rows["effective_date"],
                     }
@@ -123,7 +142,7 @@ for rows in df.to_dict(orient="records"):
     #Make Questionnaire - wawa rented dwelling Q 
     if (rows["insurer"] == "Wawanesa" and rows["type"] == "Revenue"):
       dictionary = {"Insured's Name": insuredNames(rows),
-                    "Policy Number": rows["policy_number"],
+                    "Policy Number": checkPolicyNumber(rows),
                     "Address of Property": riskAddress(rows),
                     }
       writeToPdf(questionnaire_filename[3], dictionary, rows)   
