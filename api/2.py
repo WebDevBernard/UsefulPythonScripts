@@ -1,29 +1,26 @@
-import pandas as pd
+import pandas as pd 
 from pathlib import Path
 from docxtpl import DocxTemplate
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
 
 #Directory Paths for each file
-disclosure_filename = "Disclosure and Waiver.docx"
-credit_consent_filename = "Wawa Personal Information and Credit Consent Form 8871.pdf"
+lob_filename = ["Disclosure and LOB.docx",
+                "LOB - Family Blank.pdf"
+                ]
 questionnaire_filename = ["GORE - Rented Questionnaire.pdf", 
                           "Optimum West Rental Q.pdf", 
                           "WAWA Rental Condo Questionnaire.pdf",
                           "wawa rented dwelling Q.pdf",
                           "Rented Dwelling Quest INTACT.docx"
                           ]
-binder_binder_fee = [ "Binder Fee Invoice - Cedar.pdf",
-                      "Binder.docx"
-                    ]
-cancel_letter = "Cancellation-Mid-Term-or-Flat Letter"
 base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of excel
 output_dir = base_dir / "output" # name of output folder
 output_dir.mkdir(exist_ok=True)
 
 #Pandas reading excel file
-df = pd.read_excel(excel_path, sheet_name="Sheet1")
+df = pd.read_excel(excel_path, sheet_name="Sheet2")
 
 #Format date to MMM DD, YYYY
 df["today"] = datetime.today().strftime("%B %d, %Y")
@@ -77,11 +74,7 @@ def writeToPdf(pdf, dictionary, rows):
   writer.updatePageFormFieldValues(
   writer.getPage(0), dictionary
   )
-  if (rows["type"] == "Lob" and rows["insurer"] == "Family"):
-    output_path = output_dir / f"{insuredNames(rows)} - {insuredNames(rows)} {pdf}"
-  else:
-    output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {pdf}"
-  output_path.parent.mkdir(exist_ok=True)
+  output_path = output_dir / f"{insuredNames(rows)} - {insuredNames(rows)} {pdf}"
   with open(output_path, "wb") as output_stream:
     writer.write(output_stream)
     
@@ -90,39 +83,26 @@ def writeToDocx(docx, rows):
   template_path = base_dir / "input" / docx
   doc = DocxTemplate(template_path)
   doc.render(rows)
-  if (rows["type"] == "Lob"):
-    if (rows["insurer"] == "Family"):
-      output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} Disclosure Notice.docx"
-    else:
-      output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} {docx}"
+  if (rows["insurer"] == "Family"):
+    output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} Disclosure Notice.docx"
   else:
-    output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {docx}"
+    output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} {docx}"
   output_path.parent.mkdir(exist_ok=True)
-  doc.save(output_path)    
+  doc.save(output_path)
 
 for rows in df.to_dict(orient="records"):
-  #Makes Disclosure and Waiver
-  writeToDocx(disclosure_filename, rows)
-  
-  # Make Cancel/Lapse Letter
-  if (rows["type"] == "Cancel" or rows["type"] == "Lapse"):
-    writeToDocx(cancel_letter, rows)
-  #Binder Invoice and Binder
-  if (rows["type"] == "Binder"):
-    dictionary = {'Effective Date': rows["effective_date"],
-                  'Policy Number' : checkPolicyNumber(rows),
-                  'Account Number' : rows["client_code"],
-                }
-    writeToPdf(binder_binder_fee[0], dictionary, rows)
-    writeToDocx(binder_binder_fee[1], rows)
-  #Makes Wawa Personal Information and Credit Consent Form 8871
-  if (rows["insurer"] == "Wawanesa"):
-    dictionary = {"Policy  Submission Numbers": checkPolicyNumber(rows),
-                  "Date Signed mmddyy" : datetime.today().strftime("%B %d, %Y"),
-                  "Insureds Name": rows["insured_name"],
-                  "Date Signed mmddyy_3" : datetime.today().strftime("%B %d, %Y")
-                }
-    writeToPdf(credit_consent_filename, dictionary, rows)
+  #Make Disclosure and LOB.docx
+  writeToDocx(lob_filename[0],rows)
+  #Make LOB - Family Blank.pdf
+  if (rows["insurer"] == "Family"):
+    dictionary = {"Name of Insureds": insuredNames(rows),
+                  "Address of Insureds": rows["mailing_address"],
+                  # "Day": rows["effective_date"].split(" ")[1],
+                  # "Month": rows["effective_date"].split(" ")[0],
+                  # "Year": rows["effective_date"].split(" ")[2],
+                  "Policy Number": checkPolicyNumber(rows),
+                  }
+    writeToPdf(lob_filename[1], dictionary, rows)
   if pd.notnull(rows["risk_address"]):
     #Make GORE - Rented Questionnaire
     if (rows["insurer"] == "Gore Mutual"):
