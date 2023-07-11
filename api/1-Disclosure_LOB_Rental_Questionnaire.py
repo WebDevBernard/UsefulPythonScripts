@@ -57,11 +57,23 @@ def riskAddress(rows):
     return rows["mailing_address"]
   return rows["risk_address"]
 
+#Checks if there is a mailing address
+def checkMailingAddress(rows):
+  if (pd.isnull(rows["mailing_address"])):
+    return ""
+  return rows["mailing_address"]
+
 #Checks if there is a policy_number
 def checkPolicyNumber(rows):
   if (pd.isnull(rows["policy_number"])):
     return ""
   return rows["policy_number"]
+
+#Checks if there is an effective date
+def checkEffectiveDate(rows):
+  if (pd.isnull(rows["effective_date"])):
+    return ""
+  return rows["effective_date"]
 
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
@@ -96,10 +108,10 @@ for rows in df.to_dict(orient="records"):
   #Make LOB - Family Blank.pdf
   if (rows["insurer"] == "Family"):
     dictionary = {"Name of Insureds": insuredNames(rows),
-                  "Address of Insureds": rows["mailing_address"],
-                  "Day": rows["effective_date"].split(" ")[1],
-                  "Month": rows["effective_date"].split(" ")[0],
-                  "Year": rows["effective_date"].split(" ")[2],
+                  "Address of Insureds": checkMailingAddress(rows),
+                  "Day": checkEffectiveDate(rows).split(" ")[1],
+                  "Month": checkEffectiveDate(rows).split(" ")[0],
+                  "Year": checkEffectiveDate(rows).split(" ")[2],
                   "Policy Number": checkPolicyNumber(rows),
                   }
     writeToPdf(lob_filename[1], dictionary, rows)
@@ -108,7 +120,7 @@ for rows in df.to_dict(orient="records"):
     if (rows["insurer"] == "Gore Mutual"):
       dictionary = {"Applicant / Insured": insuredNames(rows),
                     "Gore Policy #": checkPolicyNumber(rows),
-                    "Principal Street": rows["mailing_address"],
+                    "Principal Street": checkMailingAddress(rows),
                     "Rental Street": riskAddress(rows)
                   }
       writeToPdf(questionnaire_filename[0], dictionary, rows)
@@ -124,7 +136,7 @@ for rows in df.to_dict(orient="records"):
       dictionary = {"Insureds Name": insuredNames(rows),
                     "Policy Number": checkPolicyNumber(rows),
                     "Address of Property": riskAddress(rows),
-                    "Date Coverage is Required": rows["effective_date"],
+                    "Date Coverage is Required": checkEffectiveDate(rows),
                     }
       writeToPdf(questionnaire_filename[2], dictionary, rows)
     #Make Questionnaire - wawa rented dwelling Q 

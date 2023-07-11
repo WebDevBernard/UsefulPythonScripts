@@ -56,11 +56,29 @@ def riskAddress(rows):
     return rows["mailing_address"]
   return rows["risk_address"]
 
+#Checks if there is a mailing address
+def checkInsuredName(rows):
+  if (pd.isnull(rows["insured_name"])):
+    return ""
+  return rows["insured_name"]
+
+#Checks if there is a mailing address
+def checkMailingAddress(rows):
+  if (pd.isnull(rows["mailing_address"])):
+    return ""
+  return rows["mailing_address"]
+
 #Checks if there is a policy_number
 def checkPolicyNumber(rows):
   if (pd.isnull(rows["policy_number"])):
     return ""
   return rows["policy_number"]
+
+#Checks if there is an effective date
+def checkEffectiveDate(rows):
+  if (pd.isnull(rows["effective_date"])):
+    return ""
+  return rows["effective_date"]
 
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
@@ -94,7 +112,7 @@ for rows in df.to_dict(orient="records"):
   if (rows["insurer"] == "Wawanesa"):
     dictionary = {"Policy  Submission Numbers": checkPolicyNumber(rows),
                   "Date Signed mmddyy" : datetime.today().strftime("%B %d, %Y"),
-                  "Insureds Name": rows["insured_name"],
+                  "Insureds Name": checkInsuredName(rows),
                   "Date Signed mmddyy_3" : datetime.today().strftime("%B %d, %Y")
                 }
     writeToPdf(credit_consent_filename, dictionary, rows)
@@ -103,7 +121,7 @@ for rows in df.to_dict(orient="records"):
     if (rows["insurer"] == "Gore Mutual"):
       dictionary = {"Applicant / Insured": insuredNames(rows),
                     "Gore Policy #": checkPolicyNumber(rows),
-                    "Principal Street": rows["mailing_address"],
+                    "Principal Street": checkMailingAddress(rows),
                     "Rental Street": riskAddress(rows)
                   }
       writeToPdf(questionnaire_filename[0], dictionary, rows)
@@ -119,7 +137,7 @@ for rows in df.to_dict(orient="records"):
       dictionary = {"Insureds Name": insuredNames(rows),
                     "Policy Number": checkPolicyNumber(rows),
                     "Address of Property": riskAddress(rows),
-                    "Date Coverage is Required": rows["effective_date"],
+                    "Date Coverage is Required": checkEffectiveDate(rows),
                     }
       writeToPdf(questionnaire_filename[2], dictionary, rows)
     #Make Questionnaire - wawa rented dwelling Q 

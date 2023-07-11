@@ -64,6 +64,12 @@ def checkClientCode(rows):
     return ""
   return rows["client_code"]
 
+#Checks if there is an effective date
+def checkEffectiveDate(rows):
+  if (pd.isnull(rows["effective_date"])):
+    return ""
+  return rows["effective_date"]
+
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
   pdf_path = base_dir / "input" / pdf
@@ -95,7 +101,7 @@ for rows in df.to_dict(orient="records"):
     writeToDocx(cancel_letter, rows)
   #Binder Invoice and Binder
   if (rows["type"] == "Binder"):
-    dictionary = {'Effective Date': rows["effective_date"],
+    dictionary = {'Effective Date': checkEffectiveDate(rows),
                   'Policy Number' : checkPolicyNumber(rows),
                   'Account Number' : checkClientCode(rows),
                 }
