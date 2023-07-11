@@ -1,29 +1,21 @@
 import pandas as pd
 from pathlib import Path
 from docxtpl import DocxTemplate
-from datetime import datetime, timedelta
+from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
 
 #Directory Paths for each file
-disclosure_filename = "Disclosure and Waiver.docx"
-credit_consent_filename = "Wawa Personal Information and Credit Consent Form 8871.pdf"
-questionnaire_filename = ["GORE - Rented Questionnaire.pdf", 
-                          "Optimum West Rental Q.pdf", 
-                          "WAWA Rental Condo Questionnaire.pdf",
-                          "wawa rented dwelling Q.pdf",
-                          "Rented Dwelling Quest INTACT.docx"
-                          ]
 binder_binder_fee = [ "Binder Fee Invoice - Cedar.pdf",
                       "Binder.docx"
                     ]
-cancel_letter = "Cancellation-Mid-Term-or-Flat Letter"
+cancel_letter = "Cancellation-Mid-Term-or-Flat Letter.docx"
 base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of excel
 output_dir = base_dir / "output" # name of output folder
 output_dir.mkdir(exist_ok=True)
 
 #Pandas reading excel file
-df = pd.read_excel(excel_path, sheet_name="Sheet1")
+df = pd.read_excel(excel_path, sheet_name="Sheet3")
 
 #Format date to MMM DD, YYYY
 df["today"] = datetime.today().strftime("%B %d, %Y")
@@ -66,6 +58,12 @@ def checkPolicyNumber(rows):
     return ""
   return rows["policy_number"]
 
+#Checks if there is a policy_number
+def checkClientCode(rows):
+  if (pd.isnull(rows["client_code"])):
+    return ""
+  return rows["client_code"]
+
 #Reads and writes PDF
 def writeToPdf(pdf, dictionary, rows):
   pdf_path = base_dir / "input" / pdf
@@ -92,9 +90,6 @@ def writeToDocx(docx, rows):
   doc.save(output_path)    
 
 for rows in df.to_dict(orient="records"):
-  #Makes Disclosure and Waiver
-  writeToDocx(disclosure_filename, rows)
-  
   # Make Cancel/Lapse Letter
   if (rows["type"] == "Cancel" or rows["type"] == "Lapse"):
     writeToDocx(cancel_letter, rows)
@@ -102,50 +97,7 @@ for rows in df.to_dict(orient="records"):
   if (rows["type"] == "Binder"):
     dictionary = {'Effective Date': rows["effective_date"],
                   'Policy Number' : checkPolicyNumber(rows),
-                  'Account Number' : rows["client_code"],
+                  'Account Number' : checkClientCode(rows),
                 }
     writeToPdf(binder_binder_fee[0], dictionary, rows)
     writeToDocx(binder_binder_fee[1], rows)
-  #Makes Wawa Personal Information and Credit Consent Form 8871
-  if (rows["insurer"] == "Wawanesa"):
-    dictionary = {"Policy  Submission Numbers": checkPolicyNumber(rows),
-                  "Date Signed mmddyy" : datetime.today().strftime("%B %d, %Y"),
-                  "Insureds Name": rows["insured_name"],
-                  "Date Signed mmddyy_3" : datetime.today().strftime("%B %d, %Y")
-                }
-    writeToPdf(credit_consent_filename, dictionary, rows)
-  if pd.notnull(rows["risk_address"]):
-    #Make GORE - Rented Questionnaire
-    if (rows["insurer"] == "Gore Mutual"):
-      dictionary = {"Applicant / Insured": insuredNames(rows),
-                    "Gore Policy #": checkPolicyNumber(rows),
-                    "Principal Street": rows["mailing_address"],
-                    "Rental Street": riskAddress(rows)
-                  }
-      writeToPdf(questionnaire_filename[0], dictionary, rows)
-    #Make Questionnaire - Optimum West Rental Q
-    if (rows["insurer"] == "Optimum West"):
-      dictionary = {"Policy_Number[0]": checkPolicyNumber(rows),
-                    "Applicant_Insured[0]": insuredNames(rows),
-                    "Rental_Location_Address[0]": riskAddress(rows),
-                    }
-      writeToPdf(questionnaire_filename[1], dictionary, rows)
-    #Make Questionnaire - WAWA Rental Condo Questionnaire
-    if (rows["insurer"] == "Wawanesa" and rows["type"] != "Revenue"):
-      dictionary = {"Insureds Name": insuredNames(rows),
-                    "Policy Number": checkPolicyNumber(rows),
-                    "Address of Property": riskAddress(rows),
-                    "Date Coverage is Required": rows["effective_date"],
-                    }
-      writeToPdf(questionnaire_filename[2], dictionary, rows)
-    #Make Questionnaire - wawa rented dwelling Q 
-    if (rows["insurer"] == "Wawanesa" and rows["type"] == "Revenue"):
-      dictionary = {"Insured's Name": insuredNames(rows),
-                    "Policy Number": checkPolicyNumber(rows),
-                    "Address of Property": riskAddress(rows),
-                    }
-      writeToPdf(questionnaire_filename[3], dictionary, rows)   
-    #Make Questionnaire - Rented Dwelling Quest INTACT 
-    if (rows["insurer"] == "Intact"):
-      writeToDocx(questionnaire_filename[4], rows)
-
