@@ -12,5 +12,4 @@ Install in Powershell
 - `venv\Scripts\Activate.ps1`
 - `pip install -r requirements.txt`
 - `python -m auto_py_to_exe`
-
 - `pip freeze | xargs pip uninstall -y`

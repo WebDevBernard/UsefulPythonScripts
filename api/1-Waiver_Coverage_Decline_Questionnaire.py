@@ -1,13 +1,12 @@
-import pandas as pd 
+import pandas as pd
 from pathlib import Path
 from docxtpl import DocxTemplate
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
 
 #Directory Paths for each file
-lob_filename = ["Disclosure and LOB.docx",
-                "LOB - Family Blank.pdf"
-                ]
+disclosure_filename = "Disclosure and Waiver.docx"
+credit_consent_filename = "Wawa Personal Information and Credit Consent Form 8871.pdf"
 questionnaire_filename = ["GORE - Rented Questionnaire.pdf", 
                           "Optimum West Rental Q.pdf", 
                           "WAWA Rental Condo Questionnaire.pdf",
@@ -37,6 +36,8 @@ def namesFormatter(df):
         df["type"] = df["type"].str.title()
       if df["insured_name"].dtype == 'object':  
         df["insured_name"] = df["insured_name"].str.title()
+      if df["additional_insured"].dtype == 'object':  
+        df["additional_insured"] = df["additional_insured"].str.title()
       if df["insurer"].dtype == 'object':
         df["insurer"] = df["insurer"].str.title()
       if df["broker_name"].dtype == 'object':
@@ -56,6 +57,12 @@ def riskAddress(rows):
   if (pd.isnull(rows["risk_address"])):
     return rows["mailing_address"]
   return rows["risk_address"]
+
+#Checks if there is a mailing address
+def checkInsuredName(rows):
+  if (pd.isnull(rows["insured_name"])):
+    return ""
+  return rows["insured_name"]
 
 #Checks if there is a mailing address
 def checkMailingAddress(rows):
@@ -86,7 +93,8 @@ def writeToPdf(pdf, dictionary, rows):
   writer.updatePageFormFieldValues(
   writer.getPage(0), dictionary
   )
-  output_path = output_dir / f"{insuredNames(rows)} - {insuredNames(rows)} {pdf}"
+  output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {pdf}"
+  output_path.parent.mkdir(exist_ok=True)
   with open(output_path, "wb") as output_stream:
     writer.write(output_stream)
     
@@ -95,26 +103,21 @@ def writeToDocx(docx, rows):
   template_path = base_dir / "input" / docx
   doc = DocxTemplate(template_path)
   doc.render(rows)
-  if (rows["insurer"] == "Family"):
-    output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} Disclosure Notice.docx"
-  else:
-    output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} {docx}"
+  output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {docx}"
   output_path.parent.mkdir(exist_ok=True)
-  doc.save(output_path)
+  doc.save(output_path)    
 
 for rows in df.to_dict(orient="records"):
-  #Make Disclosure and LOB.docx
-  writeToDocx(lob_filename[0],rows)
-  #Make LOB - Family Blank.pdf
-  if (rows["insurer"] == "Family"):
-    dictionary = {"Name of Insureds": insuredNames(rows),
-                  "Address of Insureds": checkMailingAddress(rows),
-                  "Day": checkEffectiveDate(rows).split(" ")[1],
-                  "Month": checkEffectiveDate(rows).split(" ")[0],
-                  "Year": checkEffectiveDate(rows).split(" ")[2],
-                  "Policy Number": checkPolicyNumber(rows),
-                  }
-    writeToPdf(lob_filename[1], dictionary, rows)
+  #Makes Disclosure and Waiver
+  writeToDocx(disclosure_filename, rows)
+  #Makes Wawa Personal Information and Credit Consent Form 8871
+  if (rows["insurer"] == "Wawanesa"):
+    dictionary = {"Policy  Submission Numbers": checkPolicyNumber(rows),
+                  "Date Signed mmddyy" : datetime.today().strftime("%B %d, %Y"),
+                  "Insureds Name": checkInsuredName(rows),
+                  "Date Signed mmddyy_3" : datetime.today().strftime("%B %d, %Y")
+                }
+    writeToPdf(credit_consent_filename, dictionary, rows)
   if pd.notnull(rows["risk_address"]):
     #Make GORE - Rented Questionnaire
     if (rows["insurer"] == "Gore Mutual"):
@@ -149,3 +152,4 @@ for rows in df.to_dict(orient="records"):
     #Make Questionnaire - Rented Dwelling Quest INTACT 
     if (rows["insurer"] == "Intact"):
       writeToDocx(questionnaire_filename[4], rows)
+
