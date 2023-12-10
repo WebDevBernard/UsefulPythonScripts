@@ -65,7 +65,7 @@ def riskAddress(rows):
 
 # Checks if there is a mailing address
 def checkMailingAddress(rows):
-    if (pd.isnull(rows["mailing_address"])):
+    if pd.isnull(rows["mailing_address"]):
         return ""
     return rows["mailing_address"]
 
