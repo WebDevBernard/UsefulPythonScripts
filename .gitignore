@@ -2,5 +2,7 @@
 /output
 /input
 /api/output/
+/.venv
+/.idea
 input.xlsx
 .zip

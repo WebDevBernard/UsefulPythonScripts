@@ -1,4 +1,4 @@
-pyinstaller            
+pyinstaller
 auto-py-to-exe            
 openpyxl                  
 pandas                    
