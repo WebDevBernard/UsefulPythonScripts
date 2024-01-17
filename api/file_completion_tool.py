@@ -18,12 +18,14 @@ lob_filename = ["Disclosure and LOB.docx",
                 ]
 misc_filename = ["NCOL Letter.docx",
                  "Express Consent.docx",
-                 "Coverage Deletion Request.docx"
+                 "Coverage Deletion Request.docx",
+                 "Commercial Consent Form.docx"
                  ]
 ncol_filename = "NCOL Letter.docx"
 binder_binder_fee = ["Binder Fee Invoice - Cedar.pdf",
                      "Binder.docx"
                      ]
+wawa_banking_info = "Wawa monthly payplan Authorization Form, Form 8003GIS.pdf"
 cancel_letter = "Cancellation-Mid-Term-or-Flat Letter.docx"
 base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of excel
@@ -36,7 +38,6 @@ df = pd.read_excel(excel_path, sheet_name="Sheet1")
 # Format date to MMM DD, YYYY
 df["today"] = datetime.today().strftime("%B %d, %Y")
 df["effective_date"] = df["effective_date"].dt.strftime("%B %d, %Y")
-
 
 # Remove white spaces, capitalize first letter of each word, and format effective date time
 def namesFormatter(df):
@@ -60,9 +61,7 @@ def namesFormatter(df):
         else:
             pass
 
-
 namesFormatter(df)
-
 
 # Checks if there is additonal_insured
 def insuredNames(rows):
@@ -70,13 +69,17 @@ def insuredNames(rows):
         return rows["insured_name"]
     return rows["insured_name"] + " & " + rows['additional_insured']
 
+# Check family if addional insured but return only empty string
+def additionalInsured(rows):
+    if (pd.isnull(rows["additional_insured"])):
+        return ""
+    return rows["additional_insured"]
 
 # Checks if no risk address, use mailing address as risk address
 def riskAddress(rows):
     if (pd.isnull(rows["risk_address"])):
         return rows["mailing_address"]
     return rows["risk_address"]
-
 
 # Checks if 2nd location, use mailing address as second location
 def secondLocation(rows):
@@ -114,14 +117,11 @@ def writeToPdf(pdf, dictionary, rows):
     for pageNum in range(reader.numPages):
         page = reader.getPage(pageNum)
         writer.add_page(page)
-    writer.updatePageFormFieldValues(
-        writer.getPage(0), dictionary
-    )
+        writer.updatePageFormFieldValues(page, dictionary)
     output_path = output_dir / f"{insuredNames(rows)}" / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} {pdf}"
     output_path.parent.mkdir(exist_ok=True)
     with open(output_path, "wb") as output_stream:
         writer.write(output_stream)
-
 
 # Write to Docx
 def writeToDocx(docx, rows):
@@ -158,9 +158,11 @@ for rows in df.to_dict(orient="records"):
                           "Month": checkEffectiveDate(rows).split(" ")[0],
                           "Year": checkEffectiveDate(rows).split(" ")[2],
                           "Policy Number": checkPolicyNumber(rows),
+                          "Name 1": rows["insured_name"],
+                          "Name 2": additionalInsured(rows)
                           }
             writeToPdf(lob_filename[1], dictionary, rows)
-    if (rows["type"] == "DISCLOSURE"):
+    if (rows["type"] == "NEW BUSINESS"):
         writeToDocx(disclosure_filename, rows)
         # Makes Wawa Personal Information and Credit Consent Form 8871
         if (rows["insurer"] == "Wawanesa"):
@@ -174,6 +176,8 @@ for rows in df.to_dict(orient="records"):
         writeToDocx(misc_filename[1], rows)
     if (rows["type"] == "CHANGE"):
         writeToDocx(misc_filename[2], rows)
+    if (rows["type"] ==  "COMMERCIAL"):
+        writeToDocx(misc_filename[3], rows)
     if (rows["type"] == "CANCEL"):
         writeToDocx(cancel_letter, rows)
     if (rows["type"] == "BINDER"):
@@ -182,7 +186,7 @@ for rows in df.to_dict(orient="records"):
                       }
         writeToPdf(binder_binder_fee[0], dictionary, rows)
         writeToDocx(binder_binder_fee[1], rows)
-    if (rows["type"] == "LOB" or rows["type"] == "DISCLOSURE"):
+    if (rows["type"] == "LOB" or rows["type"] == "NEW BUSINESS" or rows["type"] == "CHANGE"):
         if pd.notnull(rows["risk_address"]):
             # Make GORE - Rented Questionnaire
             if (rows["insurer"] == "Gore Mutual"):
@@ -215,6 +219,13 @@ for rows in df.to_dict(orient="records"):
                               "Address of Property": riskAddress(rows),
                               }
                 writeToPdf(questionnaire_filename[3], dictionary, rows)
-                # Make Questionnaire - Rented Dwelling Quest INTACT
+            # Make Wawa Banking info Form
+            if (rows["insurer"] == "Wawanesa" and rows["additional"] == "WAWANESA MONTHLY"):
+                dictionary = {"Name": insuredNames(rows),
+                              "Address": riskAddress(rows),
+                              "Policy": checkPolicyNumber(rows)
+                              }
+                writeToPdf(wawa_banking_info, dictionary, rows)
+            # Make Questionnaire - Rented Dwelling Quest INTACT
             if (rows["insurer"] == "Intact"):
                 writeToDocx(questionnaire_filename[4], rows)

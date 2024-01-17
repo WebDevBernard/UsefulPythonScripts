@@ -55,6 +55,11 @@ def insuredNames(rows):
         return rows["insured_name"]
     return rows["insured_name"] + " & " + rows['additional_insured']
 
+# Check family if addional insured but return only empty string
+def additionalInsured(rows):
+    if (pd.isnull(rows["additional_insured"])):
+        return ""
+    return rows["additional_insured"]
 
 # Checks if no risk address, use mailing address as risk address
 def riskAddress(rows):
@@ -92,10 +97,8 @@ def writeToPdf(pdf, dictionary, rows):
     for pageNum in range(reader.numPages):
         page = reader.getPage(pageNum)
         writer.add_page(page)
-    writer.updatePageFormFieldValues(
-        writer.getPage(0), dictionary
-    )
-    output_path = output_dir / f"{insuredNames(rows)} - {insuredNames(rows)} {pdf}"
+        writer.updatePageFormFieldValues(page, dictionary)
+    output_path = output_dir / f"{insuredNames(rows)} - {checkPolicyNumber(rows)} {pdf}"
     with open(output_path, "wb") as output_stream:
         writer.write(output_stream)
 
@@ -124,6 +127,8 @@ for rows in df.to_dict(orient="records"):
                       "Month": checkEffectiveDate(rows).split(" ")[0],
                       "Year": checkEffectiveDate(rows).split(" ")[2],
                       "Policy Number": checkPolicyNumber(rows),
+                      "Name 1": rows["insured_name"],
+                      "Name 2": additionalInsured(rows)
                       }
         writeToPdf(lob_filename[1], dictionary, rows)
     if pd.notnull(rows["risk_address"]):

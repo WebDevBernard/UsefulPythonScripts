@@ -8,7 +8,8 @@ pdf_filename = ["GORE - Rented Questionnaire.pdf",
                 "Wawa Personal Information and Credit Consent Form 8871.pdf",
                 "WAWA Rental Condo Questionnaire.pdf",
                 "wawa rented dwelling Q.pdf",
-                "Binder Fee Invoice - Cedar.pdf"
+                "Binder Fee Invoice - Cedar.pdf",
+                "Wawa monthly payplan Authorization Form, Form 8003GIS.pdf"
                 ]
 base_dir = Path(__file__).parent.parent
 
