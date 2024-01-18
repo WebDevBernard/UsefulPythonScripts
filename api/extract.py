@@ -1,23 +1,21 @@
 from pathlib import Path
-from PyPDF2 import PdfReader
+import pdfplumber
+import pandas as pd
 
 base_dir = Path(__file__).parent.parent
-pdf_path = base_dir / "input" / "Review Application.pdf"
+pdf_path = base_dir / "input" / "wawa policy.pdf"
 
-reader = PdfReader(pdf_path)
-page = reader.pages[0]
+lines = []
 
-parts = []
+with pdfplumber.open(pdf_path) as pdf:
+    for page in pdf.pages:
+        text = page.extract_text(x_tolerance=2, y_tolerance=0)
+        for line in text.split("\n"):
+            lines.append(line)
+            print(line)
+        # print(page.extract_tables())
 
-def visitor_body(text, cm, tm, fontDict, fontSize):
-    x = tm[4]
-    y = tm[5]
-    if (y > 3800 and y < 3900):
-        parts.append(text)
-
-page.extract_text(visitor_text=visitor_body)
-text_body = "".join(parts)
-
-print(text_body)
+df = pd.DataFrame(lines)
+df.to_csv("test.csv")
 
 
