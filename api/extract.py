@@ -4,6 +4,8 @@ import pandas as pd
 
 base_dir = Path(__file__).parent.parent
 pdf_path = base_dir / "input" / "wawa policy.pdf"
+output_dir = base_dir / "output"  # name of output folder
+output_dir.mkdir(exist_ok=True)
 
 lines = []
 
@@ -16,6 +18,6 @@ with pdfplumber.open(pdf_path) as pdf:
         # print(page.extract_tables())
 
 df = pd.DataFrame(lines)
-df.to_csv("test.csv")
+df.to_csv(output_dir / "test.csv")
 
 

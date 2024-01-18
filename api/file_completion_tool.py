@@ -3,8 +3,6 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
-import jinja2
-import re
 
 base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of Excel
@@ -22,7 +20,7 @@ expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years
 df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
 df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
 df[["type", "additional", "province", "postal_code"]] = df[["type", "additional", "province", "postal_code"]].astype(str).apply(lambda col: col.str.upper())
-df[["insured_name", "employee_name", "insurer", "city"]] = df[["insured_name", "employee_name", "insurer", "city"]].astype(str).apply(
+df[["insured_name", "employee_name", "insurer", "street_address", "city"]] = df[["insured_name", "employee_name", "insurer", "street_address", "city"]].astype(str).apply(
     lambda col: col.str.title())
 # <================================= Replace NAN risk address =================================>
 df["risk_address"] = df["risk_address"].fillna(df["street_address"] + ", " + df["city"] + ", " + df["province"] + " " + df["postal_code"])
