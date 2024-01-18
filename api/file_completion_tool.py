@@ -10,20 +10,20 @@ output_dir = base_dir / "output"  # name of output folder
 output_dir.mkdir(exist_ok=True)
 df = pd.read_excel(excel_path, sheet_name="Sheet1")
 
-# Directory Paths for each file
-filename = {"condo_renewal_letter": "RENEWAL_Condo_201711.docx"
-            }
 # <================================= Formats excel sheet =================================>
 df["today"] = datetime.today().strftime("%B %d, %Y")
 df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
 expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
 df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
 df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
-df[["type", "additional", "province", "postal_code"]] = df[["type", "additional", "province", "postal_code"]].astype(str).apply(lambda col: col.str.upper())
-df[["insured_name", "employee_name", "insurer", "street_address", "city"]] = df[["insured_name", "employee_name", "insurer", "street_address", "city"]].astype(str).apply(
+df[["type", "additional", "province", "postal_code"]] = df[["type", "additional", "province", "postal_code"]].astype(
+    str).apply(lambda col: col.str.upper())
+df[["named_insured", "additional_insured", "employee_name", "insurer", "street_address", "city"]] = df[
+    ["named_insured", "additional_insured", "employee_name", "insurer", "street_address", "city"]].astype(str).apply(
     lambda col: col.str.title())
 # <================================= Replace NAN risk address =================================>
-df["risk_address"] = df["risk_address"].fillna(df["street_address"] + ", " + df["city"] + ", " + df["province"] + " " + df["postal_code"])
+df["risk_address"] = df["risk_address"].fillna(
+    df["street_address"] + ", " + df["city"] + ", " + df["province"] + " " + df["postal_code"])
 
 # PDF Writing Library
 def write_to_pdf(pdf, dictionary, rows):
@@ -34,21 +34,27 @@ def write_to_pdf(pdf, dictionary, rows):
         page = reader.getPage(pageNum)
         writer.add_page(page)
         writer.updatePageFormFieldValues(page, dictionary)
-    output_path = output_dir / f"{rows["insured_name"]}" / f"{rows["insured_name"]} {rows["type"].title()} .pdf"
+    output_path = output_dir / f"{rows["named_insured"]}" / f"{rows["named_insured"]} {rows["type"].title()} .pdf"
     output_path.parent.mkdir(exist_ok=True)
     with open(output_path, "wb") as output_stream:
         writer.write(output_stream)
+
 
 # Word Writing Library
 def write_to_docx(docx, rows):
     template_path = base_dir / "input" / docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
-    output_path = output_dir / f"{rows["insured_name"]}" / f"{rows["insured_name"]} {rows["type"].title()} .docx"
+    output_path = output_dir / f"{rows["named_insured"]}" / f"{rows["named_insured"]} {rows["type"].title()} .docx"
     output_path.parent.mkdir(exist_ok=True)
     doc.save(output_path)
+
+
+# Directory Paths for each file
+filename = {"CONDO RENEWAL LETTER": "RENEWAL_Condo_201711.docx"
+            }
 
 for rows in df.to_dict(orient="records"):
     rows["mailing_address"] = f"{rows["street_address"]}, {rows["city"]}, {rows["province"]} {rows["postal_code"]}"
     if (rows["type"] == "CONDO RENEWAL LETTER"):
-        write_to_docx(filename["condo_renewal_letter"], rows)
+        write_to_docx(filename["CONDO RENEWAL LETTER"], rows)
