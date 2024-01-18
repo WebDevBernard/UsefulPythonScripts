@@ -59,7 +59,6 @@ def write_to_pdf(pdf, dictionary, rows):
     with open(output_path, "wb") as output_stream:
         writer.write(output_stream)
 
-
 # Word Writing Library
 def write_to_docx(docx, rows):
     template_path = base_dir / "input" / docx
