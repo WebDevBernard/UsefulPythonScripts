@@ -229,3 +229,20 @@ for rows in df.to_dict(orient="records"):
             # Make Questionnaire - Rented Dwelling Quest INTACT
             if (rows["insurer"] == "Intact"):
                 writeToDocx(questionnaire_filename[4], rows)
+
+# # <================================= Address Formatter WIP =================================>
+# city_regex = r"(?i)avenue|ave|boulevard|blvd|court|crt|ct|highway|hwy|street|st"
+# postal_code_regex = r"(?i)[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z][ -]?[0-9][ABCEGHJ-NPRSTV-Z][0-9]"
+# province_regex = r"(?i)\b(NL|PE|NS|NB|QC|ON|MB|SK|AB|BC|YT|NT|NU)"
+# def regex(string):
+#     address_list = []
+#     address_list.append(re.split(city_regex, string)[0])
+#     address_list.append(re.findall(city_regex, string)[0])
+#     address_list.append(re.findall(province_regex, string)[0])
+#     address_list.append(re.findall(postal_code_regex, string)[0])
+#     print(address_list)
+# jinja2.filters.FILTERS["regex"] = regex
+# for index, row in df.iterrows():
+#     regex(row["mailing_address"])
+#     re.findall(postal_code_regex, row["mailing_address"])
+# <================================= Address Formatter WIP =================================>

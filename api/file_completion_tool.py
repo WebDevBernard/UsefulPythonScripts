@@ -21,29 +21,11 @@ df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, 
 expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
 df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
 df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
-df[["type", "additional"]] = df[["type", "additional"]].astype(str).apply(lambda col: col.str.upper())
-df[["insured_name", "insurer", "employee_name"]] = df[["insured_name", "insurer", "employee_name"]].astype(str).apply(
+df[["type", "additional", "province", "postal_code"]] = df[["type", "additional", "province", "postal_code"]].astype(str).apply(lambda col: col.str.upper())
+df[["insured_name", "employee_name", "insurer", "city"]] = df[["insured_name", "employee_name", "insurer", "city"]].astype(str).apply(
     lambda col: col.str.title())
 # <================================= Replace NAN risk address =================================>
-df["risk_address"] = df["risk_address"].fillna(df["mailing_address"])
-
-
-# # <================================= Address Formatter WIP =================================>
-# city_regex = r"(?i)avenue|ave|boulevard|blvd|court|crt|ct|highway|hwy|street|st"
-# postal_code_regex = r"(?i)[ABCEGHJ-NPRSTVXY][0-9][ABCEGHJ-NPRSTV-Z][ -]?[0-9][ABCEGHJ-NPRSTV-Z][0-9]"
-# province_regex = r"(?i)\b(NL|PE|NS|NB|QC|ON|MB|SK|AB|BC|YT|NT|NU)"
-# def regex(string):
-#     address_list = []
-#     address_list.append(re.split(city_regex, string)[0])
-#     address_list.append(re.findall(city_regex, string)[0])
-#     address_list.append(re.findall(province_regex, string)[0])
-#     address_list.append(re.findall(postal_code_regex, string)[0])
-#     print(address_list)
-# jinja2.filters.FILTERS["regex"] = regex
-# for index, row in df.iterrows():
-#     regex(row["mailing_address"])
-#     re.findall(postal_code_regex, row["mailing_address"])
-# <================================= Address Formatter WIP =================================>
+df["risk_address"] = df["risk_address"].fillna(df["street_address"] + ", " + df["city"] + ", " + df["province"] + " " + df["postal_code"])
 
 # PDF Writing Library
 def write_to_pdf(pdf, dictionary, rows):
@@ -68,7 +50,7 @@ def write_to_docx(docx, rows):
     output_path.parent.mkdir(exist_ok=True)
     doc.save(output_path)
 
-
 for rows in df.to_dict(orient="records"):
+    rows["mailing_address"] = f"{rows["street_address"]}, {rows["city"]}, {rows["province"]} {rows["postal_code"]}"
     if (rows["type"] == "CONDO RENEWAL LETTER"):
         write_to_docx(filename["condo_renewal_letter"], rows)
