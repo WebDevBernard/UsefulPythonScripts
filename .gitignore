@@ -4,5 +4,6 @@
 /api/output/
 /.venv
 /.idea
+/templates
 input.xlsx
 .zip
