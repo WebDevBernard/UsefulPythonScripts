@@ -34,7 +34,6 @@ def write_to_docx(docx, rows):
 # Directory Paths for each file
 filename = {"RENEWAL LETTER": "COVER_Ltr_NEW_RENEWAL_201711.docx"}
 
-
 for rows in df.to_dict(orient="records"):
     if (rows["type"] == "CONDO RENEWAL"):
         write_to_docx(filename["RENEWAL LETTER"], rows)

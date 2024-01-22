@@ -2,6 +2,11 @@ from pathlib import Path
 import pdfplumber
 
 def extract_tables_from_pdf(pdf_path):
+    table_settings = {
+        # "vertical_strategy": "lines",
+        # "horizontal_strategy": "text",
+        # "snap_y_tolerance": 3,
+    }
     with pdfplumber.open(pdf_path) as pdf:
         for page_number in range(len(pdf.pages)):
             tables = []
@@ -11,13 +16,7 @@ def extract_tables_from_pdf(pdf_path):
                 im.debug_tablefinder()
                 im.show()
                 tables_on_page = page.extract_tables()
-
                 for table_number, table in enumerate(tables_on_page):
-                    table_settings = {
-                        # "vertical_strategy": "lines",
-                        # "horizontal_strategy": "text",
-                        # "snap_y_tolerance": 3,
-                    }
                     table_with_settings = page.extract_tables(table_settings=table_settings)[table_number]
                     tables.append(table_with_settings)
             return tables

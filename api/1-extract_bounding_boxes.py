@@ -50,7 +50,9 @@ for pdf_path in pdf_file_paths:
     text_bounding_boxes = extract_text_and_bbox(pdf_path)
     draw_rectangles(pdf_path, text_bounding_boxes)
     for page, value in text_bounding_boxes.items():
+        print(f"\n")
         print(f"<========= Page: {page} =========>")
+        print(f"\n")
         for text, box in value:
             print(f"text: {text}")
             print(f"\n")
