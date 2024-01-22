@@ -3,9 +3,8 @@ import pdfplumber
 
 def extract_tables_from_pdf(pdf_path):
     table_settings = {
-        # "vertical_strategy": "lines",
-        # "horizontal_strategy": "text",
-        # "snap_y_tolerance": 3,
+        "vertical_strategy": "lines",
+        "horizontal_strategy": "text",
     }
     with pdfplumber.open(pdf_path) as pdf:
         for page_number in range(len(pdf.pages)):
@@ -13,13 +12,12 @@ def extract_tables_from_pdf(pdf_path):
             for page_number in range(len(pdf.pages)):
                 page = pdf.pages[page_number]
                 im = page.to_image(resolution=400)
-                im.debug_tablefinder()
+                im.debug_tablefinder(table_settings)
                 im.show()
-                tables_on_page = page.extract_tables()
-                for table_number, table in enumerate(tables_on_page):
-                    table_with_settings = page.extract_tables(table_settings=table_settings)[table_number]
-                    tables.append(table_with_settings)
-            return tables
+                tables_on_page = page.extract_tables(table_settings=table_settings)
+                for table_number, table in enumerate(tables_on_page or []):
+                    tables.extend(table)
+            return [x for x in [list(filter(None, lst)) for lst in tables]if x]
 
 base_dir = Path(__file__).parent.parent
 pdf_directory = Path(base_dir / "input")
@@ -34,13 +32,13 @@ for pdf_file in pdf_files:
     pdf_file_paths.append(file_path)
 
 for pdf_path in pdf_file_paths:
+    print(f"\n")
+    print(f"<========= PDF_FILENAME: {pdf_path} =========>")
+    print(f"\n")
     # gets table values
     tables = extract_tables_from_pdf(pdf_path)
-    for table_number, table in enumerate(tables):
-        print(f"Table {table_number + 1}:")
-        for row in table:
-            print(row)
-        print("\n")
+    for row_number, row in enumerate(tables):
+        print(f"Row {row_number + 1}: {row}")
 
     # bb_1 = (46.5600015, 143.63243797500002, 494.03997825, 153.8975676)
     # bb_2 = (46.5600015, 156.67647284999998, 494.03997825, 166.61757285)

@@ -47,6 +47,9 @@ for pdf_file in pdf_files:
     pdf_file_paths.append(file_path)
 
 for pdf_path in pdf_file_paths:
+    print(f"\n")
+    print(f"<========= PDF_FILENAME: {pdf_path} =========>")
+    print(f"\n")
     text_bounding_boxes = extract_text_and_bbox(pdf_path)
     draw_rectangles(pdf_path, text_bounding_boxes)
     for page, value in text_bounding_boxes.items():
