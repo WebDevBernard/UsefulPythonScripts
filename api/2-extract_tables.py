@@ -3,8 +3,8 @@ import pdfplumber
 
 def extract_tables_from_pdf(pdf_path):
     table_settings = {
-        "vertical_strategy": "lines",
-        "horizontal_strategy": "text",
+        # "vertical_strategy": "lines",
+        # "horizontal_strategy": "text",
     }
     with pdfplumber.open(pdf_path) as pdf:
         for page_number in range(len(pdf.pages)):
@@ -13,7 +13,7 @@ def extract_tables_from_pdf(pdf_path):
                 page = pdf.pages[page_number]
                 im = page.to_image(resolution=400)
                 im.debug_tablefinder(table_settings)
-                im.show()
+                # im.show()
                 tables_on_page = page.extract_tables(table_settings=table_settings)
                 for table_number, table in enumerate(tables_on_page or []):
                     tables.extend(table)
