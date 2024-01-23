@@ -25,4 +25,3 @@ output_dir.mkdir(exist_ok=True)
 for pdf_file in pdf_files:
     file_path = str(pdf_file)
     pdf_file_paths.append(file_path)
-
