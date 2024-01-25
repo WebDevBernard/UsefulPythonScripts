@@ -29,7 +29,6 @@ def draw_rectangles(pdf_path, page_number, rects_list):
 pg = 3
 coords = (36.4375, 67.22000049999991, 170.99999650000004, 94.84000049999992)
 
-# Extract text from page 1 using coordinates from the dictionary
 for pdf_path in pdf_file_paths:
     draw_rectangles(pdf_path, pg, coords)
     extracted_text = extract_text_within_bbox(pdf_path, pg, coords)

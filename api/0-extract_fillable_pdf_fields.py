@@ -2,7 +2,7 @@ from pathlib import Path
 from PyPDF2 import PdfReader
 
 base_dir = Path(__file__).parent.parent
-pdf_folder = base_dir / "templates"
+pdf_folder = base_dir / "input"
 output_dir = base_dir / "output"  # name of output folder
 output_dir.mkdir(exist_ok=True)
 
