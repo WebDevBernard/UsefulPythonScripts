@@ -10,7 +10,8 @@ base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of Excel
 output_dir = base_dir / "output"  # name of output folder
 output_dir.mkdir(exist_ok=True)
-df = pd.read_excel(excel_path, sheet_name="Sheet1")
+df = pd.read_excel(excel_path, sheet_name=0, engine="openpyxl")
+df = df[df["named_insured"].notna()]
 
 # <================================= Formats excel sheet =================================>
 df["today"] = datetime.today().strftime("%B %d, %Y")
@@ -32,7 +33,7 @@ df["risk_address"] = df["risk_address"].fillna(df["mailing_address"])
 def uniquify(path):
     filename, extension = os.path.splitext(path)
     counter = 1
-    while os.path.exists(path):
+    while Path(path).is_file():
         path = filename + " (" + str(counter) + ")" + extension
         counter += 1
     return path
@@ -44,7 +45,7 @@ def write_to_docx(docx, rows):
     doc.render(rows)
     output_path = output_dir / f"{rows["named_insured"]} {rows["type"].title()}.docx"
     output_path.parent.mkdir(exist_ok=True)
-    doc.save( uniquify(output_path))
+    doc.save(uniquify(output_path))
 
 
 # Reads and writes PDF

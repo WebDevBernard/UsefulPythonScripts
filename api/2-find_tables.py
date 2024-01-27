@@ -4,7 +4,7 @@ import pdfplumber
 def filter_dict(dictionary):
     for key, value in dictionary.items():
         filtered_list = [sublist for sublist in value if sublist[0] != '']
-        cleaned_list = [[s.replace('\n', ' ') if i == 0 else s for i, s in enumerate(sublist)] for sublist in
+        cleaned_list = [[s.split('\n') if i == 0 else s for i, s in enumerate(sublist)] for sublist in
                         filtered_list]
         dictionary[key] = cleaned_list
     return dictionary
@@ -20,7 +20,7 @@ def extract_tables_from_pdf(pdf_path):
             for table in find_tables:
                 table_coords.extend(table.cells)
             for cell in table_coords:
-                extracted_text = page.crop(cell).extract_text()
+                extracted_text = page.crop(cell).extract_text(layout=False)
                 tables.append(extracted_text)
             result_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in zip(tables, table_coords)]
     return filter_dict(result_dict)
@@ -47,8 +47,8 @@ for pdf_file in pdf_files:
 for pdf_path in pdf_file_paths:
     print(f"\n<========= PDF_FILENAME: {pdf_path} =========>\n")
     pages = extract_tables_from_pdf(pdf_path)
-    draw_rectangles(pdf_path, pages)
-    with open(output_dir / f"{Path(pdf_path).stem} Table Coordinates.txt", 'w') as file:
+    # draw_rectangles(pdf_path, pages)
+    with open(output_dir / f"{Path(pdf_path).stem} find_table_coordinates.txt", 'w') as file:
         for page, value in pages.items():
             file.write(f"\n<========= Page: {page} =========>\n")
             print(f"\n<========= Page: {page} =========>\n")

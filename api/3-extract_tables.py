@@ -3,19 +3,12 @@ import pdfplumber
 
 ts = {
     "vertical_strategy": "lines",
-    "horizontal_strategy": "lines"
+    "horizontal_strategy": "text"
 }
 
 
 def filter_dict(dictionary):
-    for key, value in dictionary.items():
-        for i, sublist in enumerate(value):
-            cleaned_sublist = [item for item in sublist if item not in ['', None]]
-            cleaned_sublist = [str(item).replace('\n', ' ') for item in cleaned_sublist]
-
-            dictionary[key][i] = cleaned_sublist
-
-        return dictionary
+        return {key: [sublist for sublist in ([item for item in sublist if item is not None and item != ''] for sublist in sublists) if sublist] for key, sublists in dictionary.items()}
 
 def extract_tables_from_pdf(pdf_path):
     result_dict = {}
@@ -26,7 +19,7 @@ def extract_tables_from_pdf(pdf_path):
             extract_tables = page.extract_tables(ts)
             for table in extract_tables:
                 tables.extend(table)
-            result_dict[page_number + 1] = [tables]
+            result_dict[page_number + 1] = tables
     return filter_dict(result_dict)
 
 base_dir = Path(__file__).parent.parent
@@ -44,7 +37,7 @@ for pdf_file in pdf_files:
 for pdf_path in pdf_file_paths:
     print(f"\n<========= PDF_FILENAME: {pdf_path} =========>\n")
     pages = extract_tables_from_pdf(pdf_path)
-    with open(output_dir / f"{Path(pdf_path).stem} Table Coordinates.txt", 'w') as file:
+    with open(output_dir / f"{Path(pdf_path).stem} extract_table.txt", 'w') as file:
         for page, value in pages.items():
             file.write(f"\n<========= Page: {page} =========>\n")
             print(f"\n<========= Page: {page} =========>\n")

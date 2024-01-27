@@ -9,9 +9,8 @@ def extract_text_and_bbox(pdf_path):
             page = pdf.pages[page_number]
             text_lines = page.extract_words()
             for line in text_lines:
-                print(line)
                 bounding_box = (line['x0'], line['top'], line['x1'], line['bottom'])
-                text_boxes.append((line['text'], bounding_box))
+                text_boxes.append([line['text'], bounding_box])
             result_dict[page_number + 1] = text_boxes
     return result_dict
 
@@ -37,8 +36,8 @@ for pdf_file in pdf_files:
 for pdf_path in pdf_file_paths:
     print(f"\n<========= PDF_FILENAME: {pdf_path} =========>\n")
     text_bounding_boxes = extract_text_and_bbox(pdf_path)
-    draw_rectangles(pdf_path, text_bounding_boxes)
-    with open( output_dir / f"{Path(pdf_path).stem} Text Coordinates.txt", 'w') as file:
+    # draw_rectangles(pdf_path, text_bounding_boxes)
+    with open( output_dir / f"{Path(pdf_path).stem} extract_words_coordinates.txt", 'w') as file:
         for page, value in text_bounding_boxes.items():
             file.write(f"\n<========= Page: {page} =========>\n")
             print(f"\n<========= Page: {page} =========>\n")

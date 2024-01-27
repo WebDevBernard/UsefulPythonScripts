@@ -23,10 +23,9 @@ for pdf_file in pdf_files:
 
 def draw_rectangles(pdf_path, page_number, rects_list):
     with pdfplumber.open(pdf_path) as pdf:
-        page = pdf.pages[page_number - 1]
-        page.to_image(resolution=400).draw_rects([rects_list]).show()
-
-pg = 3
+        first_page = pdf.pages[0]
+        print(first_page.chars[0])
+pg = 1
 coords = (36.4375, 67.22000049999991, 170.99999650000004, 94.84000049999992)
 
 for pdf_path in pdf_file_paths:
