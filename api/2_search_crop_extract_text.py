@@ -1,18 +1,28 @@
 from pathlib import Path
 import pdfplumber
 
-def extract_text_and_bbox(pdf_path):
-    result_dict = {}
+search = "SMOKE DETECTOR RATE APPLIED"
+
+def extract_tables_from_pdf(pdf_path):
+    dictionary = {}
     with pdfplumber.open(pdf_path) as pdf:
         for page_number in range(len(pdf.pages)):
-            text_boxes = []
             page = pdf.pages[page_number]
-            text_lines = page.extract_words(use_text_flow=True)
-            for line in text_lines:
+            text_boxes = []
+            description = page.search(search)
+            for line in description:
                 bounding_box = (line['x0'], line['top'], line['x1'], line['bottom'])
                 text_boxes.append([line['text'], bounding_box])
-            result_dict[page_number + 1] = text_boxes
-    return result_dict
+            dictionary[page_number + 1] = text_boxes
+    return dictionary
+
+def extract_text_within_bbox(pdf_path, page_number, bbox):
+    with pdfplumber.open(pdf_path) as pdf:
+        page = pdf.pages[page_number - 1]
+        cropped_page = page.crop(bbox)
+        page.to_image(resolution=400).draw_rect(bbox).show()
+        text = cropped_page.extract_text()
+    return text
 
 def draw_rectangles(pdf_path, dictionary):
     with pdfplumber.open(pdf_path) as pdf:
@@ -33,16 +43,12 @@ for pdf_file in pdf_files:
     file_path = str(pdf_file)
     pdf_file_paths.append(file_path)
 
-for pdf_path in pdf_file_paths:
-    print(f"\n<========= PDF_FILENAME: {pdf_path} =========>\n")
-    text_bounding_boxes = extract_text_and_bbox(pdf_path)
-    draw_rectangles(pdf_path, text_bounding_boxes)
-    with open( output_dir / f"{Path(pdf_path).stem} extract_words_coordinates.txt", 'w') as file:
-        for page, value in text_bounding_boxes.items():
-            file.write(f"\n<========= Page: {page} =========>\n")
-            print(f"\n<========= Page: {page} =========>\n")
-            for text, box in enumerate(value):
-                file.write(f"#{text} : {box}\n")
-                print(f"#{text} : {box}")
+pg = 1
+coords = list([[110.64081612470625, 101.41569021025873, 179.91378549927597, 109.45572843850499], [23.64, 372.49708401291565, 677.32, 386.05949620041565]][0])
 
+for pdf_path in pdf_file_paths:
+    found_search = extract_tables_from_pdf(pdf_path)
+    draw_rectangles(pdf_path, found_search)
+    # extracted_text = extract_text_within_bbox(pdf_path, pg, coords)
+    print(found_search)
 

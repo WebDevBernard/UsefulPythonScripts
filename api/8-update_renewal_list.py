@@ -1,27 +1,29 @@
 from pathlib import Path
 import pdfplumber
+import pandas as pd
 
 # Table Strategy for identifying table, using h-lines or h-text
-# ts = {
-#     "vertical_strategy": "explicit",
-#     "explicit_vertical_lines": [23.64, 50.64, 106.91, 159.36, 217.94, 341.64, 392.67, 430.92, 637.23, 677.32],
-#     "horizontal_strategy": "text",
-#     "snap_y_tolerance": 6,
-# }
-
 ts = {
-    "vertical_strategy": "lines",
-    "horizontal_strategy": "lines",
+    "vertical_strategy": "explicit",
+    "explicit_vertical_lines": [23.64, 50.64, 106.91, 159.36, 217.94, 341.64, 392.67, 430.92, 637.23, 677.32],
+    "horizontal_strategy": "text",
+    "snap_y_tolerance": 6,
 }
+
+# ts = {
+#     "vertical_strategy": "lines",
+#     "horizontal_strategy": "lines",
+# }
 
 def extract_tables_from_pdf(pdf_path):
     dictionary = {}
+    text_boxes = []
     with pdfplumber.open(pdf_path) as pdf:
         for page_number in range(len(pdf.pages)):
             page = pdf.pages[page_number]
-            # page = page.crop(bbox=(23.64, 117.61, 677.32, 586.69))
+            page = page.crop(bbox=(23.64, 117.61, 677.32, 586.69))
             # Debug screen to show where table is drawn
-            page.to_image(resolution=400).debug_tablefinder(ts).show()
+            # page.to_image(resolution=400).debug_tablefinder(ts).show()
 
             # Get all the row coordinates
             row_coords = []
@@ -51,14 +53,14 @@ for pdf_file in pdf_files:
     file_path = str(pdf_file)
     pdf_file_paths.append(file_path)
 
+
 for pdf_path in pdf_file_paths:
     print(f"\n<========= PDF_FILENAME: {pdf_path} =========>\n")
     pages = extract_tables_from_pdf(pdf_path)
     with open(output_dir / f"{Path(pdf_path).stem} extract_table.txt", 'w') as file:
-        for page, value in pages.items():
-            file.write(f"\n<========= Page: {page} =========>\n")
-            print(f"\n<========= Page: {page} =========>\n")
-            for text, box in enumerate(value):
-                file.write(f"#{text} : {box}\n")
-                print(f"#{text} : {box}")
-
+        loc_cols = ["insurer", "time_entered", "time_made", "policynum", "csrcode", "ccode", "name",
+                    "renewal"]
+        rows = [item[0] for sublist in pages.values() for item in sublist]
+        df = pd.DataFrame(rows, columns=loc_cols)
+        df = df.dropna()
+        print(df)
