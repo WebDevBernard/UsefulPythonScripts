@@ -34,8 +34,9 @@ def highlight_duplicates(s, other_column):
 duplicated = df['ccode'].duplicated()
 df = df.style.apply(highlight_duplicates, subset=["ccode"], other_column=df["buscode"])
 
+emoji = "\U0001F923\U0001F923\U0001F923\U0001F923\U0001F923"
+print(f"\n{emoji}    XlSX_FILENAME: {output_path.stem} {emoji}\n")
 
-print(f"\n<========= XlSX_FILENAME: {output_path.stem} =========>\n")
 if not exists:
     writer = pd.ExcelWriter(output_path, engine="openpyxl")
 else:

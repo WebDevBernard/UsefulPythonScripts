@@ -1,6 +1,6 @@
 import pandas as pd
-import os
 import re
+from helper_funtions import unique_file_name
 from pathlib import Path
 from docxtpl import DocxTemplate
 from datetime import datetime
@@ -30,36 +30,28 @@ df["mailing_address"] = df[["street_address", "city", "province", "postal_code"]
     lambda x: ', '.join(x[:-1]) + " " + x[-1:], axis=1)
 df["risk_address"] = df["risk_address"].fillna(df["mailing_address"])
 
-def uniquify(path):
-    filename, extension = os.path.splitext(path)
-    counter = 1
-    while Path(path).is_file():
-        path = filename + " (" + str(counter) + ")" + extension
-        counter += 1
-    return path
-
 # Word Writing Library
 def write_to_docx(docx, rows):
-    template_path = base_dir / "input" / "templates" / docx
+    template_path = base_dir / "input " / "templates"/ docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
     output_path = output_dir / f"{rows["named_insured"]} {rows["type"].title()}.docx"
     output_path.parent.mkdir(exist_ok=True)
-    doc.save(uniquify(output_path))
+    doc.save(unique_file_name(output_path))
 
 
 # Reads and writes PDF
-def writeToPdf(pdf, dictionary, rows):
-    pdf_path = base_dir / "input" / "templates" / pdf
+def write_to_pdf(pdf, dictionary, rows):
+    pdf_path = (base_dir / "input " / "templates" / pdf)
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
-    for pageNum in range(reader.numPages):
-        page = reader.getPage(pageNum)
+    for page_num in range(len(reader.pages)):
+        page = reader.pages[page_num]
         writer.add_page(page)
         writer.updatePageFormFieldValues(page, dictionary)
     output_path = output_dir / f"{rows["named_insured"]} {rows["type"].title()}.pdf"
     output_path.parent.mkdir(exist_ok=True)
-    with open(uniquify(output_path), "wb") as output_stream:
+    with open(unique_file_name(output_path), "wb") as output_stream:
         writer.write(output_stream)
 
 
@@ -98,7 +90,7 @@ for rows in df.to_dict(orient="records"):
                       "Principal Street": rows["street_address"],
                       "Rental Street": rows["risk_address"]
                       }
-        writeToPdf(filename["GORE RENTED QUESTIONNAIRE"], dictionary, rows)
+        write_to_pdf(filename["GORE RENTED QUESTIONNAIRE"], dictionary, rows)
     elif rows["type"] == "LETTER OF BROKERAGE":
         write_to_docx(filename["LETTER OF BROKERAGE"], rows)
     elif rows["type"] == "FAMILY LOB":
@@ -111,7 +103,7 @@ for rows in df.to_dict(orient="records"):
                       "Name 1": rows["named_insured"],
                       "Name 2": rows["additional_insured"],
                       }
-        writeToPdf(filename["FAMILY LOB"], dictionary, rows)
+        write_to_pdf(filename["FAMILY LOB"], dictionary, rows)
     elif rows["type"] == "RENTED INTACT QUESTIONNAIRE":
         write_to_docx(filename["RENTED INTACT QUESTIONNAIRE"], rows)
     elif rows["type"] == "REVENUE PROPERTY QUESTIONNAIRE":
@@ -121,7 +113,7 @@ for rows in df.to_dict(orient="records"):
                       "Address of Property": rows["risk_address"],
                       "Date Coverage is Required": rows["effective_date"]
                       }
-        writeToPdf(filename["REVENUE PROPERTY QUESTIONNAIRE"], dictionary, rows)
+        write_to_pdf(filename["REVENUE PROPERTY QUESTIONNAIRE"], dictionary, rows)
     elif rows["type"] == "WAWA MAC AUTHORIZATION FORM":
         dictionary = {"Policy": rows["policy_number"],
                       "Name": rows["named_insured"],
@@ -129,13 +121,13 @@ for rows in df.to_dict(orient="records"):
                       "Postal Code": rows["postal_code"],
                       "Please list policy numbers on The MAC Plan": rows["policy_number"],
                       }
-        writeToPdf(filename["WAWA MAC AUTHORIZATION FORM"], dictionary, rows)
+        write_to_pdf(filename["WAWA MAC AUTHORIZATION FORM"], dictionary, rows)
     elif rows["type"] == "RENTED DWELLING QUESTIONNAIRE":
         dictionary = {"Insureds Name": rows["named_insured"],
                       "Policy Number": rows["policy_number"],
                       "Address of property": rows["risk_address"],
                       }
-        writeToPdf(filename["RENTED DWELLING QUESTIONNAIRE"], dictionary, rows)
+        write_to_pdf(filename["RENTED DWELLING QUESTIONNAIRE"], dictionary, rows)
     elif (rows["type"] == "INTACT AUTOMATIC BANK WITHDRAWALS"):
         dictionary = {"Policy Number": rows["policy_number"],
                       "Last Name": rows["named_insured"].split()[-1],
@@ -143,4 +135,4 @@ for rows in df.to_dict(orient="records"):
                       "Name of Account Holder": rows["named_insured"],
                       "Province": rows["province"],
                       }
-        writeToPdf(filename["INTACT AUTOMATIC BANK WITHDRAWALS"], dictionary, rows)
+        write_to_pdf(filename["INTACT AUTOMATIC BANK WITHDRAWALS"], dictionary, rows)
