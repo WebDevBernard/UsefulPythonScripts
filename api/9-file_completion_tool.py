@@ -1,12 +1,10 @@
 import pandas as pd
 import re
-from helper_funtions import unique_file_name
-from pathlib import Path
+from helper_funtions import unique_file_name, base_dir
 from docxtpl import DocxTemplate
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
 
-base_dir = Path(__file__).parent.parent
 excel_path = base_dir / "input.xlsx"  # name of Excel
 output_dir = base_dir / "output"  # name of output folder
 output_dir.mkdir(exist_ok=True)
@@ -38,7 +36,6 @@ def write_to_docx(docx, rows):
     output_path = output_dir / f"{rows["named_insured"]} {rows["type"].title()}.docx"
     output_path.parent.mkdir(exist_ok=True)
     doc.save(unique_file_name(output_path))
-
 
 # Reads and writes PDF
 def write_to_pdf(pdf, dictionary, rows):

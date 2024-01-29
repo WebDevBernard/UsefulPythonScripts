@@ -1,19 +1,22 @@
 import pdfplumber
 
-def plumber_draw_rect(pdf_file, field_dict):
-    with pdfplumber.open(pdf_file) as pdf:
-        for page_number in range(len(pdf.pages)):
-            if page_number + 1 in field_dict:
-                dict_list = field_dict[page_number + 1]
-                pdf.pages[page_number].to_image(resolution=400).draw_rects([x[1] for x in dict_list]).show()
+def plumber_draw_rect(pdf, field_dict, pg_limit, dpi):
+    if field_dict:
+        with pdfplumber.open(pdf) as pdf:
+            for page_number in range(len(pdf.pages)):
+                if page_number + 1 in field_dict and pg_limit >= page_number + 1:
+                    dict_list = field_dict[page_number + 1]
+                    pdf.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
 
-def plumber_draw_from_pg_and_coords(pdf_path, page, coords):
-    with pdfplumber.open(pdf_path) as pdf:
-        pdf.pages[page - 1].to_image(resolution=400).draw_rects([x for x in coords]).show()
+def plumber_draw_from_pg_and_coords(pdf, pages, coords, dpi):
+    if coords:
+        with pdfplumber.open(pdf) as pdf:
+            for page_num in pages:
+                pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rects([x for x in coords]).show()
 
-def plumber_search_text(pdf_path, keyword):
+def plumber_search_text(pdf, keyword):
     field_dict = {}
-    with pdfplumber.open(pdf_path) as pdf:
+    with pdfplumber.open(pdf) as pdf:
         for page_number in range(len(pdf.pages)):
             page = pdf.pages[page_number]
             text_boxes = []
@@ -24,9 +27,9 @@ def plumber_search_text(pdf_path, keyword):
             field_dict[page_number + 1] = text_boxes
     return field_dict
 
-def plumber_extract_text(pdf_path):
+def plumber_extract_text(pdf):
     field_dict = {}
-    with pdfplumber.open(pdf_path) as pdf:
+    with pdfplumber.open(pdf) as pdf:
         for page_number in range(len(pdf.pages)):
             text_boxes = []
             page = pdf.pages[page_number]

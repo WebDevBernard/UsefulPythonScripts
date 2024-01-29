@@ -2,19 +2,19 @@ import pandas as pd
 import os
 from pathlib import Path
 from datetime import datetime
+from helper_funtions import base_dir
 
-base_dir = Path(__file__).parent.parent
-output_dir = base_dir / "output"  # name of output folder
-output_dir.mkdir(exist_ok=True)
-
-files = Path(base_dir / "input").glob("*.xls*")
+input_dir = base_dir / "input"  # name of output folder
+files = Path(input_dir).glob("*.xlsx")
 file_paths = []
+
 for file in files:
     file_path = str(file)
     file_paths.append(file_path)
 # Open only first xlsx file in folder
+
 excel_path = file_paths[0]
-output_path = output_dir / f"{Path(excel_path).stem}_sorted_renewal_list.xlsx"
+output_path = input_dir / f"{Path(excel_path).stem}_sorted_renewal_list.xlsx"
 df = pd.read_excel(excel_path, sheet_name=0, engine="openpyxl")
 exists = os.path.isfile(output_path)
 
@@ -26,6 +26,7 @@ for x, y in df.groupby('insurer', sort=False):
     list_with_spaces.append(y)
     list_with_spaces.append(pd.DataFrame([[float('NaN')] * len(y.columns)], columns=y.columns))
 df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
+
 
 def highlight_duplicates(s, other_column):
     is_duplicate = (other_column != 'GLA') & (other_column != 'EQB') & s.duplicated(keep=False) & (~s.isna())
