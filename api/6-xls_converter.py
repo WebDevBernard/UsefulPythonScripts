@@ -1,4 +1,4 @@
-from helper_funtions import emoji, base_dir
+from helper_functions import emoji, base_dir
 from pathlib import Path
 import pandas as pd
 

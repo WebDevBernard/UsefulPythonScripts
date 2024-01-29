@@ -1,6 +1,6 @@
 import pandas as pd
 import re
-from helper_funtions import unique_file_name, base_dir
+from helper_functions import unique_file_name, base_dir
 from docxtpl import DocxTemplate
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter

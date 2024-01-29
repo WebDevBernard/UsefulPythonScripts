@@ -1,5 +1,5 @@
 import fitz
-from helper_funtions import newline_to_list, newline_to_space
+from helper_functions import newline_to_list, newline_to_space
 
 def find_match_using_pg_num(field_dict, page_number_list, text):
     for key in page_number_list:

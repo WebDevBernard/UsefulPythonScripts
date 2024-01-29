@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from pathlib import Path
 from datetime import datetime
-from helper_funtions import base_dir
+from helper_functions import base_dir
 
 input_dir = base_dir / "input"  # name of output folder
 files = Path(input_dir).glob("*.xlsx")

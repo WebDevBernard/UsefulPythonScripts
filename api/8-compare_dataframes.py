@@ -1,4 +1,4 @@
-from helper_funtions import base_dir, emoji, unique_file_name
+from helper_functions import base_dir, emoji, unique_file_name
 from pdfplumber_functions import plumber_extract_tables
 import pandas as pd
 from pathlib import Path
