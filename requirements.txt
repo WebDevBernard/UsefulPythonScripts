@@ -6,3 +6,5 @@ docxtpl
 PyPDF2
 PyCryptodome
 pdfplumber
+pymupdf
+xlrd

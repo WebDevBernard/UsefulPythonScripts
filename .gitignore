@@ -1,9 +1,11 @@
 /venv
 /output
 /input
-/api/output/
+/py/output/
 /.venv
 /.idea
 /templates
 input.xlsx
 .zip
+.exe
+.Ink
