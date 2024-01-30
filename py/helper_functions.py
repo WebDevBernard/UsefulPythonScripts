@@ -59,4 +59,3 @@ def newline_to_space(nested_dict):
                 if inner_list:
                     inner_list[0] = inner_list[0].replace('\n', " ")
     return nested_dict
-

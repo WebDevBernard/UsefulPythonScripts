@@ -1,6 +1,6 @@
 import pandas as pd
 import re
-from helper_functions import unique_file_name, base_dir
+from helper_functions_back import unique_file_name, base_dir
 from docxtpl import DocxTemplate
 from datetime import datetime
 from PyPDF2 import PdfReader, PdfWriter
@@ -30,7 +30,7 @@ df["risk_address"] = df["risk_address"].fillna(df["mailing_address"])
 
 # Word Writing Library
 def write_to_docx(docx, rows):
-    template_path = base_dir / "input " / "templates"/ docx
+    template_path = base_dir / "input" / "templates"/ docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
     output_path = output_dir / f"{rows["named_insured"]} {rows["type"].title()}.docx"
@@ -39,7 +39,7 @@ def write_to_docx(docx, rows):
 
 # Reads and writes PDF
 def write_to_pdf(pdf, dictionary, rows):
-    pdf_path = (base_dir / "input " / "templates" / pdf)
+    pdf_path = (base_dir / "input" / "templates" / pdf)
     reader = PdfReader(pdf_path)
     writer = PdfWriter()
     for page_num in range(len(reader.pages)):

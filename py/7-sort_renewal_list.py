@@ -2,10 +2,10 @@ import pandas as pd
 import os
 from pathlib import Path
 from datetime import datetime
-from helper_functions import base_dir
+from helper_functions_back import base_dir
 
 input_dir = base_dir / "input"  # name of output folder
-files = Path(input_dir).glob("*.xlsx")
+files = Path(input_dir).glob("*.xls")
 file_paths = []
 
 for file in files:
@@ -14,8 +14,8 @@ for file in files:
 # Open only first xlsx file in folder
 
 excel_path = file_paths[0]
-output_path = input_dir / f"{Path(excel_path).stem}_sorted_renewal_list.xlsx"
-df = pd.read_excel(excel_path, sheet_name=0, engine="openpyxl")
+output_path = input_dir / f"{Path(excel_path).stem}.xlsx"
+df = pd.read_excel(excel_path, engine="xlrd")
 exists = os.path.isfile(output_path)
 
 column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled", "D/L"]

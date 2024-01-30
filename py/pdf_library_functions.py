@@ -1,5 +1,14 @@
+import pdfplumber
+
 import fitz
-from helper_functions import newline_to_list, newline_to_space
+from helper_functions_back import newline_to_list, newline_to_space
+
+# def find_correct_document(pdfs, text, coords):
+
+
+# need to check if two strings are equal
+
+
 
 def find_match_using_pg_num(field_dict, page_number_list, text):
     for key in page_number_list:
@@ -82,4 +91,37 @@ def get_text_words(pdf):
                                        zip(text_boxes, text_coords)]
         # field_dict[page_number + 1] = list(zip(text_boxes, text_coords))
     doc.close()
+    return field_dict
+
+
+def plumber_draw_rect(pdf, field_dict, pg_limit, dpi):
+    if field_dict:
+        with pdfplumber.open(pdf) as pdf:
+            for page_number in range(len(pdf.pages)):
+                if page_number + 1 in field_dict and pg_limit >= page_number + 1:
+                    dict_list = field_dict[page_number + 1]
+                    pdf.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
+
+def plumber_draw_from_pg_and_coords(pdf, pages, coords, dpi):
+    if coords:
+        with pdfplumber.open(pdf) as pdf:
+            for page_num in pages:
+                pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rects([x for x in coords]).show()
+
+def plumber_extract_tables(pdf_path, ts, bbox):
+    field_dict = {}
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_number in range(len(pdf.pages)):
+            page = pdf.pages[page_number]
+            page = page.crop(bbox=bbox)
+            row_coords = []
+            find_tables = page.find_tables(ts)
+            for table in find_tables:
+                for row in table.rows:
+                    row_coords.append(row.bbox)
+            extract_tables = page.extract_tables(ts)
+            table_texts = []
+            for table in extract_tables:
+                table_texts.extend(table)
+            field_dict[page_number + 1] = field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in zip(table_texts, row_coords)]
     return field_dict
