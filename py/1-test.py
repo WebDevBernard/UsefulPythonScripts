@@ -1,14 +1,11 @@
 from helper_fn import base_dir
 from file_writing_fn import (plumber_draw_from_pg_and_coords, find_table_dict, get_text_words,
-                             get_text_blocks, search_using_dict, search_with_crop, search_from_pg_num)
-
+                             get_text_blocks, search_using_dict, search_with_crop, search_from_pg_num, search_pg_num_stop)
+import fitz
 
 # change crop or search here
-pg = [1]
-first_keyword = "Property Coverages"
-second_keyword = "LOCATION"
-keyword_matching_crop = "Previous"
-coords = [(425.3039855957031, 291.7948913574219, 448.932373046875, 299.81011962890625)]  # must be tuple in list to work
+pg = [8]
+coords = (36.0, 769.5787963867188, 576.001220703125, 778.6453857421875)  # must be tuple in list to work
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"
@@ -17,36 +14,31 @@ output_dir.mkdir(exist_ok=True)
 pdf_files = input_dir.glob("*.pdf")
 
 if __name__ == "__main__":
-    for pdf_file in pdf_files:
-        # Comment to toggle extraction method
-        block_dict = get_text_blocks(pdf_file)    # 1 find by text blocks
-        table_dict = find_table_dict(pdf_file)    # 2 find by table
-        word_dict = get_text_words(pdf_file)       # 3 find by individual words
+    pdf = list(pdf_files)[0]
 
-        list_of_pg_no_matching_keyword = (search_using_dict(block_dict, first_keyword))
-        list_of_pg_no_matching_second_keyword = search_from_pg_num(word_dict, list_of_pg_no_matching_keyword, second_keyword)
-        list_of_pg_no_matching_crop = (search_with_crop(pdf_file, list_of_pg_no_matching_second_keyword, keyword_matching_crop, coords))
+    # Every file requires these inputs:
+    print(f"\n  Keyword Matches in Order of: \n")
+    # Determines type of pdf by scanning page 1 and an area of the page matching a single keyword
+    doc_type = {
+        "Aviva": ["Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)],
+        "Family": ["Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)],
+        "Intact": ["Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)],
+        "Wawanesa": ["Policy", (36.0, 187.6835479736328, 62.479373931884766, 197.7382354736328)],
+    }
+    keyword_1 = search_with_crop(pdf, [1], doc_type)
+    print("Using Crop From Coordinates:", keyword_1)
+    # Look for a condition to stop search, so it doesn't go into the wordings page
+    stop_condition = {
+        "Wawanesa": ["STATUTORY CONDITIONS", (242.8795166015625, 99.35482788085938, 371.42803955078125, 110.61607360839844)]
+    }
 
-        # Every file requires these inputs:
-        #   type of pdf / coordinates of p0 / group of words to search / word that can only appear on that page /
-        #       coordinates of page where value appears
+    print("Finding Pg# to Stop:", search_pg_num_stop(pdf, keyword_1, stop_condition))
+    print("Using Group of Words:       ", )
+    # Loop again to find a word match that also appears on the same page
+    print("Using a Single Word:        ", )
+    # using the list of pages with numbered matches, read the list with matching numbers and determine how to much
+    #       + index to reach the position alternatively target using set coordinates on pages that have fixed
+    #         position like intact and family policies
 
-        # The first search is scanning pdf[0] and cropping p[0] on an area of the page to get a matching word
 
-        # Once the type of pdf is determined, search through all pages of the pdf continue after finding broker copy
-        #       and break after last instance of broker copy
-
-        # Loop through the remaining pages and find group of words that can only appear on the of the value you are
-        #       looking for
-
-        # Loop again to find a word match that also appears on the same page
-
-        # using the list of pages with numbered matches, read the list with matching numbers and determine how to much
-        #       + index to reach the position alternatively target using set coordinates on pages that have fixed
-        #         position like intact and family policies
-
-        print(f"\n  Keyword Matches in Order of: \n")
-        print("Using Group of Words:       ", list_of_pg_no_matching_keyword)
-        print("Using a Single Word:        ", list_of_pg_no_matching_second_keyword)
-        print("Using Crop From Coordinates:", list_of_pg_no_matching_crop)
-        plumber_draw_from_pg_and_coords(pdf_file, pg, 0, 300)  # coords falsey = off
+    # plumber_draw_from_pg_and_coords(pdf, pg, coords, 300)  # coords falsey = off

@@ -13,21 +13,34 @@ def find_match_using_pg_num(field_dict, page_number_list, text):
             print(page)
 
 
-def search_with_crop(pdf, nums_list, text, rects):
-    dlist = []
+def search_with_crop(pdf, pg_num_list, field_dict):
     with fitz.open(pdf) as doc:
-        for key in nums_list:
-            page = doc[key - 1]
+        for pg_num in pg_num_list:
             wlist = []
-            for rect in rects:
-                text_line = page.get_text("words", clip=rect)
+            page_0_index = doc[pg_num - 1]
+            for key, field in field_dict.items():
+                text_line = page_0_index.get_text("words", field[1])
                 wlist.extend(text_line)
-            for word in wlist:
-                if text in word[4]:
-                    if key not in dlist:
-                        dlist.append(key)
-        return dlist
+                for word in wlist:
+                    if field[0].casefold() in word[4].casefold():
+                        return key
 
+def search_pg_num_stop(pdf, dict_key, field_dict):
+    pg_count = 1
+    with fitz.open(pdf) as doc:
+        for i, pg_num in enumerate(doc):
+            counter = 0
+            page_0_index = doc[i]
+            word = (field_dict[dict_key][0])
+            wlist = page_0_index.get_text("words", field_dict[dict_key][1])
+            print(wlist)
+            if word in word:
+                counter = counter + 1
+                if counter >= 1:
+                    pg_count += i
+                    break
+    print(pg_count)
+    return pg_count
 
 def search_from_pg_num(field_dict, list_of_nums, text):
     list = []
@@ -167,4 +180,4 @@ def plumber_draw_from_pg_and_coords(pdf, pages, coords, dpi):
     if coords:
         with pdfplumber.open(pdf) as pdf:
             for page_num in pages:
-                pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rects([x for x in coords]).show()
+                pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords).show()

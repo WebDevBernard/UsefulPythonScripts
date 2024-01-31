@@ -5,14 +5,8 @@ from helper_fn import base_dir
 
 input_dir = base_dir / "input"
 files = Path(input_dir).glob("*.xls")
-file_paths = []
-
-for file in files:
-    file_path = str(file)
-    file_paths.append(file_path)
-
-excel_path = file_paths[0]
-output_path = input_dir / f"{Path(excel_path).stem}.xlsx"
+excel_path = list(files)[0]
+output_path = base_dir / "output" / f"{Path(excel_path).stem}.xlsx"
 df = pd.read_excel(excel_path, engine="xlrd")
 column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled", "D/L"]
 df = df.reindex(columns=column_list)

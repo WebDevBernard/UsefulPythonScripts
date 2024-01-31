@@ -8,7 +8,7 @@ pg = [1]
 first_keyword = "Property Coverages"
 second_keyword = "LOCATION"
 keyword_matching_crop = "Previous"
-coords = [(425.3039855957031, 291.7948913574219, 448.932373046875, 299.81011962890625)]  # must be tuple in list to work
+coords = (425.3039855957031, 291.7948913574219, 448.932373046875, 299.81011962890625)  # must be tuple in list to work
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"
