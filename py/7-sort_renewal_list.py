@@ -1,23 +1,19 @@
 import pandas as pd
 import os
 from pathlib import Path
-from datetime import datetime
-from helper_functions_back import base_dir
+from helper_fn import base_dir
 
-input_dir = base_dir / "input"  # name of output folder
+input_dir = base_dir / "input"
 files = Path(input_dir).glob("*.xls")
 file_paths = []
 
 for file in files:
     file_path = str(file)
     file_paths.append(file_path)
-# Open only first xlsx file in folder
 
 excel_path = file_paths[0]
 output_path = input_dir / f"{Path(excel_path).stem}.xlsx"
 df = pd.read_excel(excel_path, engine="xlrd")
-exists = os.path.isfile(output_path)
-
 column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled", "D/L"]
 df = df.reindex(columns=column_list)
 df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)
@@ -32,16 +28,13 @@ def highlight_duplicates(s, other_column):
     is_duplicate = (other_column != 'GLA') & (other_column != 'EQB') & s.duplicated(keep=False) & (~s.isna())
     return ['background-color: LightGreen' if v else '' for v in is_duplicate]
 
+
 duplicated = df['ccode'].duplicated()
-df = df.style.apply(highlight_duplicates, subset=["ccode"], other_column=df["buscode"])
 
-emoji = "\U0001F923\U0001F923\U0001F923\U0001F923\U0001F923"
-print(f"\n{emoji}    XlSX_FILENAME: {output_path.stem} {emoji}\n")
 
-if not exists:
+if not os.path.isfile(output_path):
     writer = pd.ExcelWriter(output_path, engine="openpyxl")
 else:
     writer = pd.ExcelWriter(output_path, mode="a", if_sheet_exists="replace", engine="openpyxl")
-sheet_name = datetime.today().strftime("%b %d")
 df.to_excel(writer, sheet_name="Sheet1", index=False)
 writer.close()

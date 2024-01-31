@@ -1,15 +1,17 @@
-from helper_functions_back import base_dir, emoji, unique_file_name, write_text_coords
-from pdf_library_functions import plumber_draw_rect, plumber_draw_from_pg_and_coords
-from pymupdf_functions import find_table_dict, get_text_words, get_text_blocks, search_using_dict, search_with_crop, search_from_pg_num
+from helper_fn import base_dir
+from file_writing_fn import (plumber_draw_rect, plumber_draw_from_pg_and_coords, find_table_dict, get_text_words,
+                             write_text_coords, get_text_blocks, search_using_dict, search_with_crop,
+                             search_from_pg_num, get_pdf_fieldnames)
 
 # change crop or search here
 pg = [1]
-coords = [] # must be tuple in list to work
+coords = [(0,0,0,0)] # must be tuple in list to work
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"
 pdf_files = input_dir.glob("*.pdf")
 pdf_file_paths = []
+
 
 if __name__ == "__main__":
     for pdf_file in pdf_files:
@@ -23,5 +25,6 @@ if __name__ == "__main__":
         word_dict = get_text_words(pdf_file)      # 3 find by individual words
         # Assign dicts to write coordinates to file, or preview bbox
         write_text_coords(pdf_file, block_dict, 0, word_dict)  # dicts falsey = off
-        plumber_draw_rect(pdf_file, 0  , 8, 300)      # field_dict falsey = off
-        plumber_draw_from_pg_and_coords(pdf_file, pg, coords, 300)  # coords falsey = off
+        # plumber_draw_rect(pdf_file, 0  , 8, 300)      # field_dict# t falsey = off
+        # plumber_draw_from_pg_and_coords(pdf_file, pg, coords, 300)  # coords falsey = off
+        # get_pdf_fieldnames()
