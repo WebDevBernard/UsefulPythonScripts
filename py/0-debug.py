@@ -12,7 +12,6 @@ input_dir = base_dir / "input"
 pdf_files = input_dir.glob("*.pdf")
 pdf_file_paths = []
 
-
 if __name__ == "__main__":
     for pdf_file in pdf_files:
         file_path = str(pdf_file)

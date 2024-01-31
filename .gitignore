@@ -5,7 +5,7 @@
 /.venv
 /.idea
 /templates
-
+/__pycache__
 input.xlsx
 .zip
 .exe

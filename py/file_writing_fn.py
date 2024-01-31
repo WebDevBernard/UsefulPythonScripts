@@ -166,23 +166,3 @@ def plumber_draw_from_pg_and_coords(pdf, pages, coords, dpi):
         with pdfplumber.open(pdf) as pdf:
             for page_num in pages:
                 pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rects([x for x in coords]).show()
-
-
-def plumber_extract_tables(pdf_path, ts, bbox):
-    field_dict = {}
-    with pdfplumber.open(pdf_path) as pdf:
-        for page_number in range(len(pdf.pages)):
-            page = pdf.pages[page_number]
-            page = page.crop(bbox=bbox)
-            row_coords = []
-            find_tables = page.find_tables(ts)
-            for table in find_tables:
-                for row in table.rows:
-                    row_coords.append(row.bbox)
-            extract_tables = page.extract_tables(ts)
-            table_texts = []
-            for table in extract_tables:
-                table_texts.extend(table)
-            field_dict[page_number + 1] = field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                                                         zip(table_texts, row_coords)]
-    return field_dict
