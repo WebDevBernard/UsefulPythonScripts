@@ -3,7 +3,6 @@ from pathlib import Path
 
 base_dir = Path(__file__).parent.parent
 
-
 def write_text_coords(file_name, block_dict, table_dict, word_dict):
     output_dir = base_dir / "output" / Path(file_name).stem
     output_dir.mkdir(exist_ok=True)
