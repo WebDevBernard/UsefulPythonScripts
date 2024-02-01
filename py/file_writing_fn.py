@@ -1,56 +1,50 @@
-import pdfplumber
-import fitz
 from helper_fn import base_dir, newline_to_list, unique_file_name
 from pathlib import Path
 from docxtpl import DocxTemplate
 from PyPDF2 import PdfReader, PdfWriter
 
 
-# Pymupdf functions
-def find_match_using_pg_num(field_dict, page_number_list, text):
-    for key in page_number_list:
-        for page in field_dict[key]:
-            print(page)
+# <=================== START OF PYMUPDF FUNCTIONS
 
 
-def search_with_crop(pdf, pg_num_list, field_dict):
-    with fitz.open(pdf) as doc:
-        for pg_num in pg_num_list:
-            wlist = []
-            page_0_index = doc[pg_num - 1]
-            for key, field in field_dict.items():
-                text_line = page_0_index.get_text("words", field[1])
-                wlist.extend(text_line)
-                for word in wlist:
-                    if field[0].casefold() in word[4].casefold():
-                        return key
+# 1st search used to find what type of pdf I am trying to look for
+def search_with_crop(doc, pg_num_list, field_dict):
+    for pg_num in pg_num_list:
+        page = doc[pg_num - 1]
+        for key, field in field_dict.items():
+            keyword = field_dict[key][0]
+            coords = field_dict[key][1]
+            text_list = page.get_text("text", clip=coords)
+            if keyword.casefold() in text_list.casefold():
+                return key
 
-def search_pg_num_stop(pdf, dict_key, field_dict):
-    pg_count = 1
-    with fitz.open(pdf) as doc:
-        for i, pg_num in enumerate(doc):
-            counter = 0
-            page_0_index = doc[i]
-            word = (field_dict[dict_key][0])
-            wlist = page_0_index.get_text("words", field_dict[dict_key][1])
-            print(wlist)
-            if word in word:
-                counter = counter + 1
-                if counter >= 1:
-                    pg_count += i
-                    break
-    print(pg_count)
+# 2nd search to find which page to stop on
+def search_for_pg_limit(doc, dict_key, pg_limit):
+    pg_count = 0
+    keyword = pg_limit[dict_key][0]
+    coords = pg_limit[dict_key][1]
+    for i, pg_num in enumerate(doc):
+        page = doc[i]
+        stop_word = page.search_for(keyword, clip=coords)
+        if stop_word:
+            pg_count = i
+            break
     return pg_count
 
-def search_from_pg_num(field_dict, list_of_nums, text):
-    list = []
-    for key in list_of_nums:
-        for word in field_dict[key]:
-            if text.casefold() in word[0].casefold():
-                if key not in list:
-                    list.append(key)
-    return list
-
+# 3rd search to find the dictionary with list of matching words
+def search_for_dict(doc, pg_limit):
+    field_dict = {}
+    for page_num in range(doc.page_count):
+        page = doc[page_num]
+        if page_num == pg_limit:
+            break
+        else:
+            wlist = page.get_text("blocks")
+            text_boxes = [inner_list[4] for inner_list in wlist]
+            text_coords = [inner_list[:4] for inner_list in wlist]
+            field_dict[page_num + 1] = [[elem1, elem2] for elem1, elem2 in
+                                               zip(text_boxes, text_coords)]
+    return newline_to_list(field_dict)
 
 def search_using_dict(field_dict, text):
     list = []
@@ -63,59 +57,69 @@ def search_using_dict(field_dict, text):
     return list
 
 
-def find_table_dict(pdf):
-    with fitz.open(pdf) as doc:
-        field_dict = {}
-        for page_number in range(doc.page_count):
-            page = doc[page_number]
-            tlist = []
-            row_coords = []
-            find_tables = page.find_tables()
-            for table in find_tables:
-                tlist.extend(table.extract())
-                row_coords.append(table.bbox)
-            field_dict[page_number + 1] = field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                                                         zip(tlist, row_coords)]
-        return field_dict
+def search_from_pg_num(field_dict, list_of_nums, text):
+    list = []
+    for key in list_of_nums:
+        for word in field_dict[key]:
+            if text.casefold() in word[0].casefold():
+                if key not in list:
+                    list.append(key)
+    return list
 
 
-def get_text_blocks(pdf):
-    with fitz.open(pdf) as doc:
-        field_dict = {}
-        for page_number in range(doc.page_count):
-            page = doc[page_number]
-            wlist = page.get_text("blocks")
-            text_boxes = [inner_list[4] for inner_list in wlist]
-            text_coords = [inner_list[:4] for inner_list in wlist]
-            field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                           zip(text_boxes, text_coords)]
-        return newline_to_list(field_dict)
+# <=================== END OF PYMUPDF FUNCTIONS
 
+# find blocks words sentences and returns the word and coords as a dictionary of pages containing list of strings and
+# their bbox coordinates
+def get_text_blocks(doc):
+    field_dict = {}
+    for page_number in range(doc.page_count):
+        page = doc[page_number]
+        wlist = page.get_text("blocks")
+        text_boxes = [inner_list[4] for inner_list in wlist]
+        text_coords = [inner_list[:4] for inner_list in wlist]
+        field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
+                                       zip(text_boxes, text_coords)]
+    return newline_to_list(field_dict)
 
-def get_text_words(pdf):
-    with fitz.open(pdf) as doc:
-        field_dict = {}
-        for page_number in range(doc.page_count):
-            page = doc[page_number]
-            wlist = page.get_text("words")
-            text_boxes = [inner_list[4] for inner_list in wlist]
-            text_coords = [inner_list[:4] for inner_list in wlist]
-            field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                           zip(text_boxes, text_coords)]
-        return field_dict
+# Same as above but finds individual text words (pymupdf debugging)
+def get_text_words(doc):
+    field_dict = {}
+    for page_number in range(doc.page_count):
+        page = doc[page_number]
+        wlist = page.get_text("words")
+        text_boxes = [inner_list[4] for inner_list in wlist]
+        text_coords = [inner_list[:4] for inner_list in wlist]
+        field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
+                                       zip(text_boxes, text_coords)]
+    return field_dict
 
+# find words based on table looking things (pymupdf debugging)
+def find_table_dict(doc):
+    field_dict = {}
+    for page_number in range(doc.page_count):
+        page = doc[page_number]
+        tlist = []
+        row_coords = []
+        find_tables = page.find_tables()
+        for table in find_tables:
+            tlist.extend(table.extract())
+            row_coords.append(table.bbox)
+        field_dict[page_number + 1] = field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
+                                                                     zip(tlist, row_coords)]
+    return field_dict
 
-def get_pdf_fieldnames():
+# Gets pdf key for fillable pdfs (pymupdf debugging)
+def get_pdf_fieldnames(doc):
     input_dir = base_dir / "input"
     output_dir = base_dir / "output"
     output_dir.mkdir(exist_ok=True)
     for pdf in Path(input_dir).glob("*.pdf"):
-        with fitz.open(pdf) as doc:
-            for page in doc:
-                for i, field in enumerate(page.widgets()):
-                    print(i, field.field_name, field.xref, field.field_value)
+        for page in doc:
+            for i, field in enumerate(page.widgets()):
+                print(i, field.field_name, field.xref, field.field_value)
 
-
+# Used for writing coordinates to txt (pymupdf debugging)
 def write_text_coords(file_name, block_dict, table_dict, word_dict):
     output_dir = base_dir / "output" / Path(file_name).stem
     output_dir.mkdir(exist_ok=True)
@@ -141,7 +145,7 @@ def write_text_coords(file_name, block_dict, table_dict, word_dict):
                 for text, box in enumerate(value):
                     file.write(f"#{text} : {box}\n")
 
-
+# Used for filling docx
 def write_to_docx(docx, rows):
     output_dir = base_dir / "output"
     output_dir.mkdir(exist_ok=True)
@@ -152,7 +156,7 @@ def write_to_docx(docx, rows):
     output_path.parent.mkdir(exist_ok=True)
     doc.save(unique_file_name(output_path))
 
-
+# Used for fillable pdf's
 def write_to_pdf(pdf, dictionary, rows):
     pdf_path = (base_dir / "input" / "templates" / pdf)
     output_path = base_dir / "output" / f"{rows["named_insured"]} {rows["type"].title()}.pdf"
@@ -166,18 +170,16 @@ def write_to_pdf(pdf, dictionary, rows):
     with open(unique_file_name(output_path), "wb") as output_stream:
         writer.write(output_stream)
 
-
+# Opens the default image viewer to see what bbox look like
 def plumber_draw_rect(pdf, field_dict, pg_limit, dpi):
     if field_dict:
-        with pdfplumber.open(pdf) as pdf:
-            for page_number in range(len(pdf.pages)):
-                if page_number + 1 in field_dict and pg_limit >= page_number + 1:
-                    dict_list = field_dict[page_number + 1]
-                    pdf.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
+        for page_number in range(len(pdf.pages)):
+            if page_number + 1 in field_dict and pg_limit >= page_number + 1:
+                dict_list = field_dict[page_number + 1]
+                pdf.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
 
-
+# Same as above but based on specified coordinates instead
 def plumber_draw_from_pg_and_coords(pdf, pages, coords, dpi):
     if coords:
-        with pdfplumber.open(pdf) as pdf:
-            for page_num in pages:
-                pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords).show()
+        for page_num in pages:
+            pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords).show()
