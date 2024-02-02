@@ -14,8 +14,8 @@ def search_with_crop(doc, pg_num_list, field_dict):
         for key, field in field_dict.items():
             keyword = field_dict[key][0]
             coords = field_dict[key][1]
-            text_list = page.get_text("text", clip=coords)
-            if keyword.casefold() in text_list.casefold():
+            text_block = page.get_text("text", clip=coords)
+            if keyword.casefold() in text_block.casefold():
                 return key
 
 # 2nd search to find which page to stop on
@@ -27,11 +27,19 @@ def search_for_pg_limit(doc, dict_key, pg_limit):
         page = doc[i]
         stop_word = page.search_for(keyword, clip=coords)
         if stop_word:
-            pg_count = i
+            pg_count = i + 1
             break
+        else:
+            pg_count = i + 1
     return pg_count
 
-# 3rd search to find the dictionary with list of matching words
+# 3rd search for address block
+def search_for_name_and_address(doc, type_of_pdf, page_coords):
+    pg_num = page_coords[type_of_pdf][0]
+    coords = page_coords[type_of_pdf][1]
+    return doc[pg_num - 1].get_text("block", clip=coords)
+
+# 4th search to find the dictionary with list of matching words
 def search_for_dict(doc, pg_limit):
     field_dict = {}
     for page_num in range(doc.page_count):
@@ -65,7 +73,6 @@ def search_from_pg_num(field_dict, list_of_nums, text):
                 if key not in list:
                     list.append(key)
     return list
-
 
 # <=================== END OF PYMUPDF FUNCTIONS
 
@@ -111,13 +118,11 @@ def find_table_dict(doc):
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)
 def get_pdf_fieldnames(doc):
-    input_dir = base_dir / "input"
     output_dir = base_dir / "output"
     output_dir.mkdir(exist_ok=True)
-    for pdf in Path(input_dir).glob("*.pdf"):
-        for page in doc:
-            for i, field in enumerate(page.widgets()):
-                print(i, field.field_name, field.xref, field.field_value)
+    for page in doc:
+        for i, field in enumerate(page.widgets()):
+            print(i, field.field_name, field.xref, field.field_value)
 
 # Used for writing coordinates to txt (pymupdf debugging)
 def write_text_coords(file_name, block_dict, table_dict, word_dict):
@@ -171,15 +176,15 @@ def write_to_pdf(pdf, dictionary, rows):
         writer.write(output_stream)
 
 # Opens the default image viewer to see what bbox look like
-def plumber_draw_rect(pdf, field_dict, pg_limit, dpi):
+def plumber_draw_rect(doc, field_dict, pg_limit, dpi):
     if field_dict:
-        for page_number in range(len(pdf.pages)):
+        for page_number in range(len(doc.pages)):
             if page_number + 1 in field_dict and pg_limit >= page_number + 1:
                 dict_list = field_dict[page_number + 1]
-                pdf.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
+                doc.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
 
 # Same as above but based on specified coordinates instead
-def plumber_draw_from_pg_and_coords(pdf, pages, coords, dpi):
+def plumber_draw_from_pg_and_coords(doc, pages, coords, dpi):
     if coords:
         for page_num in pages:
-            pdf.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords).show()
+            doc.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords).show()
