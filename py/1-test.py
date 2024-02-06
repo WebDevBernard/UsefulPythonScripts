@@ -30,10 +30,11 @@ if __name__ == "__main__":
             print(f"\nName and address is:\n{name_and_address}")
 
             # Extract the list of dictionary containing all the values I am looking for:
-            field_dict = search_for_dict(doc, pg_limit)
+            words = search_for_dict(doc, pg_limit)
+            # print(f"\nThe {type_of_pdf} Dictionary:\n{words}\n")
 
             # Find group of words that can match the page of the thing you are looking for
-            find_pg_with_keyword = search_using_dict(field_dict, "Location Description")
+            find_pg_with_keyword = search_using_dict(words, "Location Description")
             print(f"The keyword is found on {find_pg_with_keyword},")
 
             # Match pg # to the possible postion with list of words and index to position

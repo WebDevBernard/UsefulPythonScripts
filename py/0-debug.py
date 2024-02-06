@@ -6,7 +6,7 @@ from file_writing_fn import (plumber_draw_rect, plumber_draw_from_pg_and_coords,
 
 # change crop or search here
 pg = [1]  # must be empty list
-coords = (37.72800064086914, 170.62953186035156, 106.89183807373047, 220.67938232421875)  # must be tuple to work
+coords = (46.560001373291016, 142.80056762695312, 179.52000427246094, 180.94363403320312)  # must be tuple to work
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"
@@ -19,14 +19,14 @@ if __name__ == "__main__":
             # get_pdf_fieldnames(doc)
 
             # WRITE TXT COORDS
-            block_dict = get_text_blocks(doc)    # 1 find by text blocks
-            # table_dict = find_table_dict(doc)    # 2 find by table This is very slow some reason
-            word_dict = get_text_words(doc)      # 3 find by individual words
-            # write_text_coords(pdf, block_dict, 0, word_dict)  # dicts falsey = off
+            b = get_text_blocks(doc)    # 1 find by text blocks
+            # t = find_table_dict(doc)    # 2 find by table This is very slow some reason
+            w = get_text_words(doc)      # 3 find by individual words
+            write_text_coords(pdf, b, 0, w)  # dicts falsey = off
 
 
-        with pdfplumber.open(pdf) as doc:
+        # with pdfplumber.open(pdf) as doc:
             # PREVIEW FROM PDF BBOXes
-            # plumber_draw_rect(doc, block_dict, 1, 300)      # field_dict# t falsey = off
-            plumber_draw_from_pg_and_coords(doc, pg, coords, 300)  # coords falsey = off
+            # plumber_draw_rect(doc, w, 1, 300)      # field_dict# t falsey = off
+            # plumber_draw_from_pg_and_coords(doc, pg, coords, 300)  # coords falsey = off
 

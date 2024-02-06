@@ -1,4 +1,4 @@
-from helper_fn import base_dir, newline_to_list, unique_file_name
+from helper_fn import base_dir, unique_file_name, newline_to_dict
 from pathlib import Path
 from docxtpl import DocxTemplate
 from PyPDF2 import PdfReader, PdfWriter
@@ -37,7 +37,10 @@ def search_for_pg_limit(doc, dict_key, pg_limit):
 def search_for_name_and_address(doc, type_of_pdf, page_coords):
     pg_num = page_coords[type_of_pdf][0]
     coords = page_coords[type_of_pdf][1]
-    return doc[pg_num - 1].get_text("block", clip=coords)
+    wlist = doc[pg_num - 1].get_text("blocks", clip=coords)
+    text_boxes = [inner_list[4].strip("\n") for inner_list in wlist]
+    return text_boxes
+
 
 # 4th search to find the dictionary with list of matching words
 def search_for_dict(doc, pg_limit):
@@ -48,11 +51,9 @@ def search_for_dict(doc, pg_limit):
             break
         else:
             wlist = page.get_text("blocks")
-            text_boxes = [inner_list[4] for inner_list in wlist]
-            text_coords = [inner_list[:4] for inner_list in wlist]
-            field_dict[page_num + 1] = [[elem1, elem2] for elem1, elem2 in
-                                               zip(text_boxes, text_coords)]
-    return newline_to_list(field_dict)
+            text_boxes = [inner_list[4].split("\n") for inner_list in wlist]
+            field_dict[page_num + 1] = text_boxes
+    return field_dict
 
 def search_using_dict(field_dict, text):
     list = []
@@ -87,7 +88,7 @@ def get_text_blocks(doc):
         text_coords = [inner_list[:4] for inner_list in wlist]
         field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
                                        zip(text_boxes, text_coords)]
-    return newline_to_list(field_dict)
+    return newline_to_dict(field_dict)
 
 # Same as above but finds individual text words (pymupdf debugging)
 def get_text_words(doc):
