@@ -1,4 +1,5 @@
-# policy type
+import re
+# the pdf type
 
 doc_type = {
     "Aviva": ["Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)],
@@ -8,15 +9,6 @@ doc_type = {
     "Invoice": ["CUSTOMER STATEMENT", (179.52000427246094, 96.41597747802734, 396.89202880859375, 116.48722839355469)]
 }
 
-# pg_limit
-
-stop_condition = {
-    "Aviva": ["CANCELLATION OF THE POLICY", (213.36000061035156, 113.92003631591797, 373.3900146484375, 123.9200439453125)],
-    "Family": ["", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)],
-    "Intact": ["STATUTORY CONDITIONS", (43.400001525878906, 35.42000198364258, 219.08799743652344, 54.698001861572266)],
-    "Wawanesa": ["Wawanesa Insurance", (80.87999725341797, 754.4638671875, 530.5338134765625, 764.6526489257812)]
-}
-
 # name and address block found on
 
 address_block = {
@@ -24,5 +16,23 @@ address_block = {
     "Family": [1, (37.72800064086914, 170.62953186035156, 122.84105682373047, 220.67938232421875)],
     "Intact": [1, (49.650001525878906, 152.64999389648438, 214.1199951171875, 200.99000549316406)],
     "Wawanesa": [1, (36.0, 122.4298095703125, 137.55322265625, 169.76731872558594)],
-    "Invoice": [1, ((46.560001373291016, 142.80056762695312, 179.52000427246094, 180.94363403320312))]
+    "Invoice": [1, (46.560001373291016, 142.80056762695312, 179.52000427246094, 180.94363403320312)]
+}
+
+# Keyword to find all the pages with broker copy or coverage summary
+# set searches is for aviva
+# list searches is for intact
+# string searches is for wawanesa
+
+keyword = {
+    "Aviva": [{"CANCELLATION OF THE POLICY"}, (213.36000061035156, 113.92003631591797, 373.3900146484375, 123.9200439453125)],
+    "Intact": [["BROKER COPY", "Coverage Summary"], [(265.20001220703125, 764.2749633789062, 347.6670227050781, 773.8930053710938), (37.650001525878906, 236.69998168945312, 197.68801879882812, 261.4319763183594)]],
+    "Wawanesa": [re.compile(r"\w{3} \d{2}, \d{2}"), (36.0, 762.829833984375, 576.001220703125, 778.6453857421875)],
+}
+
+# number to index in the outer list and number to index in the inner list after finding matching keywords
+targets = {
+   "Wawanesa": {
+    "PolicyNumber": ["Location Description", 0, 0]
+    }
 }

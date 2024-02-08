@@ -1,4 +1,5 @@
-from helper_fn import base_dir, unique_file_name, newline_to_dict
+import re
+from helper_fn import base_dir, unique_file_name
 from pathlib import Path
 from docxtpl import DocxTemplate
 from PyPDF2 import PdfReader, PdfWriter
@@ -7,73 +8,87 @@ from PyPDF2 import PdfReader, PdfWriter
 # <=================== START OF PYMUPDF FUNCTIONS
 
 
-# 1st search used to find what type of pdf I am trying to look for
-def search_with_crop(doc, pg_num_list, field_dict):
-    for pg_num in pg_num_list:
-        page = doc[pg_num - 1]
-        for key, field in field_dict.items():
-            keyword = field_dict[key][0]
-            coords = field_dict[key][1]
-            text_block = page.get_text("text", clip=coords)
-            if keyword.casefold() in text_block.casefold():
-                return key
+# 1st page search to determine type of pdf file
+def search_first_page(doc, field_dict):
+    page = doc[0]
+    for key, field in field_dict.items():
+        keyword = field_dict[key][0]
+        coords = field_dict[key][1]
+        text_block = page.get_text("text", clip=coords)
+        if keyword.casefold() in text_block.casefold():
+            return key
 
-# 2nd search to find which page to stop on
-def search_for_pg_limit(doc, dict_key, pg_limit):
-    pg_count = 0
-    keyword = pg_limit[dict_key][0]
-    coords = pg_limit[dict_key][1]
-    for i, pg_num in enumerate(doc):
-        page = doc[i]
-        stop_word = page.search_for(keyword, clip=coords)
-        if stop_word:
-            pg_count = i + 1
-            break
-        else:
-            pg_count = i + 1
-    return pg_count
-
-# 3rd search for address block
+# 2nd search for address block
 def search_for_name_and_address(doc, type_of_pdf, page_coords):
     pg_num = page_coords[type_of_pdf][0]
     coords = page_coords[type_of_pdf][1]
     wlist = doc[pg_num - 1].get_text("blocks", clip=coords)
-    text_boxes = [inner_list[4].strip("\n") for inner_list in wlist]
+    text_boxes = [inner_list[4].split("\n") for inner_list in wlist]
     return text_boxes
 
+# 3rd Get the pages with the broker copies
+# set searches is for aviva
+# list searches is for intact
+# string searches is for wawanesa
+# except if no coordinates to search, just loop through all pages
 
-# 4th search to find the dictionary with list of matching words
-def search_for_dict(doc, pg_limit):
-    field_dict = {}
-    for page_num in range(doc.page_count):
-        page = doc[page_num]
-        if page_num == pg_limit:
-            break
-        else:
-            wlist = page.get_text("blocks")
-            text_boxes = [inner_list[4].split("\n") for inner_list in wlist]
-            field_dict[page_num + 1] = text_boxes
-    return field_dict
+def get_broker_copy_pages(doc, type_of_pdf, keyword):
+    pg_list = []
+    try:
+        for i, pg_num in enumerate(doc):
+            kw = keyword[type_of_pdf][0]
+            coords = keyword[type_of_pdf][1]
+            page = doc[i]
+            if isinstance(kw, re.Pattern):
+                regex_word = page.get_text("blocks", clip=coords)
+                for w in regex_word:
+                    if kw.search(w[4]):
+                        pg_list.append(i + 1)
+            elif isinstance(kw, set):
+                stop_word = page.search_for(list(kw)[0], clip=coords)
+                if stop_word:
+                    for j in range(1, i + 1):
+                        pg_list.append(j)
+                    break
+            elif isinstance(kw, list):
+                multi_word = page.search_for(kw[0], clip=coords[0])
+                multi_word_2 = page.search_for(kw[1], clip=coords[1])
+                if multi_word or multi_word_2:
+                    pg_list.append(i + 1)
+            else:
+                single_word = page.search_for(kw, clip=coords)
+                if single_word:
+                    pg_list.append(i + 1)
+    except KeyError:
+        for k in range(doc.page_count):
+            pg_list.append(k + 1)
+    return pg_list
 
-def search_using_dict(field_dict, text):
-    list = []
-    for key, nested_list in field_dict.items():
-        for item in nested_list:
-            for word in item[0]:
-                if text.casefold() in word.casefold():
-                    if key not in list:
-                        list.append(key)
-    return list
+# 4th search to find the dictionary from the relevant pages
+def search_for_wlist(doc, pg_list):
+    newlist = []
+    for page_num in pg_list:
+        page = doc[page_num - 1]
+        wlist = page.get_text("blocks")
+        for w in wlist:
+            newlist.append(w[4].split("\n"))
+    return newlist
+
+# 5th find the keys for each matching field
+def search_for_matches(nested_list, type_of_pdf, targets):
+    matching_outer_indexes = []
+    target = targets[type_of_pdf]
+    keyword = target["PolicyNumber"][0]
+    outer_index = target["PolicyNumber"][1]
+    inner_index = target["PolicyNumber"][2]
+    for i, sublist in enumerate(nested_list):
+        for j, element in enumerate(sublist):
+            if element == keyword:
+                matching_outer_indexes.append(nested_list[i])
+                break
+    return matching_outer_indexes
 
 
-def search_from_pg_num(field_dict, list_of_nums, text):
-    list = []
-    for key in list_of_nums:
-        for word in field_dict[key]:
-            if text.casefold() in word[0].casefold():
-                if key not in list:
-                    list.append(key)
-    return list
 
 # <=================== END OF PYMUPDF FUNCTIONS
 
@@ -84,11 +99,11 @@ def get_text_blocks(doc):
     for page_number in range(doc.page_count):
         page = doc[page_number]
         wlist = page.get_text("blocks")
-        text_boxes = [inner_list[4] for inner_list in wlist]
-        text_coords = [inner_list[:4] for inner_list in wlist]
+        text_boxes = [inner_list[4].split("\n") for inner_list in wlist]
+        text_coords = [inner_list[:4]for inner_list in wlist]
         field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
                                        zip(text_boxes, text_coords)]
-    return newline_to_dict(field_dict)
+    return field_dict
 
 # Same as above but finds individual text words (pymupdf debugging)
 def get_text_words(doc):

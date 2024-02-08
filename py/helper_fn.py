@@ -36,14 +36,3 @@ def unique_file_name(path):
         path = filename + " (" + str(counter) + ")" + extension
         counter += 1
     return path
-
-
-def newline_to_dict(nested_dict):
-    for key, nested_list in nested_dict.items():
-        if nested_list and isinstance(nested_list, list):
-            for inner_list in nested_list:
-                if isinstance(inner_list, str):
-                    inner_list[0] = inner_list[0].strip().split('\n')
-                else:
-                    inner_list[0] = inner_list[0].split('\n')
-    return nested_dict
