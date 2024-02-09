@@ -5,7 +5,7 @@ from file_writing_fn import (plumber_draw_rect, plumber_draw_from_pg_and_coords,
                              write_text_coords, get_text_blocks, get_pdf_fieldnames)
 
 # change crop or search here
-pg = [3]  # must be empty list
+pg = []  # must be empty list
 coords = (36.0, 762.829833984375, 576.001220703125, 778.6453857421875)  # must be tuple to work
 
 # Loop through each PDF file and append the full path to the list

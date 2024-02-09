@@ -1,9 +1,9 @@
 import re
+from collections import defaultdict
 from helper_fn import base_dir, unique_file_name
 from pathlib import Path
 from docxtpl import DocxTemplate
 from PyPDF2 import PdfReader, PdfWriter
-
 
 # <=================== START OF PYMUPDF FUNCTIONS
 
@@ -27,9 +27,9 @@ def search_for_name_and_address(doc, type_of_pdf, page_coords):
     return text_boxes
 
 # 3rd Get the pages with the broker copies
+# regex searches is for wawanesa
 # set searches is for aviva
 # list searches is for intact
-# string searches is for wawanesa
 # except if no coordinates to search, just loop through all pages
 
 def get_broker_copy_pages(doc, type_of_pdf, keyword):
@@ -74,20 +74,21 @@ def search_for_wlist(doc, pg_list):
             newlist.append(w[4].split("\n"))
     return newlist
 
-# 5th find the keys for each matching field
-def search_for_matches(nested_list, type_of_pdf, targets):
-    matching_outer_indexes = []
-    target = targets[type_of_pdf]
-    keyword = target["PolicyNumber"][0]
-    outer_index = target["PolicyNumber"][1]
-    inner_index = target["PolicyNumber"][2]
-    for i, sublist in enumerate(nested_list):
-        for j, element in enumerate(sublist):
-            if element == keyword:
-                matching_outer_indexes.append(nested_list[i])
-                break
-    return matching_outer_indexes
 
+# 5th find the keys for each matching field and increment outer and inner index of nested list
+def search_for_matches(nested_list, type_of_pdf, word_dict):
+    field_dict = defaultdict(list)
+    try:
+        words = word_dict[type_of_pdf]
+        for i, sublist in enumerate(nested_list):
+            for k, keyword in words.items():
+                if any(keyword[0] in s for s in sublist):
+                    word = nested_list[i + keyword[1]][keyword[2]]
+                    if word not in field_dict[k]:
+                        field_dict[k].append(word)
+    except KeyError:
+        return "Insurer Key does not exist"
+    return field_dict
 
 
 # <=================== END OF PYMUPDF FUNCTIONS

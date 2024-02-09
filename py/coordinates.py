@@ -20,19 +20,74 @@ address_block = {
 }
 
 # Keyword to find all the pages with broker copy or coverage summary
-# set searches is for aviva
+# set searches not used, used if you are looking for a page to stop on starting from page 1
+# string search returns a single page, used for aviva
 # list searches is for intact
-# string searches is for wawanesa
+# regex searches is for wawanesa
 
 keyword = {
-    "Aviva": [{"CANCELLATION OF THE POLICY"}, (213.36000061035156, 113.92003631591797, 373.3900146484375, 123.9200439453125)],
+    "Aviva": ["C e r t i f i c a t e  O f  P r o p e r t y  I n s u r a n c e", (90.23999786376953, 99.76000213623047, 509.0579833984375, 109.760009765625)],
     "Intact": [["BROKER COPY", "Coverage Summary"], [(265.20001220703125, 764.2749633789062, 347.6670227050781, 773.8930053710938), (37.650001525878906, 236.69998168945312, 197.68801879882812, 261.4319763183594)]],
     "Wawanesa": [re.compile(r"\w{3} \d{2}, \d{2}"), (36.0, 762.829833984375, 576.001220703125, 778.6453857421875)],
 }
 
 # number to index in the outer list and number to index in the inner list after finding matching keywords
-targets = {
+word_dict = {
+    "Aviva": {
+        "policy_number": ["POLICY NUMBER:", 0, 1],
+        "effective_date": ["Policy Effective From:", 0, 1],
+        "risk_address": ["Location 1", 0, 1],
+        "risk_address_row_2": ["Location 1", 0, 2],
+        "risk_address_2": ["Location 2", 0, 1],
+        "risk_address_2_row_2": ["Location 2", 0, 2],
+        "risk_location_1_premium": ["TOTAL", 0, 1],
+        "risk_location_2_premium": ["TOTAL", 0, 2],
+        "number_families": ["Family", 0, 1],
+        "form_type": ["FORM", 0, 0],
+        "deductible": ["LOCATION 1", 0, 2],
+        "coverage_a": ["Coverage A", 0, 1],
+        "legal_liability": ["Coverage E - Legal Liability", 0, 1],
+        "has_earthquake": ["Earthquake Endorsement", 0, 0],
+        "overland_water": ["Overland Water", 0, 0],
+    },
+    "Family": {
+        "policy_number": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE", 14, 0],
+        "effective_date": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE", 15, 0],
+        "premium_amount": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE", -2, 0],
+        "risk_address": ["LOCATION OF INSURED PROPERTY:", 0, 1],
+        "form_type": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE.", 13, 0],
+        "deductible": ["All Property Deductible.", 0, 0],
+        "all_perils": ["All Perils:", 0, 0],
+        "specified_perils": ["Specified Perils:", 0, 0],
+        "has_earthquake": ["COVERAGES AND LIMITS OF INSURANCE - EARTHQUAKE", 1, 0],
+        "earthquake_building_only": ["COVERAGES AND LIMITS OF INSURANCE - EARTHQUAKE", 3, 0],
+        "legal_liability": ["Coverage E - Legal Liability", 0, 1],
+        "number_of_families": ["RENTAL SUITES", 0, 0],
+        "coverage_d": ["Personal Property: Unlimited", 1, 0],
+        "claim_forgiveness": ["Claim Forgiveness", 0, 0],
+    },
+    "Intact": {
+        "policy_number": ["Policy Number", 1, 0],
+        "effective_date": ["Policy Number", 1, 1],
+    },
    "Wawanesa": {
-    "PolicyNumber": ["Location Description", 0, 0]
+        "policy_number": ["NAMED INSURED AND ADDRESS", 4, 1],
+        "effective_date": ["NAMED INSURED AND ADDRESS", 6, 1],
+        "number_of_locations": ["Location Description", 1, 0],
+        "risk_address": ["Location Description", 1, 1],
+        "premium_amount": ["Total Policy Premium", 0, 1],
+        "number_families": ["Number of Families", 0, 1],
+        "form_type": ["subject to all conditions of the policy.", 3, 0],
+        "risk_type": ["Risk Type", 1, 2],
+        "deductible": ["Original Deductible", 0, 1],
+        "coverage_a": ["Coverage A - Dwelling", 0, 1],
+        "legal_liability": ["Coverage E - Legal Liability", 0, 1],
+        "bylaw_coverage": ["Building Bylaws Coverage", 0, 1],
+        "service_line": ["Service Line Coverage", 0, 1],
+        "condo_deductible_coverage": ["Condominium Deductible Coverage", 1, 0],
+        "condo_earthquake_deductible": ["Condominium Deductible Coverage Earthquake", 1, 0],
+        "condo_unit_earthquake_coverage": ["Condominium Unit Owners Earthquake Coverage", 1, 1],
+        "overland_water": ["Overland Water", 0, 0],
+        "tenant_vandalism": ["Vandalism by Tenant", 0, 1],
     }
 }
