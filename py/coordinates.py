@@ -9,16 +9,6 @@ doc_type = {
     "Invoice": ["CUSTOMER STATEMENT", (179.52000427246094, 96.41597747802734, 396.89202880859375, 116.48722839355469)]
 }
 
-# name and address block found on
-
-address_block = {
-    "Aviva": [1, (80.4000015258789, 202.239990234375, 193.14999389648438, 239.60003662109375)],
-    "Family": [1, (37.72800064086914, 170.62953186035156, 122.84105682373047, 220.67938232421875)],
-    "Intact": [1, (49.650001525878906, 152.64999389648438, 214.1199951171875, 200.99000549316406)],
-    "Wawanesa": [1, (36.0, 122.4298095703125, 137.55322265625, 169.76731872558594)],
-    "Invoice": [1, (46.560001373291016, 142.80056762695312, 179.52000427246094, 180.94363403320312)]
-}
-
 # Keyword to find all the pages with broker copy or coverage summary
 # set searches not used, used if you are looking for a page to stop on starting from page 1
 # string search returns a single page, used for aviva
@@ -32,14 +22,16 @@ keyword = {
 }
 
 # number to index in the outer list and number to index in the inner list after finding matching keywords
+# tuple only searches page 1
+# nest list searches using crop relative to input_coords
+# string searches a match from dictionary
 word_dict = {
     "Aviva": {
+        "name_and_address": (80.4000015258789, 202.239990234375, 193.14999389648438, 239.60003662109375),
         "policy_number": ["POLICY NUMBER:", 0, 1],
         "effective_date": ["Policy Effective From:", 0, 1],
-        "risk_address": ["Location 1", 0, 1],
-        "risk_address_row_2": ["Location 1", 0, 2],
-        "risk_address_2": ["Location 2", 0, 1],
-        "risk_address_2_row_2": ["Location 2", 0, 2],
+        "risk_address": ["Location 1", 0, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
+        "risk_address_2": ["Location 2", 0, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
         "risk_location_1_premium": ["TOTAL", 0, 1],
         "risk_location_2_premium": ["TOTAL", 0, 2],
         "number_families": ["Family", 0, 1],
@@ -49,11 +41,13 @@ word_dict = {
         "legal_liability": ["Coverage E - Legal Liability", 0, 1],
         "has_earthquake": ["Earthquake Endorsement", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
+        "has_sewer_back": ["Overland Water", 0, 0],
     },
     "Family": {
-        "policy_number": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE", 14, 0],
-        "effective_date": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE", 15, 0],
-        "premium_amount": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE", -2, 0],
+        "name_and_address": (37.72800064086914, 170.62953186035156, 122.84105682373047, 220.67938232421875),
+        "policy_number": [["POLICY NUMBER", (0, 10.913284301757812, 0, 12.68017578125)]],
+        "effective_date": [["EFFECTIVE DATE", (0, 11.345291137695312, 0, 13.1121826171875)]],
+        "premium_amount": [["RETURN THIS PORTION WITH PAYMENT", (0, -19.8719482421875, 0, -19.8719482421875)]],
         "risk_address": ["LOCATION OF INSURED PROPERTY:", 0, 1],
         "form_type": ["PREMIUM MUST BE RECEIVED BY THE EFFECTIVE DATE TO AVOID CANCELLATION OF COVERAGE.", 13, 0],
         "deductible": ["All Property Deductible.", 0, 0],
@@ -67,10 +61,23 @@ word_dict = {
         "claim_forgiveness": ["Claim Forgiveness", 0, 0],
     },
     "Intact": {
+        "name_and_address": (49.650001525878906, 152.64999389648438, 214.1199951171875, 200.99000549316406),
         "policy_number": ["Policy Number", 1, 0],
         "effective_date": ["Policy Number", 1, 1],
+        "risk_address": ["Property Coverage", 0, 1],
+        "form_type": ["Property Coverage", 0, 0],
+        "risk_type": ["Property Coverage", 0, 0],
+        "number_of_families": [["Families", (0, 18.699981689453125, 0, 10.54998779296875)]],
+        "has_overland_water": ["Overland Water", 0, 0],
+        "has_sewer_back": ["Overland Water", 0, 0],
+        "has_ground_water": ["Overland Water", 0, 0],
+        "has_earthquake": ["", 1, 1],
+        "deductible": ["All Property Deductible.", 0, 0],
+        "legal_liability": ["Coverage E - Legal Liability", 0, 1],
+        "coverage_a": ["Dwelling Building", 0, 3],
     },
    "Wawanesa": {
+        "name_and_address": (36.0, 122.4298095703125, 137.55322265625, 169.76731872558594),
         "policy_number": ["NAMED INSURED AND ADDRESS", 4, 1],
         "effective_date": ["NAMED INSURED AND ADDRESS", 6, 1],
         "number_of_locations": ["Location Description", 1, 0],
@@ -86,8 +93,11 @@ word_dict = {
         "service_line": ["Service Line Coverage", 0, 1],
         "condo_deductible_coverage": ["Condominium Deductible Coverage", 1, 0],
         "condo_earthquake_deductible": ["Condominium Deductible Coverage Earthquake", 1, 0],
-        "condo_unit_earthquake_coverage": ["Condominium Unit Owners Earthquake Coverage", 1, 1],
-        "overland_water": ["Overland Water", 0, 0],
-        "tenant_vandalism": ["Vandalism by Tenant", 0, 1],
+        "has_earthquake": ["Condominium Unit Owners Earthquake Coverage", 1, 1],
+        "has_overland_water": ["Overland Water", 0, 0],
+        "has_tenant_vandalism": ["Vandalism by Tenant", 0, 1],
+    },
+    "Invoice": {
+    "name_and_address": (46.560001373291016, 142.80056762695312, 179.52000427246094, 180.94363403320312)
     }
 }
