@@ -25,7 +25,7 @@ keyword = {
 # tuple only searches page 1
 # nest list searches using crop relative to input_coords
 # string searches a match from dictionary
-word_dict = {
+target_dict = {
     "Aviva": {
         "name_and_address": (80.4000015258789, 202.239990234375, 193.14999389648438, 239.60003662109375),
         "policy_number": ["POLICY NUMBER:", 0, 1],

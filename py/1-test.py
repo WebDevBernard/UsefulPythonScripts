@@ -1,9 +1,9 @@
 import fitz
 from pathlib import Path
-from helper_fn import base_dir
-from file_writing_fn import (search_first_page, search_for_matches,
-                             search_for_wlist, get_broker_copy_pages)
-from coordinates import doc_type, keyword, word_dict
+from debug_functions import base_dir
+from file_writing_functions import (search_first_page, search_for_matches,
+                                    search_for_input_dict, get_broker_copy_pages)
+from coordinates import doc_type, keyword, target_dict
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"
@@ -26,8 +26,8 @@ if __name__ == "__main__":
             print(f"\nBroker copies / coverage summary / certificate of property insurance located on pages:\n{pg_list}\n")
 
             # Extract the dictionary containing all the values I am looking for:
-            wdict = search_for_wlist(doc, pg_list)
-            print(search_for_matches(doc, wdict, type_of_pdf, word_dict))
+            input_dict = search_for_input_dict(doc, pg_list)
+            print(search_for_matches(doc, input_dict, type_of_pdf, target_dict))
             print(f"\n<==========================>\n")
 
             # need to clean data

@@ -1,7 +1,7 @@
 import pandas as pd
 import re
-from file_writing_fn import write_to_docx, write_to_pdf
-from helper_fn import base_dir
+from file_writing_functions import write_to_docx, write_to_pdf
+from debug_functions import base_dir
 from datetime import datetime
 
 excel_path = base_dir / "input.xlsx"  # name of Excel
