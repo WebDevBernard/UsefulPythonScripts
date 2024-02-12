@@ -44,7 +44,7 @@ if __name__ == "__main__":
     for rows in df.to_dict(orient="records"):
         if rows["type"] == "CONDO RENEWAL":
             write_to_docx(filename["RENEWAL LETTER"], rows)
-        elif rows["type"] == "HOME RENEWAL":
+        elif rows["type"] == "Condominium":
             write_to_docx(filename["RENEWAL LETTER"], rows)
         elif rows["type"] == "RENTED CONDO RENEWAL":
             write_to_docx(filename["RENEWAL LETTER"], rows)

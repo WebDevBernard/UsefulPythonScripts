@@ -5,8 +5,8 @@ from debug_functions import (base_dir, calculate_target_coords, plumber_draw_rec
 
 # change crop or search here
 pg = []  # use empty list to toggle off-screen preview
-input_coords = (141.35000610351562, 507.9750061035156, 174.02598571777344, 525.7430419921875)
-target_coords = (30.700000762939453, 526.6749877929688, 545.6491088867188, 536.2930297851562)
+input_coords = (270.239990234375, 582.1600341796875, 544.447998046875, 592.1600341796875)
+target_coords = (46.31999969482422, 629.3600463867188, 512.7559814453125, 642.8800048828125)
 direction = "down"
 debug_relative = calculate_target_coords(input_coords, target_coords, direction)
 

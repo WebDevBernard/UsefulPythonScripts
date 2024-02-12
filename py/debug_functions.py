@@ -3,6 +3,7 @@ from pathlib import Path
 
 base_dir = Path(__file__).parent.parent
 
+
 # find blocks words sentences and returns the word and coords as a dictionary of pages containing list of strings and
 # their bbox coordinates
 def get_text_blocks(doc):
@@ -68,6 +69,7 @@ def plumber_draw_rect(doc, field_dict, pg_limit, dpi):
 def plumber_draw_from_pg_and_coords(doc, pages, coords, dpi):
     for page_num in pages:
         doc.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords).show()
+
 
 # prints coordinates using input and target
 def calculate_target_coords(input_coords, target_coords, direction):
