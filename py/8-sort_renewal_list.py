@@ -4,10 +4,10 @@ from pathlib import Path
 from debug_functions import base_dir
 
 input_dir = base_dir / "input"
-files = Path(input_dir).glob("*.xls")
+files = Path(input_dir).glob("*.xlsx")
 excel_path = list(files)[0]
 output_path = base_dir / "output" / f"{Path(excel_path).stem}.xlsx"
-df = pd.read_excel(excel_path, engine="xlrd")
+df = pd.read_excel(excel_path, engine="openpyxl")
 column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled", "D/L"]
 df = df.reindex(columns=column_list)
 df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)

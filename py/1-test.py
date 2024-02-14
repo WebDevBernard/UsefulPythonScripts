@@ -27,6 +27,7 @@ if __name__ == "__main__":
 
             # Extract the dictionary containing all the values I am looking for:
             input_dict = search_for_input_dict(doc, pg_list)
+
             print(search_for_matches(doc, input_dict, type_of_pdf, target_dict))
             print(f"\n<==========================>\n")
 
