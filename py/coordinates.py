@@ -1,6 +1,7 @@
 import re
 
-postal_code_regex = r"[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ -]?\d[ABCEGHJ-NPRSTV-Z]\d$"
+postal_code_regex = r"[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ ]?\d[ABCEGHJ-NPRSTV-Z]\d$"
+dollar_regex = r"\$([\d,]+)"
 
 doc_type = {
     "Aviva": ["Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)],
@@ -23,10 +24,9 @@ target_dict = {
         "effective_date": ["Policy Effective From:", 0, 1],
         "policy_deductible": ["LOCATION 1", 0, 2],
         "risk_address": ["FORM", -1, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
-        "risk_type": ["FORM", 0, 0, True],
-        "form_type": ["FORM", 0, 0, True],
-        "number_of_families": ["Family", 0, 1, True],
-        "earthquake_endorsement": ["Earthquake Endorsement", 0, 0],
+        "aviva_form_type": ["FORM", 0, 0, True],
+        "aviva_number_of_families": ["Family", 0, 1, True],
+        "earthquake_coverage": ["Earthquake Endorsement", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
         "condo_deductible_coverage": ["Condominium Corporation Deductible", 0, 0],
         "premium_amount": ["TOTAL", 0, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
@@ -72,9 +72,9 @@ target_dict = {
     }
 }
 dict_of_keywords = {
-    "one": 1,
-    "two": 2,
-    "three": 3,
+    "One": 1,
+    "Two": 2,
+    "Three": 3,
     "COMPREHENSIVE FORM": "Comprehensive",
     "HOMEOWNERS": "Homeowners",
     "CONDOMINIUM": "Condominium",

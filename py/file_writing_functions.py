@@ -1,11 +1,11 @@
 import re
 import pandas as pd
-from datetime import datetime
 from collections import defaultdict
 from debug_functions import base_dir, unique_file_name
 from docxtpl import DocxTemplate
 from PyPDF2 import PdfReader, PdfWriter
-from coordinates import postal_code_regex
+from aviva_policies import format_aviva_policy
+
 
 
 # 1st page search to determine type of pdf file
@@ -75,6 +75,7 @@ def append_word_to_dict(wlist, dict, no_replace):
         if word and word not in dict:
             dict.append(word)
 
+
 def search_for_matches(doc, input_dict, type_of_pdf, target_dict):
     field_dict = defaultdict(list)
     try:
@@ -103,35 +104,12 @@ def search_for_matches(doc, input_dict, type_of_pdf, target_dict):
         return "Insurer Key does not exist"
     return field_dict
 
-
 # 5 Clean dictionary:
-def ff(dictionary):
-    for key, value in dictionary.items():
-        if isinstance(value, list) and len(value) == 1:
-            dictionary[key] = value[0]
-        if isinstance(value, list) and len(value[0]) == 1:
-            dictionary[key] = value[0][0]
-    return dictionary
 
-
-def format_policy_number(field_dict, dict_items):
-    field_dict["policy_number"] = dict_items["policy_number"]
-    return field_dict
-
-
-def format_dict_items(dict_items, type_of_pdf, dict_of_keywords):
+def format_dict_items(dict_items):
     field_dict = {}
-    flattened_dict = ff(dict_items)
-    # format_name_address(field_dict, flattened_dict)
-    # format_policy_number(field_dict, flattened_dict)
-    # format_effective_date(field_dict, flattened_dict)
-    # format_risk_address(field_dict, flattened_dict)
-    # format_form_type(field_dict, flattened_dict, dict_of_keywords)
-    # format_number_families(field_dict, flattened_dict, dict_of_keywords)
-    # format_policy_deductible(field_dict, flattened_dict)
-    # format_condo_deductible(field_dict, flattened_dict)
-    # format_premium_amount(field_dict, flattened_dict)
-    print(flattened_dict)
+    format_aviva_policy(dict_items)
+    # print(flattened_dict)
     return field_dict
 
 

@@ -32,7 +32,7 @@ def main():
             input_dict = search_for_input_dict(doc, pg_list)
             dict_items = search_for_matches(doc, input_dict, type_of_pdf, target_dict)
             # Clean data
-            cleaned_data = format_dict_items(dict_items, type_of_pdf, dict_of_keywords)
+            cleaned_data = format_dict_items(dict_items)
             print(cleaned_data)
             # format_dict_items(dict_items,type_of_pdf,dict_of_keywords)
             # Append to Pandas DF
