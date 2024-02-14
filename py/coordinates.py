@@ -83,5 +83,16 @@ dict_of_keywords = {
 }
 
 filename = {
-    "RENEWAL LETTER": "Renewal Letter - Copy.docx",
+    "INSURANCE BINDER": "Binder.docx",
+    "CANCELLATION RELEASE": "Cancellation Release.docx",
+    "GORE RENTED QUESTIONNAIRE": "GORE - Rented Questionnaire.pdf",
+    "LETTER OF BROKERAGE": "Letter of Brokerage.docx",
+    "FAMILY LOB": "LOB - Family Blank.pdf",
+    "RENEWAL LETTER": "Renewal Letter.docx",
+    "RENEWAL LETTER_NEW": "Renewal Letter - Copy.docx",
+    "RENTED INTACT QUESTIONNAIRE": "Rented Intact Questionnaire.docx",
+    "REVENUE PROPERTY QUESTIONNAIRE": "Revenue Property Questionnaire.pdf",
+    "WAWA MAC AUTHORIZATION FORM": "8003GIS062019MACAuthorizationForm Wawa.pdf",
+    "RENTED DWELLING QUESTIONNAIRE": "8186RentedDwellingQuestionnaire0418.pdf",
+    "INTACT AUTOMATIC BANK WITHDRAWALS": "Intact withdrawa form.pdf",
 }

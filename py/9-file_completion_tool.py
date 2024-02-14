@@ -3,6 +3,7 @@ import re
 from file_writing_functions import write_to_docx, write_to_pdf
 from debug_functions import base_dir
 from datetime import datetime
+from coordinates import filename
 
 excel_path = base_dir / "input.xlsx"  # name of Excel
 df = pd.read_excel(excel_path, sheet_name=0, engine="openpyxl")
@@ -26,19 +27,6 @@ df["mailing_address"] = df[["street_address", "city", "province", "postal_code"]
 df["risk_address"] = df["risk_address"].fillna(df["mailing_address"])
 
 # Directory Paths for each file
-filename = {
-    "INSURANCE BINDER": "Binder.docx",
-    "CANCELLATION RELEASE": "Cancellation Release.docx",
-    "GORE RENTED QUESTIONNAIRE": "GORE - Rented Questionnaire.pdf",
-    "LETTER OF BROKERAGE": "Letter of Brokerage.docx",
-    "FAMILY LOB": "LOB - Family Blank.pdf",
-    "RENEWAL LETTER": "Renewal Letter.docx",
-    "RENTED INTACT QUESTIONNAIRE": "Rented Intact Questionnaire.docx",
-    "REVENUE PROPERTY QUESTIONNAIRE": "Revenue Property Questionnaire.pdf",
-    "WAWA MAC AUTHORIZATION FORM": "8003GIS062019MACAuthorizationForm Wawa.pdf",
-    "RENTED DWELLING QUESTIONNAIRE": "8186RentedDwellingQuestionnaire0418.pdf",
-    "INTACT AUTOMATIC BANK WITHDRAWALS": "Intact withdrawa form.pdf",
-}
 
 if __name__ == "__main__":
     for rows in df.to_dict(orient="records"):

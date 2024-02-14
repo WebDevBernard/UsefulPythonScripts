@@ -4,8 +4,6 @@ from collections import defaultdict
 from debug_functions import base_dir, unique_file_name
 from docxtpl import DocxTemplate
 from PyPDF2 import PdfReader, PdfWriter
-from aviva_policies import format_aviva_policy
-
 
 
 # 1st page search to determine type of pdf file
@@ -106,12 +104,6 @@ def search_for_matches(doc, input_dict, type_of_pdf, target_dict):
 
 # 5 Clean dictionary:
 
-def format_dict_items(dict_items):
-    field_dict = {}
-    format_aviva_policy(dict_items)
-    # print(flattened_dict)
-    return field_dict
-
 
 def write_to_new_docx(docx, rows):
     output_dir = base_dir / "output"
@@ -125,34 +117,13 @@ def write_to_new_docx(docx, rows):
 
 # 6 append to Pandas Dataframe:
 def create_pandas_df(data_dict):
-    output_dir = base_dir / "output"
     df = pd.DataFrame([data_dict])
-
-    filename = {
-        "RENEWAL LETTER": "Renewal Letter - Copy.docx",
-    }
-
+    filename = {"RENEWAL LETTER_NEW": "Renewal Letter - Copy.docx"}
     for rows in df.to_dict(orient="records"):
         if rows["risk_type"] == "Homeowners":
-            write_to_new_docx(filename["RENEWAL LETTER"], rows)
+            write_to_new_docx(filename["RENEWAL LETTER_NEW"], rows)
         elif rows["risk_type"] == "Condominium":
-            write_to_new_docx(filename["RENEWAL LETTER"], rows)
-    output_path = output_dir / "Excel.xlsx"
-
-    # workbook = load_workbook(filename=output_path)
-    # sheet = workbook["Sheet1"]
-
-    # workbook.save(filename=output_path)
-    # if not os.path.isfile(output_dir):
-    #     writer = pd.ExcelWriter(output_path, engine="openpyxl")
-    # else:
-    #     writer = pd.ExcelWriter(output_path, mode="a", if_sheet_exists="overlay", engine="openpyxl")
-    # 
-    # 
-    # for i, d in enumerate(df):
-    #     df[i].to_excel(writer, sheet_name="Sheet1", index=False)
-    # 
-    # writer.close()
+            write_to_new_docx(filename["RENEWAL LETTER_NEW"], rows)
     return df
 
 

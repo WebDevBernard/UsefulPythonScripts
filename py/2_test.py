@@ -4,9 +4,10 @@ import pandas as pd
 from collections import defaultdict
 from pathlib import Path
 from debug_functions import base_dir
-from file_writing_functions import (search_first_page, search_for_matches, format_dict_items, write_to_new_docx,
+from file_writing_functions import (search_first_page, search_for_matches, write_to_new_docx,
                                     search_for_input_dict, get_broker_copy_pages, create_pandas_df)
 from coordinates import doc_type, keyword, target_dict, dict_of_keywords
+from aviva_policies import format_aviva_policy
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"
@@ -31,9 +32,10 @@ def main():
             # Extract the dictionary containing all the values I am looking for:
             input_dict = search_for_input_dict(doc, pg_list)
             dict_items = search_for_matches(doc, input_dict, type_of_pdf, target_dict)
-            # Clean data
-            cleaned_data = format_dict_items(dict_items)
-            print(cleaned_data)
+
+            # Cleaned data goes here
+            aviva_policies = format_aviva_policy(dict_items)
+            print(aviva_policies)
             # format_dict_items(dict_items,type_of_pdf,dict_of_keywords)
             # Append to Pandas DF
             # df = create_pandas_df(cleaned_data)
