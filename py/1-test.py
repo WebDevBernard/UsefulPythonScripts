@@ -1,6 +1,6 @@
 import fitz
 from pathlib import Path
-from debug_functions import base_dir
+from debugging import base_dir
 from file_writing_functions import (search_first_page, search_for_matches,
                                     search_for_input_dict, get_broker_copy_pages)
 from coordinates import doc_type, keyword, target_dict
@@ -30,8 +30,5 @@ if __name__ == "__main__":
 
             print(search_for_matches(doc, input_dict, type_of_pdf, target_dict))
             print(f"\n<==========================>\n")
-
-            # need to clean data
-            # need to append to pandas df
 
 

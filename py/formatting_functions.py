@@ -19,23 +19,25 @@ def find_index(regex, dict_item):
 
 def find_nested_match(regex, nested_list):
     matched_lists = []
-    stack = [nested_list]
-    while stack:
-        current_list = stack.pop(0)
-        for item in current_list:
-            if isinstance(item, list):
-                stack.append(item)
-            elif isinstance(item, str) and re.search(regex, item):
-                matched_lists.append(current_list)
-                break
+    for item in nested_list:
+        if isinstance(item, str) and re.search(regex, item) and item not in matched_lists:
+            matched_lists.append(item)
     return matched_lists
 
 def return_match_only(regex, dict_item):
-    return re.search(regex, dict_item).group()
+    try:
+        if re.search(regex, dict_item) is None:
+            return None
+        return re.search(regex, dict_item).group()
+    except KeyError:
+        "Mapping key does not exist"
 
 
 def remove_non_match(regex, dict_item):
-    return re.sub(regex, "", dict_item)
+    if isinstance(dict_item, list):
+        return eval(re.sub(regex, "", str(dict_item)))
+    else:
+        return re.sub(regex, "", dict_item)
 
 def match_keyword(dict_of_keywords, keyword):
     return dict_of_keywords.get(keyword, None)

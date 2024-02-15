@@ -72,59 +72,34 @@ def plumber_draw_from_pg_and_coords(doc, pages, coords, dpi):
 
 
 # prints coordinates using input and target
-def calculate_target_coords(pg, input_coords, target_coords, direction):
-    if pg:
-        if direction == "up":
-            x0_1, y0_1, x1_1, y1_1 = input_coords
-            x0_2, y0_2, x1_2, y1_2 = target_coords
-            debug_result_y_0 = y0_1 + y0_2 - y0_1
-            debug_result_y_1 = y1_1 + y1_2 - y1_1
-            result_y_0 = y0_2 - y0_1
-            result_y_1 = y1_2 - y1_1
-            x_y_relative = (0, result_y_0, 0, result_y_1)
-            debug_relative = (x0_2, debug_result_y_0, x1_2, debug_result_y_1)
-            print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
-            return debug_relative
+def calculate_target_coords(input_coords, target_coords, direction):
+    if direction == "down":
+        x0_1, y0_1, x1_1, y1_1 = input_coords
+        x0_2, y0_2, x1_2, y1_2 = target_coords
+        debug_result_x_0 = x0_1 + x0_2 - x0_1
+        debug_result_x_1 = x1_1 + x1_2 - x1_1
+        debug_result_y_0 = y0_1 + y0_2 - y0_1
+        debug_result_y_1 = y1_1 + y1_2 - y1_1
+        result_x_0 = x0_2 - x0_1
+        result_x_1 = x1_2 - x1_1
+        result_y_0 = y0_2 - y0_1
+        result_y_1 = y1_2 - y1_1
+        x_y_relative = (result_x_0, result_y_0, result_x_1, result_y_1)
+        debug_relative = (debug_result_x_0, debug_result_y_0, debug_result_x_1, debug_result_y_1)
+        print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
+        return debug_relative
 
-        if direction == "down":
-            x0_1, y0_1, x1_1, y1_1 = input_coords
-            x0_2, y0_2, x1_2, y1_2 = target_coords
-            debug_result_x_0 = x0_1 + x0_2 - x0_1
-            debug_result_x_1 = x1_1 + x1_2 - x1_1
-            debug_result_y_0 = y0_1 + y0_2 - y0_1
-            debug_result_y_1 = y1_1 + y1_2 - y1_1
-            result_x_0 = x0_2 - x0_1
-            result_x_1 = x1_2 - x1_1
-            result_y_0 = y0_2 - y0_1
-            result_y_1 = y1_2 - y1_1
-            x_y_relative = (result_x_0, result_y_0, result_x_1, result_y_1)
-            debug_relative = (debug_result_x_0, debug_result_y_0, debug_result_x_1, debug_result_y_1)
-            print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
-            return debug_relative
-
-        if direction == "left":
-            x0_1, y0_1, x1_1, y1_1 = input_coords
-            x0_2, y0_2, x1_2, y1_2 = target_coords
-            debug_result_x_0 = x0_1 + x0_2 - x0_1
-            debug_result_x_1 = x1_1 + x1_2 - x1_1
-            result_x_0 = x0_1 - x0_2
-            result_x_1 = x1_1 - x1_2
-            x_y_relative = (result_x_0, 0, result_x_1, 0)
-            debug_relative = (debug_result_x_0, y0_1, debug_result_x_1, y1_1)
-            print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
-            return debug_relative
-
-        if direction == "right":
-            x0_1, y0_1, x1_1, y1_1 = input_coords
-            x0_2, y0_2, x1_2, y1_2 = target_coords
-            debug_result_x_0 = x0_1 + x0_2 - x0_1
-            debug_result_x_1 = x1_1 + x1_2 - x1_1
-            result_x_0 = x0_2 - x0_1
-            result_x_1 = x1_2 - x1_1
-            x_y_relative = (result_x_0, 0, result_x_1, 0)
-            debug_relative = (debug_result_x_0, y0_1, debug_result_x_1, y1_1)
-            print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
-            return debug_relative
+    if direction == "right":
+        x0_1, y0_1, x1_1, y1_1 = input_coords
+        x0_2, y0_2, x1_2, y1_2 = target_coords
+        debug_result_x_0 = x0_1 + x0_2 - x0_1
+        debug_result_x_1 = x1_1 + x1_2 - x1_1
+        result_x_0 = x0_2 - x0_1
+        result_x_1 = x1_2 - x1_1
+        x_y_relative = (result_x_0, 0, result_x_1, 0)
+        debug_relative = (debug_result_x_0, y0_1, debug_result_x_1, y1_1)
+        print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
+        return debug_relative
 
 
 def write_txt_to_file_dir(dir_path, field_dict):
