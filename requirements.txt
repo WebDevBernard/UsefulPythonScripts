@@ -1,7 +1,8 @@
 pyinstaller
 auto-py-to-exe            
 openpyxl                  
-pandas                    
+pandas
+Pyarrow
 docxtpl
 PyPDF2
 PyCryptodome

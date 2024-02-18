@@ -24,11 +24,18 @@ def find_nested_match(regex, nested_list):
             matched_lists.append(item)
     return matched_lists
 
+def find_nested_match_2(regex, nested_list):
+    matched_lists = []
+    for item in nested_list:
+        for item_2 in item:
+            if isinstance(item_2, str) and re.search(regex, item_2) and item_2 not in matched_lists:
+                matched_lists.append(item_2)
+    return matched_lists
+
 def return_match_only(regex, dict_item):
     try:
-        if re.search(regex, dict_item) is None:
-            return None
-        return re.search(regex, dict_item).group()
+        if re.search(regex, dict_item) is not None:
+            return re.search(regex, dict_item).group()
     except KeyError:
         "Mapping key does not exist"
 
@@ -53,6 +60,12 @@ def title_case(strings_list, str_length):
 
 
 def sum_dollar_amounts(amounts):
-    clean_amount_str = amounts[0].replace("$", "").replace(",", "")
-    total = sum(int(clean_amount_str) for amount_str in amounts if amount_str)
+    clean_amount_str = [a.replace("$", "").replace(",", "") for a in amounts]
+    total = sum((int(c) for c in clean_amount_str))
     return total
+
+def add_dollar_sign(string):
+    if '$' not in string:
+        return '$' + string
+    else:
+        return string

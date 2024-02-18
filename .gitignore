@@ -5,8 +5,13 @@
 /.venv
 /.idea
 /templates
+/samples
 /__pycache__
-input.xlsx
-.zip
-.exe
-.Ink
+*.zip
+*.exe
+*.Ink
+*.pdf
+*.docx
+*.xlsx
+*.xls
+*.csv
