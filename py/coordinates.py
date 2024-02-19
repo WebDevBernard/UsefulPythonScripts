@@ -1,11 +1,10 @@
 import re
 
-postal_code_regex = re.compile(r"[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ ]?\d[ABCEGHJ-NPRSTV-Z]\d$")
-postal_code_regex_2 = re.compile(r"(Canada,)|[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ ]?\d[ABCEGHJ-NPRSTV-Z]\d$")
+postal_code_regex = re.compile(r"([ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ ]?\d[ABCEGHJ-NPRSTV-Z]\d)$")
 dollar_regex = re.compile(r"\$([\d,]+)")
-date_regex = re.compile(r"(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct("
-                        r"ober)?|Nov(ember)?|Dec(ember)?)\s+\d{1,2},\s+\d{4}")
-intact_date_regex = re.compile(r"\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}")
+date_regex = re.compile(r"\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}|(Jan(uary)?|Feb(ruary)?"
+                        r"|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(tember)?|Oct(ober)?|Nov(ember)?"
+                        r"|Dec(ember)?)\s+\d{1,2},\s+\d{4}")
 address_regex = re.compile(r"(?!.*\bltd\.)((po box)|(unit)|\d+\s+)", flags=re.IGNORECASE)
 and_regex = re.compile(r'&|\b(and)\b', flags=re.IGNORECASE)
 
@@ -30,7 +29,8 @@ target_dict = {
             ["Policy Number", (267.11999893188477, 10.15997314453125, -202.8189697265625, 9.16009521484375)]],
         "effective_date": ["Policy Effective From:", 0, 1],
         "risk_address": ["FORM", -1, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
-        "aviva_form_type": [re.compile(r".* - .*form$", flags=re.IGNORECASE), 0, 0, True],
+        "form_type": [re.compile(r".* - .*form$", flags=re.IGNORECASE), 0, 0, True],
+        "risk_type": [re.compile(r".* - .*form$", flags=re.IGNORECASE), 0, 0, True],
         "number_of_families": ["Family ,", 0, 1, True],
         "earthquake_coverage": ["Earthquake Endorsement", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
@@ -42,34 +42,35 @@ target_dict = {
         "policy_number": [["POLICY NUMBER", (0, 10.913284301757812, 0, 12.68017578125)]],
         "effective_date": [["EFFECTIVE DATE", (0, 11.345291137695312, 0, 13.1121826171875)]],
         "risk_address": ["LOCATION OF INSURED PROPERTY:", 0, 1],
-        "family_form_type": ["All Perils:", 0, 0],
-        "family_risk_type": [["POLICY TYPE", (0, 11.633319854736328, 15, 13.40020751953125)]],
-        "family_number_of_families": ["RENTAL SUITES", 0, 0],
+        "form_type": ["All Perils:", 0, 0],
+        "risk_type": [["POLICY TYPE", (0, 11.633319854736328, 15, 13.40020751953125)]],
+        "number_of_families": ["RENTAL SUITES", 0, 0],
         "premium_amount": [["RETURN THIS PORTION WITH PAYMENT", (0, -19.8719482421875, 0, -19.8719482421875)]],
-        "family_condo_deductible": ["Deductible Coverage:", 0, 0],
+        "condo_deductible": ["Deductible Coverage:", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
-        "family_earthquake_coverage": [["EARTHQUAKE PROPERTY LIMITS", (46.94398498535156, 11.1737060546875, 35, 12.26593017578125)]]
+        "earthquake_coverage": [["EARTHQUAKE PROPERTY LIMITS", (46.94398498535156, 11.1737060546875, 35, 12.26593017578125)]]
     },
     "Intact": {
-        "intact_name_and_address": (49.650001525878906, 152.64999389648438, 214.1199951171875, 200.99000549316406),
+        "name_and_address": (49.650001525878906, 152.64999389648438, 214.1199951171875, 200.99000549316406),
         "policy_number": ["Policy Number", 1, 0],
-        "intact_effective_date": ["Policy Number", 1, 1],
-        "intact_risk_address": ["Property Coverage (", 0, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "0:".split(':'))), True],
+        "effective_date": ["Policy Number", 1, 1],
+        "risk_address": ["Property Coverage (", 0, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "0:".split(':'))), True],
         "number_of_families": [["Families", (0, 18.699981689453125, 0, 10.54998779296875)]],
         "premium_amount": ["Total for Policy", 0, 1],
-        "intact_condo_earthquake_deductible": ["Additional Loss Assessment", 0, 0],
-        "intact_earthquake_coverage": ["Earthquake Damage Assumption", 0, 0],
-        "intact_overland_water": ["Enhanced Water Damage", 0, 0],
-        "intact_ground_water": ["Ground Water", 0, 0],
+        "condo_earthquake_deductible": ["Additional Loss Assessment", 0, 0],
+        "earthquake_coverage": ["Earthquake Damage Assumption", 0, 0],
+        "overland_water": ["Enhanced Water Damage", 0, 0],
+        "ground_water": ["Ground Water", 0, 0],
     },
     "Wawanesa": {
         "name_and_address": (36.0, 122.4298095703125, 200, 180),
         "policy_number": ["NAMED INSURED AND ADDRESS", 4, 1],
         "effective_date": ["NAMED INSURED AND ADDRESS", 6, 1],
         "risk_address": ["Location Description", 1, 1],
-        "wawa_form_type": ["subject to all conditions of the policy.", 3, 0, True],
-        "wawa_risk_type": ["Risk Type", 1, 2, True],
-        "number_families": ["Number of Families", 0, 1],
+        "form_type": ["subject to all conditions of the policy.", 3, 0, True],
+        "risk_type": ["Risk Type", 1, 2, True],
+        "number_of_families": ["Number of Families", 0, 1, True],
+        "number_of_units": ["Number of Units", 0, 3, True],
         "premium_amount": ["Total Policy Premium", 0, 1],
         "condo_deductible": ["Condominium Deductible Coverage-", 1, 0],
         "condo_earthquake_deductible": ["Condominium Deductible Coverage Earthquake", 1, 0],
@@ -90,34 +91,6 @@ dict_of_keywords = {
     "1": 1,
     "2": 2,
     "3": 3,
-    "COMPREHENSIVE FORM": "Comprehensive",
-    "FIRE & EXTENDED COVERAGE FORM": "Fire and EC",
-    "HOMEOWNERS": "Home",
-    "CONDOMINIUM": "Condo",
-    "Home": "Home",
-    "Condominium": "Condo",
-    "Tenant": "Tenant",
-    "Rental Condominium": "Rental Condo",
-    "RENTED DWELLING": "Rented Dwelling",
-    "Homeowner": "Home",
-    "Revenue Property": "Rented Dwelling",
-    "Basic Revenue Property Policy": "Basic",
-    "Broad Revenue Property Policy": "Broad",
-    "Comprehensive Revenue Property Policy": "Comprehensive",
-    "Comprehensive Condominium Policy": "Comprehensive",
-    "Comprehensive Homeowners Policy": "Comprehensive",
-    "(Seasonal Homeowners Broad)": ["Seasonal Home", "Broad"],
-    "(Homeowners Comprehensive)": ["Home", "Comprehensive"],
-    "(Rented Dwelling - Comprehensive )": ["Rented Dwelling", "Comprehensive"],
-    "(Rented Condominium)": ["Rental Condo", "Comprehensive"],
-    "(Condominium Comprehensive)": ["Condo", "Comprehensive"],
-    "Basic": "Basic",
-    "Broad": "Broad",
-
-
-    "Seasonal Condominium": "Seasonal Condo",
-    "Seasonal": "Seasonal Condo",
-
 }
 
 filename = {

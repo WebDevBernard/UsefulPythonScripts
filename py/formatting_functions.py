@@ -1,5 +1,7 @@
 import re
 
+def flatten(xss):
+    return [x for xs in xss for x in xs]
 
 def ff(dictionary):
     for key, value in dictionary.items():
@@ -24,14 +26,6 @@ def find_nested_match(regex, nested_list):
             matched_lists.append(item)
     return matched_lists
 
-def find_nested_match_2(regex, nested_list):
-    matched_lists = []
-    for item in nested_list:
-        for item_2 in item:
-            if isinstance(item_2, str) and re.search(regex, item_2) and item_2 not in matched_lists:
-                matched_lists.append(item_2)
-    return matched_lists
-
 def return_match_only(regex, dict_item):
     try:
         if re.search(regex, dict_item) is not None:
@@ -49,10 +43,16 @@ def remove_non_match(regex, dict_item):
 def match_keyword(dict_of_keywords, keyword):
     return dict_of_keywords.get(keyword, None)
 
+def custom_title_case(sentence):
+    return ' '.join(
+        word if word.isdigit() or word[-2:] in {"th", "rd"} else word.capitalize()
+        for word in sentence.split()
+    )
+
 def title_case(strings_list, str_length):
     if strings_list and isinstance(strings_list, list):
         word = [string.strip().title() if len(string) > str_length else string for string in strings_list]
-        return word[0]
+        return custom_title_case(word[0])
     if strings_list and isinstance(strings_list, str):
         words = strings_list.split()
         capitalized_words = [word.strip().capitalize() if len(word) > str_length else word for word in words]
@@ -61,11 +61,13 @@ def title_case(strings_list, str_length):
 
 def sum_dollar_amounts(amounts):
     clean_amount_str = [a.replace("$", "").replace(",", "") for a in amounts]
-    total = sum((int(c) for c in clean_amount_str))
+    total = sum(int(c) for c in clean_amount_str)
     return total
 
-def add_dollar_sign(string):
-    if '$' not in string:
-        return '$' + string
-    else:
-        return string
+def clean_dollar_amounts(amounts):
+    try:
+        clean_amount_str = amounts.replace("$", "").replace(",", "").replace(" 00", "").replace(".00", "")
+        total = int(clean_amount_str)
+        return total
+    except ValueError:
+        "fatal error is fatal"

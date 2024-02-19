@@ -24,9 +24,11 @@ if __name__ == "__main__":
             pg_list = get_broker_copy_pages(doc, type_of_pdf, keyword)
             input_dict = search_for_input_dict(doc, pg_list)
             dict_items = search_for_matches(doc, input_dict, type_of_pdf, target_dict)
-            cleaned_data = format_policy(dict_items)
+            cleaned_data = format_policy(dict_items, type_of_pdf)
             print(cleaned_data)
-            # df = create_pandas_df(cleaned_data)
-            # print(df)
+            try:
+                df = create_pandas_df(cleaned_data)
+            except KeyError:
+                print("No file")
             print(f"\n<==========================>\n")
 
