@@ -35,6 +35,7 @@ target_dict = {
         "earthquake_coverage": ["Earthquake Endorsement", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
         "condo_deductible": ["Condominium Corporation Deductible", 0, 0],
+        "service_line": ["Service Line Coverage", 0, 0],
         "premium_amount": ["TOTAL", 0, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
     },
     "Family": {
@@ -48,6 +49,7 @@ target_dict = {
         "premium_amount": [["RETURN THIS PORTION WITH PAYMENT", (0, -19.8719482421875, 0, -19.8719482421875)]],
         "condo_deductible": ["Deductible Coverage:", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
+        "service_line": ["Service Lines", 0, 0],
         "earthquake_coverage": [["EARTHQUAKE PROPERTY LIMITS", (46.94398498535156, 11.1737060546875, 35, 12.26593017578125)]]
     },
     "Intact": {
@@ -61,6 +63,7 @@ target_dict = {
         "earthquake_coverage": ["Earthquake Damage Assumption", 0, 0],
         "overland_water": ["Enhanced Water Damage", 0, 0],
         "ground_water": ["Ground Water", 0, 0],
+        "service_line": ["Water and Sewer Lines", 0, 0],
     },
     "Wawanesa": {
         "name_and_address": (36.0, 122.4298095703125, 200, 180),
@@ -93,6 +96,23 @@ dict_of_keywords = {
     "3": 3,
 }
 
+
+input = {
+    "task": [2, 1],
+    "broker_name": [6, 1],
+    "risk_type": [11, 1],
+    "named_insured": [14, 1],
+    "insurer": [15, 1],
+    "policy_number": [16, 1],
+    "effective_date": [17, 1],
+    "address_one": [19, 1],
+    "address_two": [20, 1],
+    "address_three": [21, 1],
+    "risk_address_1": [23, 1],
+    "risk_address_2": [24, 1],
+    "risk_address_3": [25, 1],
+}
+
 filename = {
     "INSURANCE BINDER": "Binder.docx",
     "CANCELLATION RELEASE": "Cancellation Release.docx",
@@ -100,7 +120,7 @@ filename = {
     "LETTER OF BROKERAGE": "Letter of Brokerage.docx",
     "FAMILY LOB": "LOB - Family Blank.pdf",
     "RENEWAL LETTER": "Renewal Letter.docx",
-    "RENEWAL LETTER_NEW": "Renewal Letter - Copy.docx",
+    "RL": "Renewal Letter New.docx",
     "RENTED INTACT QUESTIONNAIRE": "Rented Intact Questionnaire.docx",
     "REVENUE PROPERTY QUESTIONNAIRE": "Revenue Property Questionnaire.pdf",
     "WAWA MAC AUTHORIZATION FORM": "8003GIS062019MACAuthorizationForm Wawa.pdf",

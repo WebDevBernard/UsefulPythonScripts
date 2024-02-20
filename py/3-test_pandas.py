@@ -4,9 +4,9 @@ import pandas as pd
 from collections import defaultdict
 from pathlib import Path
 from debugging import base_dir
-from file_writing_functions import (search_first_page, search_for_matches, write_to_new_docx,
+from file_writing_functions import (search_first_page, search_for_matches,
                                     search_for_input_dict, get_broker_copy_pages, format_policy, create_pandas_df)
-from coordinates import doc_type, keyword, target_dict, dict_of_keywords
+from coordinates import doc_type, keyword, target_dict
 
 
 # Loop through each PDF file and append the full path to the list
@@ -29,6 +29,6 @@ if __name__ == "__main__":
             try:
                 df = create_pandas_df(cleaned_data)
             except KeyError:
-                print("No file")
+                continue
             print(f"\n<==========================>\n")
 

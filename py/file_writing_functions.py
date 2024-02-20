@@ -101,9 +101,9 @@ def search_for_matches(doc, input_dict, type_of_pdf, target_dict):
                             if return_match_only(target[0], word) and word not in field_dict[type_of_pdf][k]:
                                 field_dict[type_of_pdf][k].append(word)
                     except IndexError:
-                        print("Target index does not exist")
+                        continue
     except KeyError:
-        return "Insurer Key does not exist"
+        return
     return field_dict
 
 
@@ -127,7 +127,7 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
                     names[-1] = "and " + names[-1]
                 field_dict["named_insured"] = ", ".join(names)
     except TypeError:
-        print("No address block found")
+        return
     return field_dict
 
 
@@ -135,7 +135,7 @@ def format_insurer_name(field_dict, type_of_pdf):
     try:
         field_dict["insurer"] = type_of_pdf
     except TypeError:
-        print("No insurer name found")
+        return
     return field_dict
 
 
@@ -152,7 +152,7 @@ def format_mailing_address(field_dict, dict_items, type_of_pdf):
                 field_dict["address_line_three"] = title_case(
                     return_match_only(postal_code_regex, city_province_p_code), 3)
     except TypeError:
-        print("No mailing address found")
+        return
     return field_dict
 
 
@@ -184,7 +184,7 @@ def format_risk_address(field_dict, dict_items, type_of_pdf):
                 field_dict["risk_address_2"] = title_case(
                     remove_non_match(postal_code_regex, " ".join(dict_items["risk_address"][1])), 3).rstrip(", ")
     except AttributeError:
-        print("Risk address not found")
+        return
     return field_dict
 
 
@@ -227,7 +227,7 @@ def format_form_type(field_dict, dict_items, type_of_pdf):
                 if "fire & extended".casefold() in form_type.casefold():
                     field_dict[f"form_type_{index + 1}"] = "Basic Form"
     except TypeError:
-        "risk type not found"
+         return
     return field_dict
 
 
@@ -262,7 +262,6 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
             if isinstance(dict_items["risk_address"], list):
                 for index, risk_type in enumerate(
                         find_nested_match(re.compile(r'\((.*?)\)'), flatten(dict_items["risk_address"]))):
-                    print(risk_type)
                     if "seasonal".casefold() in risk_type.casefold():
                         field_dict["seasonal"] = True
                     if "home".casefold() in risk_type.casefold():
@@ -281,7 +280,7 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                         try:
                             field_dict["risk_type"] = list_of_risk_types[0]
                         except IndexError:
-                            print("out of range")
+                            return
         if isinstance(dict_items["risk_type"], list):
             list_of_risk_types = []
             for index, risk_type in enumerate(dict_items["risk_type"]):
@@ -307,9 +306,9 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                     try:
                         field_dict["risk_type"] = list_of_risk_types[0]
                     except IndexError:
-                        print("out of range")
+                        return
     except TypeError:
-        "Risk type not found"
+         return
     return field_dict
 
 
@@ -335,7 +334,7 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
                 field_dict["number_of_families"] = match_keyword(dict_of_keywords, remove_non_match(re.compile(
                     r" Family"), family_number.split(" , ")[0]))
     except TypeError:
-        "Number of families not found"
+         return
     return field_dict
 
 
@@ -346,7 +345,7 @@ def format_policy_number(field_dict, dict_items):
                 field_dict["policy_number"] = policy_number
         field_dict["policy_number"] = dict_items["policy_number"]
     except TypeError:
-        "Policy number not found"
+         return
     return field_dict
 
 
@@ -355,7 +354,7 @@ def format_effective_date(field_dict, dict_items):
         time_with_date = return_match_only(date_regex, dict_items["effective_date"])
         field_dict["effective_date"] = time_with_date
     except TypeError:
-        "Effective date not found"
+        return
     return field_dict
 
 
@@ -370,7 +369,7 @@ def format_condo_deductible(field_dict, dict_items, type_of_pdf):
         if type_of_pdf == "Family" and dict_items["condo_deductible"]:
             field_dict["condo_deductible_1"] = return_match_only(dollar_regex, dict_items["condo_deductible"][0])
     except TypeError:
-        "Condo deductible not found"
+         return
     return field_dict
 
 
@@ -389,7 +388,7 @@ def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
         if type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
             field_dict["condo_earthquake_deductible_1"] = "$25,000"
     except TypeError:
-        "Condo earthquake deductible not found"
+         return
     return field_dict
 
 
@@ -400,15 +399,14 @@ def format_premium_amount(field_dict, dict_items):
         else:
             field_dict["premium_amount"] = '${:,.2f}'.format(clean_dollar_amounts(dict_items["premium_amount"]))
     except TypeError:
-        "Premium amount not found"
+         return
     return field_dict
 
 
 def format_additional_coverage(field_dict, dict_items, type_of_pdf):
     try:
-        if type_of_pdf == "Family" and dict_items["earthquake_coverage"] and return_match_only(dollar_regex,
-                                                                                               dict_items[
-                                                                                                   "earthquake_coverage"]):
+        if (type_of_pdf == "Family" and dict_items["earthquake_coverage"] and
+                return_match_only(dollar_regex, dict_items["earthquake_coverage"])):
             field_dict["earthquake_coverage"] = True
         if type_of_pdf == "Aviva" or type_of_pdf == "Intact" or type_of_pdf == "Wawanesa":
             if dict_items["earthquake_coverage"]:
@@ -425,7 +423,7 @@ def format_additional_coverage(field_dict, dict_items, type_of_pdf):
             if dict_items["tenant_vandalism"]:
                 field_dict["tenant_vandalism"] = True
     except TypeError:
-        "Additional coverage not found"
+        return
 
 
 def format_policy(dict_items, type_of_pdf):
@@ -465,8 +463,5 @@ def create_pandas_df(data_dict):
     df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
     expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
     df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
-    filename = {"RENEWAL LETTER_NEW": "Renewal Letter New.docx"}
-    for rows in df.to_dict(orient="records"):
-        write_to_new_docx(filename["RENEWAL LETTER_NEW"], rows)
     return df
 
