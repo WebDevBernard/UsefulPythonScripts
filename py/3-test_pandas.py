@@ -1,11 +1,8 @@
 import fitz
-import os
-import pandas as pd
-from collections import defaultdict
 from pathlib import Path
-from debugging import base_dir
-from file_writing_functions import (search_first_page, search_for_matches,
-                                    search_for_input_dict, get_broker_copy_pages, format_policy, create_pandas_df)
+from coordinates import base_dir
+from cleaning_functions import (search_first_page, search_for_matches,
+                                search_for_input_dict, get_broker_copy_pages, format_policy, create_pandas_df)
 from coordinates import doc_type, keyword, target_dict
 
 

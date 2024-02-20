@@ -1,8 +1,5 @@
-import os
 from pathlib import Path
-
-base_dir = Path(__file__).parent.parent
-
+from coordinates import base_dir
 
 # find blocks words sentences and returns the word and coords as a dictionary of pages containing list of strings and
 # their bbox coordinates
@@ -123,11 +120,3 @@ def write_text_coords(file_name, block_dict, table_dict, word_dict):
     if word_dict:
         write_txt_to_file_dir(word_dir_path, word_dict)
 
-
-def unique_file_name(path):
-    filename, extension = os.path.splitext(path)
-    counter = 1
-    while Path(path).is_file():
-        path = filename + " (" + str(counter) + ")" + extension
-        counter += 1
-    return path

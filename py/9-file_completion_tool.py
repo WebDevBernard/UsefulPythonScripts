@@ -1,39 +1,15 @@
-import fitz
 import pandas as pd
-from datetime import datetime
-from pathlib import Path
-from debugging import base_dir
-from file_writing_functions import (search_first_page, search_for_matches, write_to_new_docx,
-                                    search_for_input_dict, get_broker_copy_pages, format_policy, create_pandas_df)
-from coordinates import doc_type, keyword, target_dict, filename
+from coordinates import base_dir
 from sort_renewal_list import sort_renewal_list
-# Loop through each PDF file and append the full path to the list
+from file_writing_functions import renewal_letter, renewal_letter_manual
+
 input_dir = base_dir / "input"
 output_dir = base_dir / "output"
 output_dir.mkdir(exist_ok=True)
 pdf_files = input_dir.glob("*.pdf")
 excel_path = base_dir / "input.xlsx"  # name of Excel
 
-def renewal_letter():
-    for pdf in pdf_files:
-        with fitz.open(pdf) as doc:
-            print(f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} ")
-            type_of_pdf = search_first_page(doc, doc_type)
-            pg_list = get_broker_copy_pages(doc, type_of_pdf, keyword)
-            input_dict = search_for_input_dict(doc, pg_list)
-            dict_items = search_for_matches(doc, input_dict, type_of_pdf, target_dict)
-            cleaned_data = format_policy(dict_items, type_of_pdf)
-            try:
-                df = create_pandas_df(cleaned_data)
-            except KeyError:
-                continue
-            df["broker_name"] = pd.read_excel(excel_path, sheet_name=0, header=None).at[10, 1]
-            print(df)
-            for rows in df.to_dict(orient="records"):
-                write_to_new_docx(filename["RL"], rows)
-            print(f"\n<==========================>\n")
-
-def get_excel_data():
+def get_excel_data(excel_path):
     data = {}
     try:
         df = pd.read_excel(excel_path, sheet_name=0, header=None)
@@ -51,22 +27,14 @@ def get_excel_data():
         return None
     return data
 
-def renewal_letter_manual():
-    df = pd.DataFrame([get_excel_data()])
-    df["today"] = datetime.today().strftime("%B %d, %Y")
-    df["mailing_address"] = df[["address_line_one", "address_line_two"]].astype(str).apply(
-        lambda x: ', '.join(x[:-1]) + " " + x[-1:], axis=1)
-    df["risk_address_1"] = df["risk_address_1"].fillna(df["mailing_address"])
-    print(df)
-    for rows in df.to_dict(orient="records"):
-        write_to_new_docx(filename["RL"], rows)
+excel_data = get_excel_data(excel_path)
 
 if __name__ == "__main__":
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
     task = df_excel.at[6, 1]
     if task == "Auto Generate Renewal Letter From Policy":
-        renewal_letter()
+        renewal_letter(excel_path)
     elif task == "Manually Generate Renewal Letter from Data Entry":
-        renewal_letter_manual()
+        renewal_letter_manual(excel_data)
     elif task == "Sort Renewal List from Excel File":
         sort_renewal_list()

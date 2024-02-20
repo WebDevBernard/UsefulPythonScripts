@@ -1,4 +1,7 @@
 import re
+from pathlib import Path
+
+base_dir = Path(__file__).parent.parent
 
 postal_code_regex = re.compile(r"([ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ ]?\d[ABCEGHJ-NPRSTV-Z]\d)$")
 dollar_regex = re.compile(r"\$([\d,]+)")

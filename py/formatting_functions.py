@@ -1,4 +1,6 @@
 import re
+import os
+from pathlib import Path
 
 def flatten(xss):
     return [x for xs in xss for x in xs]
@@ -71,3 +73,11 @@ def clean_dollar_amounts(amounts):
         return total
     except ValueError:
         "fatal error is fatal"
+
+def unique_file_name(path):
+    filename, extension = os.path.splitext(path)
+    counter = 1
+    while Path(path).is_file():
+        path = filename + " (" + str(counter) + ")" + extension
+        counter += 1
+    return path

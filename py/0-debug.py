@@ -1,6 +1,7 @@
 import fitz
 import pdfplumber
-from debugging import (base_dir, calculate_target_coords, plumber_draw_rect, plumber_draw_from_pg_and_coords,
+from coordinates import base_dir
+from debugging import (calculate_target_coords, plumber_draw_rect, plumber_draw_from_pg_and_coords,
                        find_table_dict, get_text_words, write_text_coords, get_text_blocks, get_pdf_fieldnames)
 
 # change crop or search here

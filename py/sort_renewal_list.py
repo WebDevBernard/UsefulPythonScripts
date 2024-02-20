@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 from pathlib import Path
-from debugging import base_dir
+from coordinates import base_dir
 
 input_dir = base_dir / "input"
 xlsx_files = Path(input_dir).glob("*.xlsx")
@@ -29,7 +29,7 @@ def sort_renewal_list():
         list_with_spaces.append(y)
         list_with_spaces.append(pd.DataFrame([[float('NaN')] * len(y.columns)], columns=y.columns))
     df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
-
+    print(df)
     if not os.path.isfile(output_path):
         writer = pd.ExcelWriter(output_path, engine="openpyxl")
     else:

@@ -1,8 +1,8 @@
 import fitz
 from pathlib import Path
-from debugging import base_dir
-from file_writing_functions import (search_first_page, search_for_matches,
-                                    search_for_input_dict, get_broker_copy_pages)
+from coordinates import base_dir
+from cleaning_functions import (search_first_page, search_for_matches,
+                                search_for_input_dict, get_broker_copy_pages)
 from coordinates import doc_type, keyword, target_dict
 
 # Loop through each PDF file and append the full path to the list
