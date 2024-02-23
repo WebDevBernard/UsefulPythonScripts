@@ -6,7 +6,7 @@ from datetime import datetime
 from coordinates import (postal_code_regex, dollar_regex, dict_of_keywords, date_regex, and_regex, address_regex)
 from formatting_functions import (ff, remove_non_match, return_match_only, title_case, match_keyword,
                                   sum_dollar_amounts, flatten, find_index, find_nested_match, clean_dollar_amounts,
-                                  unique_file_name)
+                                  unique_file_name, join_names, title_case_except_last_two)
 
 
 # 1st page search to determine type of pdf file
@@ -18,6 +18,7 @@ def search_first_page(doc, field_dict):
         text_block = page.get_text("text", clip=coords)
         if keyword.casefold() in text_block.casefold():
             return key
+
 
 
 # 2nd Get the pages with the broker copies
@@ -116,16 +117,12 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
                 names = [i.split(' & ') for i in dict_items["name_and_address"][:address_index]]
                 join_same_last_names = [" ".join(reversed(i.split(", "))).title() if ", " in i else
                                         (i + " " + names[0][0]).split(", ")[0].title() for i in names[0]]
-                if len(join_same_last_names) > 1:
-                    join_same_last_names[-1] = "and " + join_same_last_names[-1]
-                field_dict["named_insured"] = ", ".join(join_same_last_names)
+                field_dict["named_insured"] = join_names(join_same_last_names)
         if type_of_pdf == "Aviva" or type_of_pdf == "Family" or type_of_pdf == "Wawanesa":
             if dict_items["name_and_address"] and isinstance(dict_items["name_and_address"], list):
                 names = remove_non_match(and_regex, dict_items["name_and_address"][:address_index])
-                names = [i.strip().title() for i in names]
-                if len(names) > 1:
-                    names[-1] = "and " + names[-1]
-                field_dict["named_insured"] = ", ".join(names)
+                names = [" ".join(i.split()).strip().title() for i in names]
+                field_dict["named_insured"] = join_names(names)
     except TypeError:
         return
     return field_dict
@@ -147,7 +144,11 @@ def format_mailing_address(field_dict, dict_items, type_of_pdf):
                 address_index = find_index(address_regex, dict_items["name_and_address"])
                 city_province_p_code = " ".join(dict_items["name_and_address"][address_index + 1:pc_index + 1])
                 field_dict["address_line_one"] = title_case(dict_items["name_and_address"][address_index:pc_index], 1)
-                field_dict["address_line_two"] = title_case(remove_non_match(postal_code_regex, city_province_p_code),
+                if type_of_pdf == "Family":
+                    field_dict["address_line_two"] = title_case(remove_non_match(postal_code_regex, city_province_p_code),
+                                                            2).rstrip("Canada,").strip()
+                else:
+                    field_dict["address_line_two"] = title_case(remove_non_match(postal_code_regex, city_province_p_code),
                                                             2)
                 field_dict["address_line_three"] = title_case(
                     return_match_only(postal_code_regex, city_province_p_code), 3)
@@ -162,27 +163,27 @@ def format_risk_address(field_dict, dict_items, type_of_pdf):
             all_addresses = find_nested_match(postal_code_regex, flatten(dict_items["risk_address"]))
             if isinstance(dict_items["risk_address"], list):
                 for index, address in enumerate(all_addresses):
-                    field_dict[f"risk_address_{index + 1}"] = title_case(
-                        remove_non_match(postal_code_regex, all_addresses[index]), 3).rstrip(", ")
+                    field_dict[f"risk_address_{index + 1}"] = title_case_except_last_two(
+                        remove_non_match(postal_code_regex, all_addresses[index])).rstrip(", ")
         if type_of_pdf == "Family" or type_of_pdf == "Intact" or type_of_pdf == "Wawanesa":
             all_addresses = find_nested_match(postal_code_regex, dict_items["risk_address"])
             if isinstance(dict_items["risk_address"], list):
                 for index, address in enumerate(all_addresses):
-                    field_dict[f"risk_address_{index + 1}"] = title_case(
-                        remove_non_match(postal_code_regex, all_addresses[index]), 3).rstrip(", ")
+                    field_dict[f"risk_address_{index + 1}"] = title_case_except_last_two(
+                        remove_non_match(postal_code_regex, all_addresses[index])).rstrip(", ")
             else:
-                field_dict["risk_address_1"] = title_case(
-                    remove_non_match(postal_code_regex, dict_items["risk_address"]), 3).rstrip(", ")
+                field_dict["risk_address_1"] = title_case_except_last_two(
+                    remove_non_match(postal_code_regex, dict_items["risk_address"])).rstrip(", ")
         if type_of_pdf == "Aviva":
             if isinstance(dict_items["risk_address"][0], list):
-                field_dict["risk_address_1"] = title_case(
-                    remove_non_match(postal_code_regex, " ".join(dict_items["risk_address"][0])), 3).rstrip(", ")
+                field_dict["risk_address_1"] = title_case_except_last_two(
+                    remove_non_match(postal_code_regex, " ".join(dict_items["risk_address"][0]))).rstrip(", ")
             else:
-                field_dict["risk_address_1"] = title_case(
-                    remove_non_match(postal_code_regex, dict_items["risk_address"][0]), 3).rstrip(", ")
+                field_dict["risk_address_1"] = title_case_except_last_two(
+                    remove_non_match(postal_code_regex, dict_items["risk_address"][0])).rstrip(", ")
             if isinstance(dict_items["risk_address"][1], list):
-                field_dict["risk_address_2"] = title_case(
-                    remove_non_match(postal_code_regex, " ".join(dict_items["risk_address"][1])), 3).rstrip(", ")
+                field_dict["risk_address_2"] = title_case_except_last_two(
+                    remove_non_match(postal_code_regex, " ".join(dict_items["risk_address"][1]))).rstrip(", ")
     except AttributeError:
         return
     return field_dict
@@ -206,7 +207,7 @@ def format_form_type(field_dict, dict_items, type_of_pdf):
                     if "basic".casefold() in form_type.casefold():
                         field_dict[f"form_type_{index + 1}"] = "Basic Form"
                     if "fire & extended".casefold() in form_type.casefold():
-                        field_dict[f"form_type_{index + 1}"] = "Basic Form"
+                        field_dict[f"form_type_{index + 1}"] = "Fire + EC"
         if isinstance(dict_items["form_type"], str):
             if "comprehensive".casefold() in dict_items["form_type"].casefold():
                 field_dict["form_type_1"] = "Comprehensive Form"
@@ -275,7 +276,7 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                     if "rented condominium".casefold() in risk_type.casefold():
                         list_of_risk_types.append("rented_condo")
                     if any("home".casefold() in s.casefold() for s in list_of_risk_types):
-                        field_dict["risk_type"] = "Home"
+                        field_dict["risk_type"] = "home"
                     else:
                         try:
                             field_dict["risk_type"] = list_of_risk_types[0]
@@ -320,19 +321,18 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
                 if match:
                     number = str(int(match.group(1)) + 1)
                     field_dict[f"number_of_families"] = match_keyword(dict_of_keywords, number)
-        elif type_of_pdf == "Family":
+        elif type_of_pdf == "Family" and not dict_items["number_of_families"]:
             field_dict[f"number_of_families"] = match_keyword(dict_of_keywords, "1")
         if type_of_pdf == "Intact" or type_of_pdf == "Wawanesa":
-            if isinstance(dict_items["number_of_families"], str) or isinstance(dict_items["number_of_units"], str):
+            if isinstance(dict_items["number_of_families"], str):
                 field_dict["number_of_families"] = match_keyword(dict_of_keywords, dict_items["number_of_families"])
+            if not dict_items["number_of_families"] and dict_items["number_of_units"]:
                 field_dict["number_of_families"] = match_keyword(dict_of_keywords, dict_items["number_of_units"])
         if type_of_pdf == "Aviva" and isinstance(dict_items["number_of_families"], str):
-            field_dict["number_of_families"] = match_keyword(dict_of_keywords, remove_non_match(re.compile(
-                r" Family"), dict_items["number_of_families"].split(" , ")[0]))
+            field_dict["number_of_families"] = match_keyword(dict_of_keywords, dict_items["number_of_families"])
         elif type_of_pdf == "Aviva" and isinstance(dict_items["number_of_families"], list):
             for index, family_number in enumerate(dict_items["number_of_families"]):
-                field_dict["number_of_families"] = match_keyword(dict_of_keywords, remove_non_match(re.compile(
-                    r" Family"), family_number.split(" , ")[0]))
+                field_dict["number_of_families"] = match_keyword(dict_of_keywords, family_number)
     except TypeError:
          return
     return field_dict
@@ -363,9 +363,13 @@ def format_condo_deductible(field_dict, dict_items, type_of_pdf):
         if isinstance(dict_items["condo_deductible"], str):
             field_dict["condo_deductible_1"] = return_match_only(dollar_regex,
                                                                  dict_items["condo_deductible"])
+            if type_of_pdf == "Aviva" and dict_items["condo_deductible"]:
+                field_dict["condo_earthquake_deductible_1"] = return_match_only(dollar_regex, dict_items["condo_deductible"])
         else:
-            for index, condo_deductible in enumerate(dict_items["condo_deductible_coverage"]):
+            for index, condo_deductible in enumerate(dict_items["condo_deductible"]):
                 field_dict[f"condo_deductible_{index + 1}"] = return_match_only(dollar_regex, condo_deductible)
+                if type_of_pdf == "Aviva" and dict_items["condo_deductible"]:
+                    field_dict["condo_earthquake_deductible_1"] = return_match_only(dollar_regex, condo_deductible)
         if type_of_pdf == "Family" and dict_items["condo_deductible"]:
             field_dict["condo_deductible_1"] = return_match_only(dollar_regex, dict_items["condo_deductible"][0])
     except TypeError:
@@ -379,14 +383,16 @@ def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
             field_dict["condo_earthquake_deductible_1"] = return_match_only(dollar_regex,
                                                                             dict_items["condo_earthquake_deductible"])
         else:
-            for index, condo_deductible in enumerate(dict_items["condo_earthquake_deductible"]):
+            for index, condo_earthquake_deductible in enumerate(dict_items["condo_earthquake_deductible"]):
                 field_dict[f"condo_earthquake_deductible_{index + 1}"] = return_match_only(dollar_regex,
-                                                                                           condo_deductible)
+                                                                                           condo_earthquake_deductible)
         if type_of_pdf == "Family" and dict_items["condo_deductible"]:
             field_dict["condo_earthquake_deductible_1"] = return_match_only(dollar_regex,
                                                                             dict_items["condo_deductible"][1])
         if type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
             field_dict["condo_earthquake_deductible_1"] = "$25,000"
+        if type_of_pdf == "Intact" and not dict_items["condo_earthquake_deductible"]:
+            field_dict["condo_earthquake_deductible_1"] = "$2,500"
     except TypeError:
          return
     return field_dict

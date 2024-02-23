@@ -47,7 +47,7 @@ def match_keyword(dict_of_keywords, keyword):
 
 def custom_title_case(sentence):
     return ' '.join(
-        word if word.isdigit() or word[-2:] in {"th", "rd"} else word.capitalize()
+        word if word.isdigit() or word[-2:] in {"th", "rd", "nd", "st"} else word.capitalize()
         for word in sentence.split()
     )
 
@@ -81,3 +81,16 @@ def unique_file_name(path):
         path = filename + " (" + str(counter) + ")" + extension
         counter += 1
     return path
+
+def join_names(names):
+    if len(names) == 0:
+        return ''
+    elif len(names) == 1:
+        return names[0]
+    else:
+        return ', '.join(names[:-1]) + ' and ' + names[-1]
+
+def title_case_except_last_two(address):
+    title_cased_address = ' '.join(word.capitalize() for word in address[:-3].split())
+    title_cased_address += address[-3:].upper()
+    return custom_title_case(title_cased_address)

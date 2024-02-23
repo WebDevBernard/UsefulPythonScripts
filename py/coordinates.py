@@ -14,7 +14,7 @@ and_regex = re.compile(r'&|\b(and)\b', flags=re.IGNORECASE)
 doc_type = {
     "Aviva": ["Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)],
     "Family": ["Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)],
-    "Intact": ["Version", (39.599998474121094, 733.7724609375, 334.03118896484375, 744.352294921875)],
+    "Intact": ["Intact Insurance", (39.599998474121094, 733.7724609375, 334.03118896484375, 744.352294921875)],
     "Wawanesa": ["BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703)],
     "Invoice": ["CUSTOMER STATEMENT", (179.52000427246094, 96.41597747802734, 396.89202880859375, 116.48722839355469)]
 }
@@ -34,7 +34,7 @@ target_dict = {
         "risk_address": ["FORM", -1, slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))],
         "form_type": [re.compile(r".* - .*form$", flags=re.IGNORECASE), 0, 0, True],
         "risk_type": [re.compile(r".* - .*form$", flags=re.IGNORECASE), 0, 0, True],
-        "number_of_families": ["Family ,", 0, 1, True],
+        "number_of_families": ["Extended Liability", 1, 0],
         "earthquake_coverage": ["Earthquake Endorsement", 0, 0],
         "overland_water": ["Overland Water", 0, 0],
         "condo_deductible": ["Condominium Corporation Deductible", 0, 0],
@@ -97,6 +97,8 @@ dict_of_keywords = {
     "1": 1,
     "2": 2,
     "3": 3,
+    "001 Additional Family": 2,
+    "002 Additional Family": 3,
 }
 
 

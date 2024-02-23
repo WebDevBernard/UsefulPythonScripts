@@ -30,7 +30,7 @@ if __name__ == "__main__":
             b = get_text_blocks(doc)    # 1 find by text blocks
             # t = find_table_dict(doc)    # 2 find by table
             w = get_text_words(doc)      # 3 find by individual words
-            # write_text_coords(pdf, b, 0, w)  # dicts falsey = off
+            write_text_coords(pdf, b, 0, w)  # dicts falsey = off
 
         with pdfplumber.open(pdf) as doc:
             # plumber_draw_rect(doc, b, 8, 300)      # field_dict# falsey = off

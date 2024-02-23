@@ -39,7 +39,8 @@ def renewal_letter(excel_path):
                 df = create_pandas_df(cleaned_data)
             except KeyError:
                 continue
-            df["broker_name"] = pd.read_excel(excel_path, sheet_name=0, header=None).at[10, 1]
+            df["broker_name"] = pd.read_excel(excel_path, sheet_name=0, header=None).at[8, 1]
+            df["mods"] = pd.read_excel(excel_path, sheet_name=0, header=None).at[4, 1]
             print(df)
             for rows in df.to_dict(orient="records"):
                 write_to_new_docx(filename["RL"], rows)
@@ -66,7 +67,6 @@ def write_to_docx(docx, rows):
     output_path = output_dir / f"{rows["named_insured"]} {rows["type"].title()}.docx"
     doc.save(unique_file_name(output_path))
 
-
 # Used for fillable pdf's
 def write_to_pdf(pdf, dictionary, rows):
     pdf_path = (base_dir / "templates" / pdf)
@@ -80,4 +80,3 @@ def write_to_pdf(pdf, dictionary, rows):
         writer.updatePageFormFieldValues(page, dictionary)
     with open(unique_file_name(output_path), "wb") as output_stream:
         writer.write(output_stream)
-
