@@ -1,9 +1,11 @@
 import fitz
 import re
+import pandas as pd
 from pathlib import Path
+from datetime import datetime
 from collections import namedtuple, defaultdict
-from Helpers import target_dict, and_regex, address_regex, date_regex, dollar_regex, \
-    postal_code_regex, ff, find_index, join_and_format_names, address_one_title_case, address_two_title_case
+from Helpers import (target_dict, and_regex, address_regex, date_regex, dollar_regex, postal_code_regex, ff, find_index,
+                     join_and_format_names, address_one_title_case, address_two_title_case, risk_address_title_case)
 
 
 def get_doc_types(doc):
@@ -157,7 +159,10 @@ def format_mailing_address(field_dict, dict_items):
         pc_index = find_index(postal_code_regex, name_and_address)
         address_index = find_index(address_regex, name_and_address)
         city_province_p_code = " ".join(name_and_address[address_index + 1:pc_index + 1])
-        field_dict["address_line_one"] = address_one_title_case(" ".join(name_and_address[address_index:pc_index - 1]))
+        if name_and_address[address_index:pc_index-1] == []:
+            field_dict["address_line_one"] = address_one_title_case(" ".join(name_and_address[address_index:pc_index]))
+        else:
+            field_dict["address_line_one"] = address_one_title_case(" ".join(name_and_address[address_index:pc_index-1]))
         field_dict["address_line_two"] = address_two_title_case(
             re.sub(re.compile(r"Canada,"), "", re.sub(postal_code_regex, "", city_province_p_code)))
         field_dict["address_line_three"] = re.search(postal_code_regex, city_province_p_code).group().title()
@@ -202,14 +207,6 @@ def format_additional_coverage(field_dict, dict_items, type_of_pdf):
         field_dict["service_line"] = True
 
 
-def find_nested_match(regex, nested_list):
-    matched_lists = []
-    for item in nested_list:
-        if re.search(regex, item) and item not in matched_lists:
-            matched_lists.append(item)
-    return matched_lists
-
-
 def find_risk_addresses(risk_addresses):
     matched = []
     for index, risk_address in enumerate(risk_addresses):
@@ -221,12 +218,10 @@ def find_risk_addresses(risk_addresses):
 def format_risk_address(field_dict, dict_items):
     risk_addresses = find_risk_addresses(dict_items["risk_address"])
     for index, risk_address in enumerate(risk_addresses):
-        field_dict[f"risk_address_{index + 1}"] = address_two_title_case(
+        field_dict[f"risk_address_{index + 1}"] = risk_address_title_case(
             re.sub(postal_code_regex, "", risk_address[0]).rstrip(", "))
     return field_dict
 
-def flatten(xss):
-    return [item for sublist in xss for item in sublist]
 
 def format_form_type(field_dict, dict_items, type_of_pdf):
     for form_types in dict_items["form_type"]:
@@ -246,36 +241,35 @@ def format_form_type(field_dict, dict_items, type_of_pdf):
                     field_dict[f"form_type_{index + 1}"] = "Specified Perils"
     return field_dict
 
+
 def format_risk_type(field_dict, dict_items, type_of_pdf):
     for risk_types in dict_items["risk_type"]:
         for index, risk_type in enumerate(risk_types):
             if "seasonal".casefold() in risk_type.casefold():
                 field_dict["seasonal"] = True
             if "home".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index+1}"] = "home"
+                field_dict[f"risk_type_{index + 1}"] = "home"
             elif "rented dwelling".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index+1}"] = "rented_dwelling"
+                field_dict[f"risk_type_{index + 1}"] = "rented_dwelling"
             elif "revenue".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index+1}"] = "rented_dwelling"
+                field_dict[f"risk_type_{index + 1}"] = "rented_dwelling"
             elif "rental".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index+1}"] = "rented_condo"
+                field_dict[f"risk_type_{index + 1}"] = "rented_condo"
             elif "tenant".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index+1}"] = "tenant"
+                field_dict[f"risk_type_{index + 1}"] = "tenant"
             elif type_of_pdf == "Aviva" and "condominium".casefold() in risk_type.casefold():
-                    field_dict[f"risk_type_{index+1}"] = "condo"
+                field_dict[f"risk_type_{index + 1}"] = "condo"
             elif type_of_pdf == "Family" and "condo".casefold() in risk_type.casefold():
-                    field_dict[f"risk_type_{index+1}"] = "condo"
+                field_dict[f"risk_type_{index + 1}"] = "condo"
             elif type_of_pdf == "Intact" and "condominium ".casefold() in risk_type.casefold():
-                    field_dict[f"risk_type_{index+1}"] = "condo"
+                field_dict[f"risk_type_{index + 1}"] = "condo"
             elif type_of_pdf == "Wawanesa" and "Condominium" in risk_type:
-                    field_dict[f"risk_type_{index+1}"] = "condo"
+                field_dict[f"risk_type_{index + 1}"] = "condo"
     return field_dict
 
-def match_keyword(dict_of_keywords, keyword):
-    return dict_of_keywords.get(keyword, None)
 
 def format_number_families(field_dict, dict_items, type_of_pdf):
-    dict_of_keywords = {
+    keywords = {
         "One": 1,
         "Two": 2,
         "Three": 3,
@@ -286,53 +280,46 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
         "002 Additional Family": 3,
     }
     if not dict_items["number_of_families"]:
-        field_dict["number_of_families_1"] = match_keyword(dict_of_keywords, "1")
+        field_dict["number_of_families_1"] = keywords.get("1", None)
     for families in dict_items["number_of_families"]:
         for index, number_of_families in enumerate(families):
             if type_of_pdf == "Aviva":
-                field_dict[f"number_of_families_{index + 1}"] = match_keyword(dict_of_keywords, number_of_families)
-            if type_of_pdf == "Family":
-                match = re.search(r"\b(\d+)\b", number_of_families)
-                if match:
-                    number = str(int(match.group(1)) + 1)
-                    field_dict[f"number_of_families_{index+1}"] = match_keyword(dict_of_keywords, number)
+                field_dict[f"number_of_families_{index + 1}"] = keywords.get(number_of_families, None)
+            match = re.search(r"\b(\d+)\b", number_of_families)
+            if type_of_pdf == "Family" and match:
+                field_dict[f"number_of_families_{index + 1}"] = keywords.get(str(int(match.group(1)) + 1), None)
             if type_of_pdf == "Intact" or type_of_pdf == "Wawanesa":
-                field_dict[f"number_of_families_{index+1}"] = match_keyword(dict_of_keywords, number_of_families)
+                field_dict[f"number_of_families_{index + 1}"] = keywords.get(number_of_families, None)
+    if not dict_items["number_of_families"] and dict_items["number_of_units"]:
+        for families in dict_items["number_of_units"]:
+            for index, number_of_units in enumerate(families):
+                field_dict[f"number_of_families_{index + 1}"] = keywords.get(number_of_units, None)
     return field_dict
 
-# def format_condo_deductible(field_dict, dict_items, type_of_pdf):
-#     try:
-#         if isinstance(dict_items["condo_deductible"], str):
-#             field_dict["condo_deductible_1"] = return_match_only(dollar_regex,
-#                                                                  dict_items["condo_deductible"])
-#             if type_of_pdf == "Aviva" and dict_items["condo_deductible"]:
-#                 field_dict["condo_earthquake_deductible_1"] = return_match_only(dollar_regex, dict_items["condo_deductible"])
-#         else:
-#             for index, condo_deductible in enumerate(dict_items["condo_deductible"]):
-#                 field_dict[f"condo_deductible_{index + 1}"] = return_match_only(dollar_regex, condo_deductible)
-#                 if type_of_pdf == "Aviva" and dict_items["condo_deductible"]:
-#                     field_dict["condo_earthquake_deductible_1"] = return_match_only(dollar_regex, condo_deductible)
-#         if type_of_pdf == "Family" and dict_items["condo_deductible"]:
-#             field_dict["condo_deductible_1"] = return_match_only(dollar_regex, dict_items["condo_deductible"][0])
-#     except TypeError:
-#          return
-#     return field_dict
+
+def format_condo_deductible(field_dict, dict_items, type_of_pdf):
+    for deductibles in dict_items["condo_deductible"]:
+        if type_of_pdf == "Family":
+            field_dict["condo_deductible_1"] = re.search(dollar_regex, deductibles[0]).group()
+            field_dict["condo_earthquake_deductible_1"] = re.search(dollar_regex, deductibles[1]).group()
+        for index, condo_deductible in enumerate(deductibles):
+            if dict_items["condo_deductible"] and type_of_pdf != "Family":
+                field_dict[f"condo_deductible_{index + 1}"] = re.search(dollar_regex, condo_deductible).group()
+            if type_of_pdf == "Aviva":
+                field_dict["condo_earthquake_deductible_1"] = re.search(dollar_regex, condo_deductible).group()
+    return field_dict
 
 
 def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
     for deductibles in dict_items["condo_earthquake_deductible"]:
         for index, condo_earthquake_deductible in enumerate(deductibles):
-            if type_of_pdf == "Family" and dict_items["condo_deductible"]:
-
-                field_dict["condo_earthquake_deductible_1"] = re.search(dollar_regex,
-                                                                                dict_items["condo_deductible"][1]).group
-            elif type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
+            if type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
                 field_dict["condo_earthquake_deductible_1"] = "$25,000"
             elif type_of_pdf == "Intact" and not dict_items["condo_earthquake_deductible"]:
                 field_dict["condo_earthquake_deductible_1"] = "$2,500"
             else:
                 field_dict[f"condo_earthquake_deductible_{index + 1}"] = re.search(dollar_regex,
-                                                                                       condo_earthquake_deductible).group
+                                                                                   condo_earthquake_deductible).group()
     return field_dict
 
 
@@ -350,32 +337,17 @@ def format_policy(flattened_dict, type_of_pdf):
         format_form_type(field_dict, flattened_dict, type_of_pdf)
         format_risk_type(field_dict, flattened_dict, type_of_pdf)
         format_number_families(field_dict, flattened_dict, type_of_pdf)
-        # format_condo_deductible(field_dict, flattened_dict, type_of_pdf)
+        format_condo_deductible(field_dict, flattened_dict, type_of_pdf)
         format_condo_earthquake_deductible(field_dict, flattened_dict, type_of_pdf)
     return field_dict
 
-# 6 append to Pandas Dataframe:
-# def create_pandas_df(data_dict):
-#     df = pd.DataFrame([data_dict])
-#     df["today"] = datetime.today().strftime("%B %d, %Y")
-#     df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
-#     expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
-#     df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
-#     return df
-#
-# def write_to_pdf(pdf, dictionary, rows):
-#     pdf_path = (base_dir / "templates" / pdf)
-#     output_path = base_dir / "output" / f"{rows["named_insured"]} {rows["risk_type"].title()}.pdf"
-#     output_path.parent.mkdir(exist_ok=True)
-#     reader = PdfReader(pdf_path)
-#     writer = PdfWriter()
-#     for page_num in range(len(reader.pages)):
-#         page = reader.pages[page_num]
-#         writer.add_page(page)
-#         writer.updatePageFormFieldValues(page, dictionary)
-#     with open(unique_file_name(output_path), "wb") as output_stream:
-#         writer.write(output_stream)
-
+def create_pandas_df(data_dict):
+    df = pd.DataFrame([data_dict])
+    df["today"] = datetime.today().strftime("%B %d, %Y")
+    df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
+    expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
+    df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
+    return df
 
 def main():
     for pdf_file in pdf_files:
@@ -395,7 +367,9 @@ def main():
             input_dict = search_for_input_dict(doc, pg_list)
             dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
             # print(ff(dict_items[doc_type]))
-            print(format_policy(ff(dict_items[doc_type]), doc_type))
+            formatted_dict = format_policy(ff(dict_items[doc_type]), doc_type)
+            print(formatted_dict)
+            # print(create_pandas_df(formatted_dict))
             print(f"\n<==========================>\n")
 
 

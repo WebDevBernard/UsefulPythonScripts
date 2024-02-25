@@ -1,19 +1,11 @@
 import fitz
 import pdfplumber
+from pathlib import Path
 
+base_dir = Path(__file__).parent.parent
 # change crop or search here
 pg = [1]  # use empty list to toggle off-screen preview
-loc_coords = (250, 764.2749633789062, 360, 773.8930053710938)
-
-input_coords = (217.20001220703125, 83.71001434326172, 399.2909851074219, 93.34901428222656)
-target_coords = (217.20001220703125, 93.52500915527344, 402.0320129394531, 105.8910140991211)
-direction = "down"
-debug_relative = calculate_target_coords(input_coords, target_coords, direction)
-
-if loc_coords:
-    coords = loc_coords  # must be tuple to work
-else:
-    coords = debug_relative
+coords = (250, 764.2749633789062, 360, 773.8930053710938)
 
 # find blocks words sentences and returns the word and coords as a dictionary of pages containing list of strings and
 # their bbox coordinates
@@ -134,12 +126,7 @@ def write_text_coords(file_name, block_dict, table_dict, word_dict):
     if word_dict:
         write_txt_to_file_dir(word_dir_path, word_dict)
 
-
-# Loop through each PDF file and append the full path to the list
-input_dir = base_dir / "input"
-pdf_files = input_dir.glob("*.pdf")
-
-if __name__ == "__main__":
+def main():
     for pdf in pdf_files:
         with fitz.open(pdf) as doc:
             get_pdf_fieldnames(doc)
@@ -153,3 +140,10 @@ if __name__ == "__main__":
             # plumber_draw_rect(doc, b, 8, 300)      # field_dict# falsey = off
             plumber_draw_from_pg_and_coords(doc, pg, coords, 300)  # coords falsey = off
 
+
+# Loop through each PDF file and append the full path to the list
+input_dir = base_dir / "input"
+pdf_files = input_dir.glob("*.pdf")
+
+if __name__ == "__main__":
+    main()
