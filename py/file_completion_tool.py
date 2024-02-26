@@ -4,22 +4,15 @@ import os
 import re
 from pathlib import Path
 from docxtpl import DocxTemplate
-from Helpers import (target_dict, and_regex, address_regex, date_regex, dollar_regex,
+from helpers import (target_dict, and_regex, address_regex, date_regex, dollar_regex,
                      postal_code_regex, ff, find_index, join_and_format_names, address_one_title_case,
-                     address_two_title_case, risk_address_title_case, unique_file_name)
+                     address_two_title_case, risk_address_title_case, unique_file_name, doc_types, content_pages)
 from PyPDF2 import PdfReader, PdfWriter
 from datetime import datetime
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 
 
 def get_doc_types(doc):
-    DocType = namedtuple("Insurer", "pdf_name keyword coordinates", defaults=None)
-    doc_types = [
-        DocType("Aviva", "Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)),
-        DocType("Family", "Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)),
-        DocType("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
-        DocType("Wawanesa", "BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703))
-    ]
     for doc_type in doc_types:
         for page_index in range(len(doc)):
             page = doc[page_index]
@@ -29,13 +22,6 @@ def get_doc_types(doc):
 
 
 def get_content_pages(doc, pdf_name):
-    ContentPages = namedtuple("Insurer", "pdf_name keyword coordinates", defaults=None)
-    content_pages = [
-        ContentPages("Aviva", "CANCELLATION OF THE POLICY", -1),
-        ContentPages("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
-        ContentPages("Wawanesa", re.compile(r"\w{3}\s\d{2},\s\d{4}"),
-                     (36.0, 762.829833984375, 576.001220703125, 778.6453857421875))
-    ]
     pg_list = []
     for content_page in content_pages:
         keyword = content_page.keyword
@@ -142,19 +128,20 @@ def search_for_matches(doc, input_dict, type_of_pdf, target_dict):
 def format_named_insured(field_dict, dict_items, type_of_pdf):
     for name_and_address in dict_items["name_and_address"]:
         address_index = find_index(address_regex, name_and_address)
-        if type_of_pdf == "Aviva" or type_of_pdf == "Family" or type_of_pdf == "Wawanesa":
-            names = re.sub(and_regex, "", ", ".join(name_and_address[:address_index]))
-            field_dict["named_insured"] = join_and_format_names(names.split(", "))
         if type_of_pdf == "Intact":
             names = [i.split(' & ') for i in name_and_address[:address_index]]
             join_same_last_names = [" ".join(reversed(i.split(", "))) if ", " in i else
                                     (i + " " + names[0][0]).split(", ")[0] for i in names[0]]
             field_dict["named_insured"] = join_and_format_names(join_same_last_names)
+        else:
+            names = re.sub(and_regex, "", ", ".join(name_and_address[:address_index]))
+            field_dict["named_insured"] = join_and_format_names(names.split(", "))
     return field_dict
 
 
 def format_insurer_name(field_dict, type_of_pdf):
-    field_dict["insurer"] = type_of_pdf
+    if type_of_pdf == "Wawanesa" or type_of_pdf == "Intact" or type_of_pdf == "Family" or type_of_pdf == "Aviva":
+        field_dict["insurer"] = type_of_pdf
     return field_dict
 
 
@@ -163,24 +150,26 @@ def format_mailing_address(field_dict, dict_items):
         pc_index = find_index(postal_code_regex, name_and_address)
         address_index = find_index(address_regex, name_and_address)
         city_province_p_code = " ".join(name_and_address[address_index + 1:pc_index + 1])
-        if name_and_address[address_index:pc_index-1] == []:
+        if name_and_address[address_index:pc_index - 1] == []:
             field_dict["address_line_one"] = address_one_title_case(" ".join(name_and_address[address_index:pc_index]))
         else:
-            field_dict["address_line_one"] = address_one_title_case(" ".join(name_and_address[address_index:pc_index-1]))
+            field_dict["address_line_one"] = address_one_title_case(
+                " ".join(name_and_address[address_index:pc_index - 1]))
         field_dict["address_line_two"] = address_two_title_case(
             re.sub(re.compile(r"Canada,"), "", re.sub(postal_code_regex, "", city_province_p_code)))
         field_dict["address_line_three"] = re.search(postal_code_regex, city_province_p_code).group().title()
     return field_dict
 
 
-
 def format_policy_number(field_dict, dict_items):
-    field_dict["policy_number"] = dict_items["policy_number"][0][0]
+    if dict_items["policy_number"]:
+        field_dict["policy_number"] = dict_items["policy_number"][0][0]
     return field_dict
 
 
 def format_effective_date(field_dict, dict_items):
-    field_dict["effective_date"] = re.search(date_regex, dict_items["effective_date"][0][0]).group()
+    if dict_items["effective_date"]:
+        field_dict["effective_date"] = re.search(date_regex, dict_items["effective_date"][0][0]).group()
     return field_dict
 
 
@@ -191,7 +180,8 @@ def sum_dollar_amounts(amounts):
 
 
 def format_premium_amount(field_dict, dict_items):
-    field_dict["premium_amount"] = '${:,.2f}'.format(sum_dollar_amounts(dict_items["premium_amount"]))
+    if dict_items["premium_amount"]:
+        field_dict["premium_amount"] = '${:,.2f}'.format(sum_dollar_amounts(dict_items["premium_amount"]))
     return field_dict
 
 
@@ -284,8 +274,9 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
         "001 Additional Family": 2,
         "002 Additional Family": 3,
     }
-    if not dict_items["number_of_families"]:
-        field_dict["number_of_families_1"] = keywords.get("1", None)
+    if type_of_pdf == "Wawanesa" or type_of_pdf == "Intact" or type_of_pdf == "Family" or type_of_pdf == "Aviva":
+        if not dict_items["number_of_families"]:
+            field_dict["number_of_families_1"] = keywords.get("1", None)
     for families in dict_items["number_of_families"]:
         for index, number_of_families in enumerate(families):
             if type_of_pdf == "Aviva":
@@ -328,6 +319,25 @@ def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
     return field_dict
 
 
+def format_icbc(field_dict, dict_items, type_of_pdf):
+    if type_of_pdf == "ICBC":
+        for license_plates in dict_items["licence_plate"]:
+            for index, license_plate in enumerate(license_plates):
+                plate_number = re.sub(re.compile(r"Licence Plate Number "), "", license_plate)
+                field_dict["licence_plate"] = plate_number
+        for transaction_types in dict_items["transaction_type"]:
+            for index, transaction_type in enumerate(transaction_types):
+                transaction = re.sub(re.compile(r"Transaction Type "), "", transaction_type)
+                field_dict["transaction_type"] = transaction
+        for name_codes in dict_items["name_code"]:
+            for index, name_code in enumerate(name_codes):
+                name = re.search(re.compile(r"(?<= - )\b\w{2,3}\b(?= - )"), name_code)
+                if name is not None:
+                    field_dict["name_code"] = name.group()
+                else:
+                    field_dict["name_code"] = "HOUSE"
+
+
 def format_policy(flattened_dict, type_of_pdf):
     field_dict = {}
     if type_of_pdf:
@@ -344,15 +354,19 @@ def format_policy(flattened_dict, type_of_pdf):
         format_number_families(field_dict, flattened_dict, type_of_pdf)
         format_condo_deductible(field_dict, flattened_dict, type_of_pdf)
         format_condo_earthquake_deductible(field_dict, flattened_dict, type_of_pdf)
+        format_icbc(field_dict, flattened_dict, type_of_pdf)
     return field_dict
 
 
 def create_pandas_df(data_dict):
     df = pd.DataFrame([data_dict])
     df["today"] = datetime.today().strftime("%B %d, %Y")
-    df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
-    expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
-    df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
+    try:
+        df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
+        expiry_date = pd.to_datetime(df["effective_date"]) + pd.offsets.DateOffset(years=1)
+        df["expiry_date"] = expiry_date.dt.strftime("%B %d, %Y")
+    except KeyError:
+        print("invalid effective_date")
     return df
 
 
@@ -380,36 +394,40 @@ def write_to_pdf(pdf, dictionary, rows):
         writer.write(output_stream)
 
 
+def find_excel_paths(excel_paths):
+    if Path(excel_paths).suffix == ".XLS":
+        return pd.read_excel(excel_paths, engine="xlrd")
+    elif Path(excel_paths).suffix == ".XLSX":
+        return pd.read_excel(excel_paths, engine="openpyxl")
+
+
 def sort_renewal_list():
     xlsx_files = Path(input_dir).glob("*.xlsx")
     xls_files = Path(input_dir).glob("*.xls")
     files = list(xlsx_files) + list(xls_files)
     excel_paths = list(files)[0]
     output_path = base_dir / "output" / f"{Path(excel_paths).stem}.xlsx"
-    if Path(excel_paths).suffix == ".XLS":
-        df = pd.read_excel(excel_path, engine="xlrd")
-    elif Path(excel_paths).suffix == ".XLSX":
-        df = pd.read_excel(excel_path, engine="openpyxl")
-        try:
-            column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled",
-                           "D/L"]
-            df = df.reindex(columns=column_list)
-            df = df.drop_duplicates(subset=["policynum"], keep=False)
-            df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)
-            list_with_spaces = []
-            for x, y in df.groupby('insurer', sort=False):
-                list_with_spaces.append(y)
-                list_with_spaces.append(pd.DataFrame([[float('NaN')] * len(y.columns)], columns=y.columns))
-            df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
-            print(df)
-            if not os.path.isfile(output_path):
-                writer = pd.ExcelWriter(output_path, engine="openpyxl")
-            else:
-                writer = pd.ExcelWriter(output_path, mode="a", if_sheet_exists="replace", engine="openpyxl")
-            df.to_excel(writer, sheet_name="Sheet1", index=False)
-            writer.close()
-        except TypeError:
-            return
+    try:
+        column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled",
+                       "D/L"]
+        df = find_excel_paths(excel_paths)
+        df = df.reindex(columns=column_list)
+        df = df.drop_duplicates(subset=["policynum"], keep=False)
+        df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)
+        list_with_spaces = []
+        for x, y in df.groupby('insurer', sort=False):
+            list_with_spaces.append(y)
+            list_with_spaces.append(pd.DataFrame([[float('NaN')] * len(y.columns)], columns=y.columns))
+        df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
+        print(df)
+        if not os.path.isfile(output_path):
+            writer = pd.ExcelWriter(output_path, engine="openpyxl")
+        else:
+            writer = pd.ExcelWriter(output_path, mode="a", if_sheet_exists="replace", engine="openpyxl")
+        df.to_excel(writer, sheet_name="Sheet1", index=False)
+        writer.close()
+    except TypeError:
+        return
 
 
 def renewal_letter(excel_path1):
@@ -418,7 +436,6 @@ def renewal_letter(excel_path1):
             print(f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} ")
             doc_type = get_doc_types(doc)
             print(f"This is a {doc_type} policy.")
-            doc_type = get_doc_types(doc)
             pg_list = get_content_pages(doc, doc_type)
             input_dict = search_for_input_dict(doc, pg_list)
             dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
@@ -427,8 +444,8 @@ def renewal_letter(excel_path1):
                 df = create_pandas_df(formatted_dict)
             except KeyError:
                 continue
-            df["broker_name"] = pd.read_excel(excel_path, sheet_name=0, header=None).at[8, 1]
-            df["mods"] = pd.read_excel(excel_path, sheet_name=0, header=None).at[4, 1]
+            df["broker_name"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[8, 1]
+            df["mods"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[4, 1]
             print(df)
             for rows in df.to_dict(orient="records"):
                 write_to_new_docx("Renewal Letter New.docx", rows)
@@ -436,7 +453,7 @@ def renewal_letter(excel_path1):
 
 
 def renewal_letter_manual(excel_data1):
-    df = pd.DataFrame([excel_data])
+    df = pd.DataFrame([excel_data1])
     df["today"] = datetime.today().strftime("%B %d, %Y")
     df["mailing_address"] = df[["address_line_one", "address_line_two"]].astype(str).apply(
         lambda x: ', '.join(x[:-1]) + " " + x[-1:], axis=1)
@@ -450,9 +467,9 @@ def renewal_letter_manual(excel_data1):
 def get_excel_data(excel_path1):
     data = {}
     try:
-        df = pd.read_excel(excel_path, sheet_name=0, header=None)
+        df = pd.read_excel(excel_path1, sheet_name=0, header=None)
         data["broker_name"] = df.at[8, 1]
-        data["risk_type"] = df.at[13, 1]
+        data["risk_type_1"] = df.at[13, 1]
         data["named_insured"] = df.at[15, 1]
         data["insurer"] = df.at[16, 1]
         data["policy_number"] = df.at[17, 1]
@@ -478,7 +495,7 @@ excel_data = get_excel_data(excel_path)
 def main():
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
     task = df_excel.at[2, 1]
-    if task == "Auto Generate Renewal Letter":
+    if task == "Auto Renewal Letter":
         renewal_letter(excel_path)
     elif task == "Manual Renewal Letter":
         renewal_letter_manual(excel_data)

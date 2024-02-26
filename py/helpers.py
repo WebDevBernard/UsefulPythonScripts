@@ -14,17 +14,33 @@ and_regex = re.compile(r'&|\b(and)\b', flags=re.IGNORECASE)
 form_fields = ["insurer", "name_and_address", "policy_number", "effective_date", "risk_address", "form_type",
                "risk_type", "number_of_families", "number_of_units", "premium_amount", "condo_deductible",
                "condo_earthquake_deductible", "earthquake_coverage", "overland_water", "ground_water",
-               "tenant_vandalism",
-               "service_line"]
+               "tenant_vandalism", "service_line", "licence_plate", "transaction_type", "name_code"]
 FormFields = namedtuple("FormFields", form_fields, defaults=(None,) * len(form_fields))
 target_fields = ["target_keyword", "first_index", "second_index", "target_coordinates", "append_duplicates",
                  "join_list"]
 TargetFields = namedtuple("TargetFields", target_fields, defaults=(None,) * len(target_fields))
 remaining_index = slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1:".split(':')))
+
+DocType = namedtuple("DocType", "pdf_name keyword coordinates", defaults=None)
+doc_types = [
+    DocType("Aviva", "Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)),
+    DocType("Family", "Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)),
+    DocType("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
+    DocType("Wawanesa", "BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703)),
+    DocType("ICBC", "Owner's Certificate of Insurance", (281.5190124511719, 36.0, 557.7416381835938, 48.2890625))
+]
+
+ContentPages = namedtuple("ContentPages", "pdf_name keyword coordinates", defaults=None)
+content_pages = [
+    ContentPages("Aviva", "CANCELLATION OF THE POLICY", -1),
+    ContentPages("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
+    ContentPages("Wawanesa", re.compile(r"\w{3}\s\d{2},\s\d{4}"),
+                 (36.0, 762.829833984375, 576.001220703125, 778.6453857421875)),
+    ContentPages("ICBC", "ICBC Copy", (36.0, 761.039794921875, 560.1397094726562, 769.977294921875))
+]
 target_dict = {
     "Aviva":
         FormFields(
-            # "name_and_address" is the target_key, first_index the outer nested list, inner_index is the inner list
             name_and_address=TargetFields(target_coordinates=(80.4000015258789, 202.239990234375, 250, 280)),
             policy_number=TargetFields(target_keyword="Policy Number", target_coordinates=(
                 267.11999893188477, 10.15997314453125, -202.8189697265625, 9.16009521484375)),
@@ -47,7 +63,6 @@ target_dict = {
         )._asdict(),
     "Family":
         FormFields(
-            # "name_and_address" is the target_key
             name_and_address=TargetFields(
                 target_coordinates=(37.72800064086914, 170.62953186035156, 150, 220.67938232421875)),
             policy_number=TargetFields(target_keyword="POLICY NUMBER",
@@ -70,7 +85,6 @@ target_dict = {
         )._asdict(),
     "Intact":
         FormFields(
-            # "name_and_address" is the target_key
             name_and_address=TargetFields(
                 target_coordinates=(49.650001525878906, 152.64999389648438, 214.1199951171875, 200.99000549316406)),
             policy_number=TargetFields(target_keyword="Policy Number",
@@ -97,7 +111,6 @@ target_dict = {
         )._asdict(),
     "Wawanesa":
         FormFields(
-            # "name_and_address" is the target_key
             name_and_address=TargetFields(
                 target_coordinates=(36.0, 122.4298095703125, 200, 180)),
             policy_number=TargetFields(target_keyword="NAMED INSURED AND ADDRESS",
@@ -127,7 +140,15 @@ target_dict = {
             service_line=TargetFields(target_keyword="Service Line Coverage", first_index=0, second_index=0),
 
         )._asdict(),
-
+    "ICBC":
+        FormFields(
+            name_and_address=TargetFields(
+                target_coordinates=(36.0, 111.35009765625, 150, 150)),
+            licence_plate=TargetFields(target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
+                                       first_index=0, second_index=0),
+            transaction_type=TargetFields(target_keyword="Transaction Type", first_index=0, second_index=0),
+            name_code=TargetFields(target_coordinates=(198.0, 761.0403442382812, 255.010986328125, 769.977294921875))
+        )._asdict(),
 }
 
 
