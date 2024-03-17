@@ -205,7 +205,8 @@ def format_additional_coverage(field_dict, dict_items, type_of_pdf):
         field_dict["overland_water"] = True
     if dict_items["service_line"]:
         field_dict["service_line"] = True
-
+    if type_of_pdf == "Aviva" and dict_items["overland_water"]:
+        field_dict["service_line"] = True
 
 def find_risk_addresses(risk_addresses):
     matched = []
@@ -393,6 +394,7 @@ def sort_renewal_list():
             excel_paths, engine="openpyxl")
         df = df.reindex(columns=column_list)
         df = df.drop_duplicates(subset=["policynum"], keep=False)
+
         df["renewal_1"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%d-%b")
         df["renewal"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%m%d")
         df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)
@@ -403,6 +405,7 @@ def sort_renewal_list():
             list_with_spaces.append(y)
             list_with_spaces.append(pd.DataFrame([[float('NaN')] * len(y.columns)], columns=y.columns))
         df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
+        # df = df[((df['pcode'] == 'FS') | (df['csrcode'] == 'FS')) & (df['buscode'] == 'COMM')]
         print(df)
         if not os.path.isfile(output_path):
             writer = pd.ExcelWriter(output_path, engine="openpyxl")
@@ -495,7 +498,7 @@ def format_icbc(dict_items, type_of_pdf):
     return field_dict
 
 
-def rename_icbc(drive_letter):
+def rename_icbc(drive_letter, number_of_pdfs):
     icbc_input_directory = Path.home() / 'Downloads'
     icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
     producer_dict = {
@@ -503,9 +506,8 @@ def rename_icbc(drive_letter):
     }
     pdf_files1 = list(icbc_input_directory.rglob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
-    for pdf in pdf_files1[-9:]:
-        with fitz.open(pdf) as doc:
-            print(Path(pdf).stem)
+    for pdf in pdf_files1[-number_of_pdfs:]:
+        with (fitz.open(pdf) as doc):
             print(f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} ")
             doc_type = get_doc_types(doc)
             print(f"This is a {doc_type} policy.")
@@ -519,9 +521,7 @@ def rename_icbc(drive_letter):
             except KeyError:
                 continue
             if doc_type and doc_type == "ICBC":
-                icbc_file_name = f"{df['licence_plate'].at[0]} Change.pdf" if df['transaction_type'].at[
-                                                                                  0] == "CHANGE" else f"{df['licence_plate'].at[
-                    0]}.pdf"
+                icbc_file_name = f"{df['licence_plate'].at[0]} Change.pdf" if df['transaction_type'].at[0] == "CHANGE" else f"{df['licence_plate'].at[0]}.pdf"
                 icbc_output_dir = Path(icbc_output_directory) if df['name_code'].at[
                                                                      0].upper() == "HOUSE" or producer_dict.get(
                     df['name_code'].at[0].upper()) is None else Path(
@@ -531,7 +531,7 @@ def rename_icbc(drive_letter):
                 if icbc_output_path.exists():
                     with fitz.open(icbc_output_path) as doc1:
                         target_transaction_id = doc1[0].get_text("text", clip=(
-                        502.0, 63.96209716796875, 558.0, 72.82147216796875))
+                            502.0, 63.96209716796875, 558.0, 72.82147216796875))
                         if int(df["transaction_timestamp"].at[0]) == int(target_transaction_id):
                             continue
                         else:
@@ -553,6 +553,7 @@ def main():
     df_excel_1 = pd.read_excel(excel_path, sheet_name="Data", header=None)
     task = df_excel.at[2, 1]
     drive_letter = df_excel_1.at[1, 4]
+    number_of_pdfs = int(df_excel_1.at[2, 4]) - 1
     if task == "Auto Renewal Letter":
         renewal_letter(excel_path)
     elif task == "Manual Renewal Letter":
@@ -560,7 +561,7 @@ def main():
     elif task == "Sort Renewal List":
         sort_renewal_list()
     elif task == "Copy/Rename APV250":
-        rename_icbc(drive_letter)
+        rename_icbc(drive_letter, number_of_pdfs)
 
 
 if __name__ == "__main__":
