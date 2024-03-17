@@ -14,7 +14,8 @@ and_regex = re.compile(r'&|\b(and)\b', flags=re.IGNORECASE)
 form_fields = ["insurer", "name_and_address", "policy_number", "effective_date", "risk_address", "form_type",
                "risk_type", "number_of_families", "number_of_units", "premium_amount", "condo_deductible",
                "condo_earthquake_deductible", "earthquake_coverage", "overland_water", "ground_water",
-               "tenant_vandalism", "service_line", "licence_plate", "transaction_type", "name_code"]
+               "tenant_vandalism", "service_line", "licence_plate", "transaction_type", "name_code",
+               "transaction_timestamp"]
 FormFields = namedtuple("FormFields", form_fields, defaults=(None,) * len(form_fields))
 target_fields = ["target_keyword", "first_index", "second_index", "target_coordinates", "append_duplicates",
                  "join_list"]
@@ -90,10 +91,12 @@ target_dict = {
             policy_number=TargetFields(target_keyword="Policy Number",
                                        first_index=1, second_index=0),
             effective_date=TargetFields(target_keyword="Policy Number", first_index=1, second_index=1),
-            risk_address=TargetFields(target_keyword="Property Coverage (", first_index=0, second_index=remaining_index,
-                                      append_duplicates=True),
-            form_type=TargetFields(target_keyword="Property Coverage (", first_index=0, second_index=0),
-            risk_type=TargetFields(target_keyword="Property Coverage (", first_index=0, second_index=0),
+            risk_address=TargetFields(target_keyword="Property Coverage (",
+                                      target_coordinates=(0.0, 16.902496337890625, 0.0, 0.0)),
+            form_type=TargetFields(target_keyword="Property Coverage (",
+                                   target_coordinates=(110.64999389648438, 0.0, 0, -10.03228759765625)),
+            risk_type=TargetFields(target_keyword="Property Coverage (",
+                                   target_coordinates=(110.64999389648438, 0.0, 0, -10.03228759765625)),
             number_of_families=TargetFields(target_keyword="Families",
                                             target_coordinates=(0, 18.699981689453125, 0, 10.54998779296875)),
             premium_amount=TargetFields(target_keyword="Total for Policy",
@@ -130,11 +133,8 @@ target_dict = {
                                         first_index=0, second_index=1),
             earthquake_coverage=TargetFields(target_keyword="Earthquake Coverage", first_index=0, second_index=0),
             overland_water=TargetFields(target_keyword="Overland Water", first_index=0, second_index=0),
-            condo_deductible=TargetFields(target_keyword="Condominium Deductible Coverage-", first_index=0,
-                                          second_index=1),
-            condo_earthquake_deductible=TargetFields(target_keyword="Condominium Deductible Coverage Earthquake",
-                                                     first_index=1,
-                                                     second_index=0),
+            condo_deductible=TargetFields(target_keyword="Condominium Deductible Coverage-", target_coordinates=(350.89600372314453, 0.0, 103.84786987304688, -9.600006103515625)),
+            condo_earthquake_deductible=TargetFields(target_keyword="Condominium Deductible Coverage Earthquake", target_coordinates=(350.89600372314453, 0.0, 95.4251708984375, -9.5999755859375)),
             tenant_vandalism=TargetFields(target_keyword="Vandalism by Tenant Coverage -", first_index=0,
                                           second_index=0),
             service_line=TargetFields(target_keyword="Service Line Coverage", first_index=0, second_index=0),
@@ -142,12 +142,12 @@ target_dict = {
         )._asdict(),
     "ICBC":
         FormFields(
-            name_and_address=TargetFields(
-                target_coordinates=(36.0, 111.35009765625, 150, 150)),
+            name_and_address=TargetFields(target_coordinates=(36.0, 111.35009765625, 200, 180)),
             licence_plate=TargetFields(target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
                                        first_index=0, second_index=0),
             transaction_type=TargetFields(target_keyword="Transaction Type", first_index=0, second_index=0),
-            name_code=TargetFields(target_coordinates=(198.0, 761.0403442382812, 255.010986328125, 769.977294921875))
+            name_code=TargetFields(target_coordinates=(198.0, 761.0403442382812, 255.010986328125, 769.977294921875)),
+            transaction_timestamp=TargetFields(target_keyword="Transaction Timestamp", first_index=0, second_index=0)
         )._asdict(),
 }
 

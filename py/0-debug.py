@@ -3,13 +3,47 @@ import pdfplumber
 from pathlib import Path
 from tabulate import tabulate
 
-base_dir = Path(__file__).parent.parent
+draw_rect_on_page_num = [1]
+draw_rect_from_coords = (502.0, 63.96209716796875, 558.0, 72.82147216796875)
+input_coords = (40.599998474121094, 341.62982177734375, 331.97607421875, 360.16729736328125)
+target_coords = (398.4960021972656, 341.62982177734375, 427.4012451171875, 350.56732177734375)
+turn_on_draw_rect_all = False
+turn_on_pdf_field_names = False
+turn_on_write_text_coords = True
 
-pg = [1]
-coords = (36.0, 761.039794921875, 560.1397094726562, 769.977294921875)
-input_coords = (36.0, 761.039794921875, 560.1397094726562, 769.977294921875)
-target_coords = ()
-direction = "down"
+
+# Gets pdf key for fillable pdfs (pymupdf debugging)
+def get_pdf_fieldnames(filename, doc):
+    if turn_on_pdf_field_names:
+        output_dir = base_dir / "output" / Path(filename).stem
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / f"(FieldNames) {Path(filename).stem}.txt"
+        with open(output_path, 'w', encoding="utf-8") as file:
+            for index, page in enumerate(doc):
+                file.write(f"\nPage: {index + 1}\n")
+                print(f"\nPage {index + 1}\n")
+                for index1, widget in enumerate(page.widgets()):
+                    file.write(f"{widget.field_name}")
+                    print(f"{index1}{" " * 9}{widget.field_name}")
+
+
+# prints coordinates using input and target
+def calculate_target_coords(input_coords, target_coords):
+    if input_coords and target_coords:
+        x0_1, y0_1, x1_1, y1_1 = input_coords
+        x0_2, y0_2, x1_2, y1_2 = target_coords
+        debug_result_x_0 = x0_1 + x0_2 - x0_1
+        debug_result_x_1 = x1_1 + x1_2 - x1_1
+        debug_result_y_0 = y0_1 + y0_2 - y0_1
+        debug_result_y_1 = y1_1 + y1_2 - y1_1
+        result_x_0 = x0_2 - x0_1
+        result_x_1 = x1_2 - x1_1
+        result_y_0 = y0_2 - y0_1
+        result_y_1 = y1_2 - y1_1
+        x_y_relative = (result_x_0, result_y_0, result_x_1, result_y_1)
+        debug_relative = (debug_result_x_0, debug_result_y_0, debug_result_x_1, debug_result_y_1)
+        print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
+        return debug_relative
 
 
 # Get list of word looking things (pymupdf debugging)
@@ -54,21 +88,12 @@ def find_table_dict(doc):
     return field_dict
 
 
-# Gets pdf key for fillable pdfs (pymupdf debugging)
-def get_pdf_fieldnames(doc):
-    output_dir = base_dir / "output"
-    output_dir.mkdir(exist_ok=True)
-    for index, page in enumerate(doc):
-        print(f"\nPage {index + 1}")
-        for index, widget in enumerate(page.widgets()):
-            print(f"{index}{" " * 9}{widget.field_name}")
-
-
 # Opens the default image viewer to see what bbox look like
 def plumber_draw_rect(doc, field_dict, dpi):
-    for page_number in range(len(doc.pages)):
-        dict_list = field_dict[page_number + 1]
-        doc.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
+    if turn_on_draw_rect_all:
+        for page_number in range(len(doc.pages)):
+            dict_list = field_dict[page_number + 1]
+            doc.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
 
 
 # Same as above but based on specified coordinates instead
@@ -78,64 +103,36 @@ def plumber_draw_from_pg_and_coords(doc, pages, coords1, dpi):
         doc.pages[page_num - 1].to_image(resolution=dpi).draw_rect(coords1).show()
 
 
-# prints coordinates using input and target
-def calculate_target_coords(input_coords, target_coords, direction):
-    if input_coords and target_coords and direction:
-        if direction == "down":
-            x0_1, y0_1, x1_1, y1_1 = input_coords
-            x0_2, y0_2, x1_2, y1_2 = target_coords
-            debug_result_x_0 = x0_1 + x0_2 - x0_1
-            debug_result_x_1 = x1_1 + x1_2 - x1_1
-            debug_result_y_0 = y0_1 + y0_2 - y0_1
-            debug_result_y_1 = y1_1 + y1_2 - y1_1
-            result_x_0 = x0_2 - x0_1
-            result_x_1 = x1_2 - x1_1
-            result_y_0 = y0_2 - y0_1
-            result_y_1 = y1_2 - y1_1
-            x_y_relative = (result_x_0, result_y_0, result_x_1, result_y_1)
-            debug_relative = (debug_result_x_0, debug_result_y_0, debug_result_x_1, debug_result_y_1)
-            print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
-            return debug_relative
-
-        if direction == "right":
-            x0_1, y0_1, x1_1, y1_1 = input_coords
-            x0_2, y0_2, x1_2, y1_2 = target_coords
-            debug_result_x_0 = x0_1 + x0_2 - x0_1
-            debug_result_x_1 = x1_1 + x1_2 - x1_1
-            result_x_0 = x0_2 - x0_1
-            result_x_1 = x1_2 - x1_1
-            x_y_relative = (result_x_0, 0, result_x_1, 0)
-            debug_relative = (debug_result_x_0, y0_1, debug_result_x_1, y1_1)
-            print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
-            return debug_relative
-
-
 def write_txt_to_file_dir(dir_path, field_dict):
     with open(dir_path, 'w', encoding="utf-8") as file:
         for page, data in field_dict.items():
             file.write(f"Page: {page}\n")
-            file.write(f"{tabulate(data, ["Keywords", "Coordinates"], tablefmt="grid", maxcolwidths=[50, None])}\n")
+            try:
+                file.write(f"{tabulate(data, ["Keywords", "Coordinates"], tablefmt="grid", maxcolwidths=[50, None])}\n")
+            except IndexError:
+                continue
 
 
 def write_text_coords(file_name, block_dict, table_dict, word_dict):
-    output_dir = base_dir / "output" / Path(file_name).stem
-    output_dir.mkdir(exist_ok=True)
-    block_dir_path = output_dir / f"(Block Coordinates) {Path(file_name).stem}.txt"
-    table_dir_path = output_dir / f"(Table Coordinates) {Path(file_name).stem}.txt"
-    word_dir_path = output_dir / f"(Word Coordinates) {Path(file_name).stem}.txt"
-    if block_dict:
-        write_txt_to_file_dir(block_dir_path, block_dict)
-    if table_dict:
-        write_txt_to_file_dir(table_dir_path, table_dict)
-    if word_dict:
-        write_txt_to_file_dir(word_dir_path, word_dict)
+    if turn_on_write_text_coords:
+        output_dir = base_dir / "output" / Path(file_name).stem
+        output_dir.mkdir(parents=True, exist_ok=True)
+        block_dir_path = output_dir / f"(Block Coordinates) {Path(file_name).stem}.txt"
+        table_dir_path = output_dir / f"(Table Coordinates) {Path(file_name).stem}.txt"
+        word_dir_path = output_dir / f"(Word Coordinates) {Path(file_name).stem}.txt"
+        if block_dict:
+            write_txt_to_file_dir(block_dir_path, block_dict)
+        if table_dict:
+            write_txt_to_file_dir(table_dir_path, table_dict)
+        if word_dict:
+            write_txt_to_file_dir(word_dir_path, word_dict)
 
 
 def main():
-    calculate_target_coords(input_coords, target_coords, direction)
+    calculate_target_coords(input_coords, target_coords)
     for pdf in pdf_files:
         with fitz.open(pdf) as doc:
-            # get_pdf_fieldnames(doc)
+            get_pdf_fieldnames(pdf, doc)
 
             b = get_text_blocks(doc)  # 1 find by text blocks
             # t = find_table_dict(doc)  # 2 find by table
@@ -143,9 +140,11 @@ def main():
             write_text_coords(pdf, b, 0, w)
 
         with pdfplumber.open(pdf) as doc:
-            # plumber_draw_rect(doc, b, 300)
-            plumber_draw_from_pg_and_coords(doc, pg, coords, 300)
+            plumber_draw_rect(doc, b, 300)
+            plumber_draw_from_pg_and_coords(doc, draw_rect_on_page_num, draw_rect_from_coords, 300)
 
+
+base_dir = Path(__file__).parent.parent
 
 # Loop through each PDF file and append the full path to the list
 input_dir = base_dir / "input"

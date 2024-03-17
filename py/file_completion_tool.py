@@ -2,6 +2,9 @@ import pandas as pd
 import fitz
 import os
 import re
+import shutil
+import warnings
+import pathlib
 from pathlib import Path
 from docxtpl import DocxTemplate
 from helpers import (target_dict, and_regex, address_regex, date_regex, dollar_regex,
@@ -10,6 +13,8 @@ from helpers import (target_dict, and_regex, address_regex, date_regex, dollar_r
 from PyPDF2 import PdfReader, PdfWriter
 from datetime import datetime
 from collections import defaultdict
+
+warnings.simplefilter("ignore")
 
 
 def get_doc_types(doc):
@@ -31,7 +36,7 @@ def get_content_pages(doc, pdf_name):
             # if the type of pdf found in get_doc_types matches the pdf_name
             if content_page.pdf_name == pdf_name:
 
-                # Finds which page to stop on with coordinates being the starting range of pages
+                # Findscd  which page to stop on with coordinates being the starting range of pages
                 if isinstance(keyword, str) and isinstance(coordinates, int):
                     if page.search_for(keyword):
                         for page_num in range(page_index + coordinates, page_index + 1):
@@ -244,6 +249,16 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                 field_dict["seasonal"] = True
             if "home".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "home"
+            elif type_of_pdf == "Aviva" and "condominium".casefold() in risk_type.casefold():
+                field_dict[f"risk_type_{index + 1}"] = "condo"
+            elif type_of_pdf == "Family" and "condo".casefold() in risk_type.casefold():
+                field_dict[f"risk_type_{index + 1}"] = "condo"
+            elif type_of_pdf == "Intact" and "condominium ".casefold() in risk_type.casefold():
+                field_dict[f"risk_type_{index + 1}"] = "condo"
+            elif type_of_pdf == "Intact" and "Rented Condominium".casefold() in risk_type.casefold():
+                field_dict[f"risk_type_{index + 1}"] = "rented_condo"
+            elif type_of_pdf == "Wawanesa" and "Condominium" in risk_type:
+                field_dict[f"risk_type_{index + 1}"] = "condo"
             elif "rented dwelling".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "rented_dwelling"
             elif "revenue".casefold() in risk_type.casefold():
@@ -252,14 +267,6 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                 field_dict[f"risk_type_{index + 1}"] = "rented_condo"
             elif "tenant".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "tenant"
-            elif type_of_pdf == "Aviva" and "condominium".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index + 1}"] = "condo"
-            elif type_of_pdf == "Family" and "condo".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index + 1}"] = "condo"
-            elif type_of_pdf == "Intact" and "condominium ".casefold() in risk_type.casefold():
-                field_dict[f"risk_type_{index + 1}"] = "condo"
-            elif type_of_pdf == "Wawanesa" and "Condominium" in risk_type:
-                field_dict[f"risk_type_{index + 1}"] = "condo"
     return field_dict
 
 
@@ -311,7 +318,8 @@ def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
         for index, condo_earthquake_deductible in enumerate(deductibles):
             if type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
                 field_dict["condo_earthquake_deductible_1"] = "$25,000"
-            elif type_of_pdf == "Intact" and not dict_items["condo_earthquake_deductible"]:
+            elif type_of_pdf == "Intact" and dict_items["earthquake_coverage"] and not dict_items[
+                "condo_earthquake_deductible"]:
                 field_dict["condo_earthquake_deductible_1"] = "$2,500"
             else:
                 field_dict[f"condo_earthquake_deductible_{index + 1}"] = re.search(dollar_regex,
@@ -319,28 +327,9 @@ def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
     return field_dict
 
 
-def format_icbc(field_dict, dict_items, type_of_pdf):
-    if type_of_pdf == "ICBC":
-        for license_plates in dict_items["licence_plate"]:
-            for index, license_plate in enumerate(license_plates):
-                plate_number = re.sub(re.compile(r"Licence Plate Number "), "", license_plate)
-                field_dict["licence_plate"] = plate_number
-        for transaction_types in dict_items["transaction_type"]:
-            for index, transaction_type in enumerate(transaction_types):
-                transaction = re.sub(re.compile(r"Transaction Type "), "", transaction_type)
-                field_dict["transaction_type"] = transaction
-        for name_codes in dict_items["name_code"]:
-            for index, name_code in enumerate(name_codes):
-                name = re.search(re.compile(r"(?<= - )\b\w{2,3}\b(?= - )"), name_code)
-                if name is not None:
-                    field_dict["name_code"] = name.group()
-                else:
-                    field_dict["name_code"] = "HOUSE"
-
-
 def format_policy(flattened_dict, type_of_pdf):
     field_dict = {}
-    if type_of_pdf:
+    if type_of_pdf and type_of_pdf != "ICBC":
         format_named_insured(field_dict, flattened_dict, type_of_pdf)
         format_insurer_name(field_dict, type_of_pdf)
         format_mailing_address(field_dict, flattened_dict)
@@ -354,7 +343,6 @@ def format_policy(flattened_dict, type_of_pdf):
         format_number_families(field_dict, flattened_dict, type_of_pdf)
         format_condo_deductible(field_dict, flattened_dict, type_of_pdf)
         format_condo_earthquake_deductible(field_dict, flattened_dict, type_of_pdf)
-        format_icbc(field_dict, flattened_dict, type_of_pdf)
     return field_dict
 
 
@@ -371,12 +359,10 @@ def create_pandas_df(data_dict):
 
 
 def write_to_new_docx(docx, rows):
-    output_dir = base_dir / "output"
-    output_dir.mkdir(exist_ok=True)
     template_path = base_dir / "templates" / docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
-    output_path = output_dir / f"{rows["named_insured"]} {rows["risk_type_1"].title()}.docx"
+    output_path = output_dir / f"{rows["named_insured"]}.docx"
     doc.save(unique_file_name(output_path))
 
 
@@ -394,13 +380,6 @@ def write_to_pdf(pdf, dictionary, rows):
         writer.write(output_stream)
 
 
-def find_excel_paths(excel_paths):
-    if Path(excel_paths).suffix == ".XLS":
-        return pd.read_excel(excel_paths, engine="xlrd")
-    elif Path(excel_paths).suffix == ".XLSX":
-        return pd.read_excel(excel_paths, engine="openpyxl")
-
-
 def sort_renewal_list():
     xlsx_files = Path(input_dir).glob("*.xlsx")
     xls_files = Path(input_dir).glob("*.xls")
@@ -410,10 +389,15 @@ def sort_renewal_list():
     try:
         column_list = ["policynum", "ccode", "name", "pcode", "csrcode", "insurer", "buscode", "renewal", "Pulled",
                        "D/L"]
-        df = find_excel_paths(excel_paths)
+        df = pd.read_excel(excel_paths, engine="xlrd") if Path(excel_paths).suffix == ".XLS" else pd.read_excel(
+            excel_paths, engine="openpyxl")
         df = df.reindex(columns=column_list)
         df = df.drop_duplicates(subset=["policynum"], keep=False)
+        df["renewal_1"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%d-%b")
+        df["renewal"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%m%d")
         df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)
+        df["renewal"] = df["renewal_1"]
+        df = df.drop('renewal_1', axis=1)
         list_with_spaces = []
         for x, y in df.groupby('insurer', sort=False):
             list_with_spaces.append(y)
@@ -431,6 +415,7 @@ def sort_renewal_list():
 
 
 def renewal_letter(excel_path1):
+    pdf_files = input_dir.glob("*.pdf")
     for pdf in pdf_files:
         with fitz.open(pdf) as doc:
             print(f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} ")
@@ -447,8 +432,9 @@ def renewal_letter(excel_path1):
             df["broker_name"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[8, 1]
             df["mods"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[4, 1]
             print(df)
-            for rows in df.to_dict(orient="records"):
-                write_to_new_docx("Renewal Letter New.docx", rows)
+            if doc_type and doc_type != "ICBC":
+                for rows in df.to_dict(orient="records"):
+                    write_to_new_docx("Renewal Letter New.docx", rows)
             print(f"\n<==========================>\n")
 
 
@@ -483,24 +469,98 @@ def get_excel_data(excel_path1):
     return data
 
 
+def format_icbc(dict_items, type_of_pdf):
+    field_dict = {}
+    if type_of_pdf and type_of_pdf == "ICBC":
+        for license_plates in dict_items["licence_plate"]:
+            for index, license_plate in enumerate(license_plates):
+                plate_number = re.sub(re.compile(r"Licence Plate Number "), "", license_plate)
+                field_dict["licence_plate"] = plate_number
+        for transaction_types in dict_items["transaction_type"]:
+            for index, transaction_type in enumerate(transaction_types):
+                transaction = re.sub(re.compile(r"Transaction Type "), "", transaction_type)
+                field_dict["transaction_type"] = transaction
+        for name_codes in dict_items["name_code"]:
+            for index, name_code in enumerate(name_codes):
+                name = re.search(re.compile(r"(?<= - )\b\w{2,3}\b(?= - )"), name_code)
+                if name is not None:
+                    field_dict["name_code"] = name.group().upper()
+                else:
+                    field_dict["name_code"] = "HOUSE"
+        for transaction_timestamps in dict_items["transaction_timestamp"]:
+            for index, transaction_timestamp in enumerate(transaction_timestamps):
+                transaction1 = re.sub(re.compile(r"Transaction Timestamp "), "", transaction_timestamp)
+                field_dict["transaction_timestamp"] = transaction1
+        format_named_insured(field_dict, dict_items, type_of_pdf)
+    return field_dict
+
+
+def rename_icbc(drive_letter):
+    icbc_input_directory = Path.home() / 'Downloads'
+    icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
+    producer_dict = {
+
+    }
+    pdf_files1 = list(icbc_input_directory.rglob("*.pdf"))
+    pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
+    for pdf in pdf_files1[-9:]:
+        with fitz.open(pdf) as doc:
+            print(Path(pdf).stem)
+            print(f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} ")
+            doc_type = get_doc_types(doc)
+            print(f"This is a {doc_type} policy.")
+            pg_list = get_content_pages(doc, doc_type)
+            input_dict = search_for_input_dict(doc, pg_list)
+            dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
+            formatted_dict = format_icbc(ff(dict_items[doc_type]), doc_type)
+            try:
+                df = pd.DataFrame([formatted_dict])
+                print(df)
+            except KeyError:
+                continue
+            if doc_type and doc_type == "ICBC":
+                icbc_file_name = f"{df['licence_plate'].at[0]} Change.pdf" if df['transaction_type'].at[
+                                                                                  0] == "CHANGE" else f"{df['licence_plate'].at[
+                    0]}.pdf"
+                icbc_output_dir = Path(icbc_output_directory) if df['name_code'].at[
+                                                                     0].upper() == "HOUSE" or producer_dict.get(
+                    df['name_code'].at[0].upper()) is None else Path(
+                    f"{icbc_output_directory}/{producer_dict.get(df['name_code'].at[0].upper())}")
+                # icbc_output_dir.mkdir(parents=True, exist_ok=True)
+                icbc_output_path = icbc_output_dir / icbc_file_name
+                if icbc_output_path.exists():
+                    with fitz.open(icbc_output_path) as doc1:
+                        target_transaction_id = doc1[0].get_text("text", clip=(
+                        502.0, 63.96209716796875, 558.0, 72.82147216796875))
+                        if int(df["transaction_timestamp"].at[0]) == int(target_transaction_id):
+                            continue
+                        else:
+                            shutil.copy(pdf, unique_file_name(icbc_output_path))
+                else:
+                    shutil.copy(pdf, unique_file_name(icbc_output_path))
+
+
 base_dir = Path(__file__).parent.parent
 input_dir = base_dir / "input"
 output_dir = base_dir / "output"
-output_dir.mkdir(exist_ok=True)
-pdf_files = input_dir.glob("*.pdf")
-excel_path = base_dir / "input.xlsx"  # name of Excel
-excel_data = get_excel_data(excel_path)
 
 
 def main():
+    output_dir.mkdir(exist_ok=True)
+    excel_path = base_dir / "input.xlsx"  # name of Excel
+    excel_data = get_excel_data(excel_path)
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
+    df_excel_1 = pd.read_excel(excel_path, sheet_name="Data", header=None)
     task = df_excel.at[2, 1]
+    drive_letter = df_excel_1.at[1, 4]
     if task == "Auto Renewal Letter":
         renewal_letter(excel_path)
     elif task == "Manual Renewal Letter":
         renewal_letter_manual(excel_data)
     elif task == "Sort Renewal List":
         sort_renewal_list()
+    elif task == "Copy/Rename APV250":
+        rename_icbc(drive_letter)
 
 
 if __name__ == "__main__":
