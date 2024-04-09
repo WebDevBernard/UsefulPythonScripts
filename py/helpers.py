@@ -65,7 +65,7 @@ target_dict = {
     "Family":
         FormFields(
             name_and_address=TargetFields(
-                target_coordinates=(37.72800064086914, 170.62953186035156, 150, 220.67938232421875)),
+                target_coordinates=(37.72800064086914, 170.62953186035156, 150, 228.67138671875)),
             policy_number=TargetFields(target_keyword="POLICY NUMBER",
                                        target_coordinates=(0, 10.913284301757812, 0, 12.68017578125)),
             effective_date=TargetFields(target_keyword="EFFECTIVE DATE",

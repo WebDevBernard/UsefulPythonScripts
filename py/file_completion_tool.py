@@ -205,7 +205,7 @@ def format_additional_coverage(field_dict, dict_items, type_of_pdf):
         field_dict["overland_water"] = True
     if dict_items["service_line"]:
         field_dict["service_line"] = True
-    if type_of_pdf == "Aviva" and dict_items["overland_water"]:
+    if type_of_pdf == "Family" and dict_items["overland_water"]:
         field_dict["service_line"] = True
 
 def find_risk_addresses(risk_addresses):
@@ -256,8 +256,10 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                 field_dict[f"risk_type_{index + 1}"] = "condo"
             elif type_of_pdf == "Intact" and "condominium ".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "condo"
+                field_dict["condo_earthquake_deductible_1"] = "$100,000"
             elif type_of_pdf == "Intact" and "Rented Condominium".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "rented_condo"
+                field_dict["condo_earthquake_deductible_1"] = "$100,000"
             elif type_of_pdf == "Wawanesa" and "Condominium" in risk_type:
                 field_dict[f"risk_type_{index + 1}"] = "condo"
             elif "rented dwelling".casefold() in risk_type.casefold():
@@ -305,7 +307,8 @@ def format_condo_deductible(field_dict, dict_items, type_of_pdf):
     for deductibles in dict_items["condo_deductible"]:
         if type_of_pdf == "Family":
             field_dict["condo_deductible_1"] = re.search(dollar_regex, deductibles[0]).group()
-            field_dict["condo_earthquake_deductible_1"] = re.search(dollar_regex, deductibles[1]).group()
+            if re.search(dollar_regex, deductibles[1]):
+                field_dict["condo_earthquake_deductible_1"] = re.search(dollar_regex, deductibles[1]).group()
         for index, condo_deductible in enumerate(deductibles):
             if dict_items["condo_deductible"] and type_of_pdf != "Family":
                 field_dict[f"condo_deductible_{index + 1}"] = re.search(dollar_regex, condo_deductible).group()
