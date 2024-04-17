@@ -9,3 +9,4 @@ PyCryptodome
 pdfplumber
 pymupdf
 xlrd
+tabulate

@@ -13,6 +13,7 @@ from helpers import (target_dict, and_regex, address_regex, date_regex, dollar_r
 from PyPDF2 import PdfReader, PdfWriter
 from datetime import datetime
 from collections import defaultdict
+from names import producer_dict
 
 warnings.simplefilter("ignore")
 
@@ -256,10 +257,10 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                 field_dict[f"risk_type_{index + 1}"] = "condo"
             elif type_of_pdf == "Intact" and "condominium ".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "condo"
-                field_dict["condo_earthquake_deductible_1"] = "$100,000"
+                field_dict["condo_deductible_1"] = "$100,000"
             elif type_of_pdf == "Intact" and "Rented Condominium".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "rented_condo"
-                field_dict["condo_earthquake_deductible_1"] = "$100,000"
+                field_dict["condo_deductible_1"] = "$100,000"
             elif type_of_pdf == "Wawanesa" and "Condominium" in risk_type:
                 field_dict[f"risk_type_{index + 1}"] = "condo"
             elif "rented dwelling".casefold() in risk_type.casefold():
@@ -504,9 +505,6 @@ def format_icbc(dict_items, type_of_pdf):
 def rename_icbc(drive_letter, number_of_pdfs):
     icbc_input_directory = Path.home() / 'Downloads'
     icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
-    producer_dict = {
-
-    }
     pdf_files1 = list(icbc_input_directory.rglob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
     for pdf in pdf_files1[-number_of_pdfs:]:

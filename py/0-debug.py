@@ -3,8 +3,8 @@ import pdfplumber
 from pathlib import Path
 from tabulate import tabulate
 
-draw_rect_on_page_num = []
-draw_rect_from_coords = (502.0, 63.96209716796875, 558.0, 72.82147216796875)
+draw_rect_on_page_num = [1]
+draw_rect_from_coords = (183.83999633789062, 728.4000244140625, 197.9759979248047, 734.4000244140625)
 input_coords = (40.599998474121094, 341.62982177734375, 331.97607421875, 360.16729736328125)
 target_coords = (398.4960021972656, 341.62982177734375, 427.4012451171875, 350.56732177734375)
 turn_on_draw_rect_all = False

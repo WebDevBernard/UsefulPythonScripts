@@ -8,3 +8,16 @@ Python Scripts
 - `python -m auto_py_to_exe`
 - `pip freeze | xargs pip uninstall -y`
 
+```
+{
+    "terminal.integrated.profiles.windows": {
+        "GitBash": {
+            "source": "GitBash",
+            "path": ["E:\\PortableGit\\bin\\bash.exe"],
+            "icon": "terminal-bash"
+          }
+    },
+    "terminal.integrated.defaultProfile.windows": "GitBash"
+}
+
+```

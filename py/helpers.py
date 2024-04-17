@@ -25,6 +25,7 @@ remaining_index = slice(*map(lambda x: int(x.strip()) if x.strip() else None, "1
 DocType = namedtuple("DocType", "pdf_name keyword coordinates", defaults=None)
 doc_types = [
     DocType("Aviva", "Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)),
+    DocType("Aviva", "Aviva", (183.83999633789062, 728.4000244140625, 197.9759979248047, 734.4000244140625)),
     DocType("Family", "Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)),
     DocType("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
     DocType("Wawanesa", "BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703)),
