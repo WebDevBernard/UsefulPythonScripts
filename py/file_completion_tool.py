@@ -209,11 +209,13 @@ def format_additional_coverage(field_dict, dict_items, type_of_pdf):
     if type_of_pdf == "Family" and dict_items["overland_water"]:
         field_dict["service_line"] = True
 
+
 def find_risk_addresses(risk_addresses):
     matched = []
-    for index, risk_address in enumerate(risk_addresses):
-        if re.search(postal_code_regex, " ".join(risk_address)) and risk_address not in matched:
-            matched.append(risk_address)
+    for risk_address1 in risk_addresses:
+        for risk_address in risk_address1:
+            if re.search(postal_code_regex, risk_address) and risk_address not in matched:
+                matched.append(risk_address)
     return matched
 
 
@@ -221,7 +223,7 @@ def format_risk_address(field_dict, dict_items):
     risk_addresses = find_risk_addresses(dict_items["risk_address"])
     for index, risk_address in enumerate(risk_addresses):
         field_dict[f"risk_address_{index + 1}"] = risk_address_title_case(
-            re.sub(postal_code_regex, "", risk_address[0]).rstrip(", "))
+            re.sub(postal_code_regex, "", risk_addresses[index]).rstrip(", "))
     return field_dict
 
 
