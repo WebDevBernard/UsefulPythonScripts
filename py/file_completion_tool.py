@@ -9,7 +9,7 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from helpers import (target_dict, and_regex, address_regex, date_regex, dollar_regex,
                      postal_code_regex, ff, find_index, join_and_format_names, address_one_title_case,
-                     address_two_title_case, risk_address_title_case, unique_file_name, doc_types, content_pages)
+                     address_two_title_case, risk_address_title_case, unique_file_name, doc_types, content_pages, find_matching_paths)
 from PyPDF2 import PdfReader, PdfWriter
 from datetime import datetime
 from collections import defaultdict
@@ -37,7 +37,7 @@ def get_content_pages(doc, pdf_name):
             # if the type of pdf found in get_doc_types matches the pdf_name
             if content_page.pdf_name == pdf_name:
 
-                # Findscd  which page to stop on with coordinates being the starting range of pages
+                # Finds which page to stop on with coordinates being the starting range of pages
                 if isinstance(keyword, str) and isinstance(coordinates, int):
                     if page.search_for(keyword):
                         for page_num in range(page_index + coordinates, page_index + 1):
@@ -141,7 +141,7 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
             field_dict["named_insured"] = join_and_format_names(join_same_last_names)
         else:
             names = re.sub(and_regex, "", ", ".join(name_and_address[:address_index]))
-            field_dict["named_insured"] = join_and_format_names(names.split(", "))
+            field_dict["named_insured"] = join_and_format_names(names.split(", ")).replace("  ", " ")
     return field_dict
 
 
@@ -180,7 +180,7 @@ def format_effective_date(field_dict, dict_items):
 
 
 def sum_dollar_amounts(amounts):
-    clean_amount_str = [a.replace("$", "").replace(",", "").replace(" 00", "").replace(".00", "") for a in amounts[0]]
+    clean_amount_str = [a.replace("$", "").replace(",", "").replace(" 00", "").replace(".00", "").replace(" ", "") for a in amounts[0]]
     total = sum(int(c) for c in clean_amount_str)
     return total
 
@@ -261,6 +261,8 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
             elif type_of_pdf == "Intact" and "Rented Condominium".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "rented_condo"
                 field_dict["condo_deductible_1"] = "$100,000"
+            elif type_of_pdf == "Wawanesa" and "Rental Condominium" in risk_type:
+                field_dict[f"risk_type_{index + 1}"] = "rented_condo"
             elif type_of_pdf == "Wawanesa" and "Condominium" in risk_type:
                 field_dict[f"risk_type_{index + 1}"] = "condo"
             elif "rented dwelling".casefold() in risk_type.casefold():
@@ -292,6 +294,7 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
         for index, number_of_families in enumerate(families):
             if type_of_pdf == "Aviva":
                 field_dict[f"number_of_families_{index + 1}"] = keywords.get(number_of_families, None)
+                print(keywords.get(number_of_families, None))
             match = re.search(r"\b(\d+)\b", number_of_families)
             if type_of_pdf == "Family" and match:
                 field_dict[f"number_of_families_{index + 1}"] = keywords.get(str(int(match.group(1)) + 1), None)
@@ -319,13 +322,12 @@ def format_condo_deductible(field_dict, dict_items, type_of_pdf):
 
 
 def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
+    if type_of_pdf == "Intact" and dict_items["earthquake_coverage"] and not dict_items[
+        "condo_earthquake_deductible"]:field_dict["condo_earthquake_deductible_1"] = "$2,500"
     for deductibles in dict_items["condo_earthquake_deductible"]:
         for index, condo_earthquake_deductible in enumerate(deductibles):
             if type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
                 field_dict["condo_earthquake_deductible_1"] = "$25,000"
-            elif type_of_pdf == "Intact" and dict_items["earthquake_coverage"] and not dict_items[
-                "condo_earthquake_deductible"]:
-                field_dict["condo_earthquake_deductible_1"] = "$2,500"
             else:
                 field_dict[f"condo_earthquake_deductible_{index + 1}"] = re.search(dollar_regex,
                                                                                    condo_earthquake_deductible).group()
@@ -334,7 +336,7 @@ def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
 
 def format_policy(flattened_dict, type_of_pdf):
     field_dict = {}
-    if type_of_pdf and type_of_pdf != "ICBC":
+    if type_of_pdf and type_of_pdf == "Wawanesa" or type_of_pdf == "Intact" or type_of_pdf == "Family" or type_of_pdf == "Aviva":
         format_named_insured(field_dict, flattened_dict, type_of_pdf)
         format_insurer_name(field_dict, type_of_pdf)
         format_mailing_address(field_dict, flattened_dict)
@@ -398,7 +400,6 @@ def sort_renewal_list():
             excel_paths, engine="openpyxl")
         df = df.reindex(columns=column_list)
         df = df.drop_duplicates(subset=["policynum"], keep=False)
-
         df["renewal_1"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%d-%b")
         df["renewal"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%m%d")
         df.sort_values(["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True)
@@ -527,18 +528,22 @@ def rename_icbc(drive_letter, number_of_pdfs):
                                                                      0].upper() == "HOUSE" or producer_dict.get(
                     df['name_code'].at[0].upper()) is None else Path(
                     f"{icbc_output_directory}/{producer_dict.get(df['name_code'].at[0].upper())}")
-                # icbc_output_dir.mkdir(parents=True, exist_ok=True)
                 icbc_output_path = icbc_output_dir / icbc_file_name
-                if icbc_output_path.exists():
-                    with fitz.open(icbc_output_path) as doc1:
-                        target_transaction_id = doc1[0].get_text("text", clip=(
-                            502.0, 63.96209716796875, 558.0, 72.82147216796875))
-                        if int(df["transaction_timestamp"].at[0]) == int(target_transaction_id):
-                            continue
-                        else:
-                            shutil.copy(pdf, unique_file_name(icbc_output_path))
-                else:
+                paths = list(Path(icbc_output_directory).rglob("*.pdf"))
+                file_names = [path.stem.split()[0] for path in paths]
+                target_filename = Path(icbc_file_name).stem.split()[0]
+                matching_transaction_ids = []
+                if target_filename in file_names:
+                    # Find matching paths for the target filename
+                    matching_paths = find_matching_paths(target_filename, paths)
+                    for path_name in matching_paths:
+                        with fitz.open(path_name) as doc1:
+                            target_transaction_id = doc1[0].get_text("text", clip=(
+                                502.0, 63.96209716796875, 558.0, 72.82147216796875))
+                            matching_transaction_ids.append(int(target_transaction_id))
+                if int(df["transaction_timestamp"].at[0]) not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
+
 
 
 base_dir = Path(__file__).parent.parent
@@ -551,10 +556,9 @@ def main():
     excel_path = base_dir / "input.xlsx"  # name of Excel
     excel_data = get_excel_data(excel_path)
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
-    df_excel_1 = pd.read_excel(excel_path, sheet_name="Data", header=None)
     task = df_excel.at[2, 1]
-    drive_letter = df_excel_1.at[1, 4]
-    number_of_pdfs = int(df_excel_1.at[2, 4]) - 1
+    drive_letter = df_excel.at[31, 1]
+    number_of_pdfs = int(df_excel.at[29, 1]) - 1
     if task == "Auto Renewal Letter":
         renewal_letter(excel_path)
     elif task == "Manual Renewal Letter":

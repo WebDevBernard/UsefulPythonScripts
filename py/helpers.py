@@ -210,3 +210,7 @@ def unique_file_name(path):
         path = filename + " (" + str(counter) + ")" + extension
         counter += 1
     return path
+
+def find_matching_paths(target_filename, paths):
+    matching_paths = [path for path in paths if path.stem.split()[0] == target_filename]
+    return matching_paths
