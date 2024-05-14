@@ -507,14 +507,19 @@ def format_icbc(dict_items, type_of_pdf):
 
 
 def icbc_filename(df):
+    if df['licence_plate'].at[0] == "NONLIC":
+        return f"{df['named_insured'].at[0]} Registration.pdf"
     if df['transaction_type'].at[0] not in ["RENEW", "NEW"]:
         return f"{df['licence_plate'].at[0]} {df['transaction_type'].at[0]}.pdf"
     else:
         return f"{df['licence_plate'].at[0]}.pdf"
 
+
 def rename_icbc(drive_letter, number_of_pdfs):
     icbc_input_directory = Path.home() / 'Downloads'
     icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
+    # icbc_output_directory = Path.home() / 'Desktop' / "NEW"
+    # icbc_output_directory.mkdir(exist_ok=True)
     pdf_files1 = list(icbc_input_directory.rglob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
     for pdf in pdf_files1[-number_of_pdfs:]:

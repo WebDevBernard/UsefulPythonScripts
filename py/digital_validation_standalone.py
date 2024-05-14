@@ -33,7 +33,7 @@ def find_matching_paths(target_filename, paths):
 
 DocType = namedtuple("DocType", "pdf_name keyword", defaults=None)
 doc_types = [
-    DocType("ICBC", "NOT VALID UNLESS STAMPED BY")
+    DocType("ICBC", "Transaction Timestamp")
 ]
 form_fields = ["licence_plate", "transaction_timestamp", "validation_stamp", "customer_copy", "insured_name", "owner_name", "time_of_validation"]
 target_fields = ["target_keyword", "first_index", "second_index", "target_coordinates", "append_duplicates",
@@ -59,12 +59,12 @@ target_dict = {
 
 def get_doc_types(doc):
     for doc_type in doc_types:
-        for page_index in range(len(doc)):
-            page = doc[page_index]
-            text_block = page.get_text("blocks")
-            text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in text_block]
-            for text in text_boxes:
-                if doc_type.keyword in text:
+        page = doc[0]
+        text_block = page.get_text("blocks")
+        text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in text_block]
+        for text in text_boxes:
+            for item in text:
+                if doc_type.keyword in item:
                     return doc_type.pdf_name
 
 
@@ -134,7 +134,7 @@ def format_icbc(dict_items, type_of_pdf):
     field_dict = {}
     if type_of_pdf and type_of_pdf == "ICBC":
         if not dict_items["licence_plate"]:
-            field_dict["licence_plate"] = "999"
+            field_dict["licence_plate"] = "NONLIC"
         for license_plates in dict_items["licence_plate"]:
             for index, license_plate in enumerate(license_plates):
                 plate_number = re.sub(re.compile(r"Licence Plate Number "), "", license_plate)
@@ -161,6 +161,7 @@ def get_excel_data():
         data["number_of_pdfs"] = int(df_excel.at[2, 1]) - 1
         data["broker_code"] = df_excel.at[4, 1]
         data["company_name"] = df_excel.at[8, 1]
+        data["toggle_customer_copy"] = df_excel.at[13, 1]
     except KeyError:
         return None
     return data
@@ -169,11 +170,19 @@ def get_excel_data():
 def not_customer_copy_page_numbers(pdf):
     pages = []
     with (fitz.open(pdf) as doc):
+        top = False
+        top_block = doc[0].get_text("text", clip=(230.3990020751953, 36.0, 573.6226196289062, 48.2890625))
+        if "Temporary Operation Permit and Owner’s Certificate of Insurance".casefold() in top_block.casefold():
+            top = True
         for page_num in range(len(doc)):
             page = doc[page_num]
+
             text_block = page.get_text("text", clip=(480, 760, 580, 780))
             if not "Customer Copy".casefold() in text_block.casefold():
                 pages.append(page_num)
+
+        if top == True:
+            del pages[-1]
     return list(reversed(pages))
 
 
@@ -205,8 +214,6 @@ def write_to_icbc(doc, dict_items):
                 page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname='spacemo', fontsize=6)
             if type(dict_items["ICBC"]["time_of_validation"]) is list:
                 for el1 in dict_items["ICBC"]["time_of_validation"]:
-
-                    print(el1)
                     page = doc[el1[0]]
                     current_time = datetime.today().hour
                     date = datetime.today().strftime("%I:%M")
@@ -229,7 +236,6 @@ def write_to_icbc(doc, dict_items):
                 page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname='spacemo', fontsize=6)
             if type(dict_items["ICBC"]["time_of_validation"]) is list:
                 for el1 in dict_items["ICBC"]["time_of_validation"]:
-                    print(el1)
                     page = doc[el1[0]]
                     current_time = datetime.today().hour
                     date = datetime.today().strftime("%I:%M")
@@ -239,6 +245,14 @@ def write_to_icbc(doc, dict_items):
                     page.insert_textbox(date_location, date, align=fitz.TEXT_ALIGN_RIGHT,
                                         fontname="spacemo", fontsize=5)
 
+
+def toggle_customer_copy():
+    data = get_excel_data()
+    toggle = data["toggle_customer_copy"]
+    if type(toggle) is str:
+        return ""
+    else:
+        return " (Customer Copy)"
 
 def copy_icbc(number_of_pdfs):
     # input directory sorting
@@ -250,7 +264,7 @@ def copy_icbc(number_of_pdfs):
     icbc_output_directory.mkdir(exist_ok=True)
     paths = list(Path(icbc_output_directory).rglob("*.pdf"))
     file_names = [path.stem.split()[0] for path in paths]
-
+    toggle = toggle_customer_copy()
     for pdf in pdf_files1[-number_of_pdfs:]:
         with (fitz.open(pdf) as doc):
             doc_type = get_doc_types(doc)
@@ -263,7 +277,8 @@ def copy_icbc(number_of_pdfs):
             except KeyError:
                 continue
             if doc_type and doc_type == "ICBC":
-                icbc_file_name = f"{df['licence_plate'].at[0]} (Customer Copy).pdf" if df["licence_plate"].at[0] != "999" else f"{df["insured_name"].at[0].title()} (Customer Copy).pdf"
+                icbc_file_name = f"{df['licence_plate'].at[0]}{toggle}.pdf" if df["licence_plate"].at[
+                    0] != "NONLIC" else f"{df["insured_name"].at[0].title()}{toggle}.pdf"
 
                 icbc_output_path = icbc_output_directory / icbc_file_name
 
@@ -278,12 +293,15 @@ def copy_icbc(number_of_pdfs):
                         with fitz.open(path_name) as doc1:
                             target_transaction_id = doc1[0].get_text("text", clip=(
                                 500.0, 58.0, 580.0, 73.0))
-                            match = int(re.match(r'.*?(\d+)', target_transaction_id).group(1))
+                            match = int(re.match(re.compile(r'.*?(\d+)'), target_transaction_id).group(1))
                             matching_transaction_ids.append(match)
                 if int(df["transaction_timestamp"].at[0]) not in matching_transaction_ids:
                     write_to_icbc(doc, dict_items)
-                    doc.delete_pages(not_customer_copy_page_numbers(pdf))
-                    doc.save(unique_file_name(icbc_output_path))
+                    if toggle == " (Customer Copy)":
+                        doc.delete_pages(not_customer_copy_page_numbers(pdf))
+                        doc.save(unique_file_name(icbc_output_path))
+                    else:
+                        doc.save(unique_file_name(icbc_output_path))
 
 
 def main():
