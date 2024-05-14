@@ -3,13 +3,13 @@ import pdfplumber
 from pathlib import Path
 from tabulate import tabulate
 
-draw_rect_on_page_num = [1]
-draw_rect_from_coords = (36.720001220703125, 168.61354064941406, 150.7803497314453, 218.66339111328125)
-input_coords = (40.599998474121094, 341.62982177734375, 331.97607421875, 360.16729736328125)
-target_coords = (398.4960021972656, 341.62982177734375, 427.4012451171875, 350.56732177734375)
+draw_rect_on_page_num = [2]
+draw_rect_from_coords = (421.1990051269531, 475.1189880371094, 472.557861328125, 505.1189880371094)
+input_coords = (421.1990051269531, 319.6457214355469, 472.557861328125, 326.5304870605469)
+target_coords = (421.1990051269531, 330, 472.557861328125, 360)
 turn_on_draw_rect_all = False
 turn_on_pdf_field_names = False
-turn_on_write_text_coords = False
+turn_on_write_text_coords = True
 
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)

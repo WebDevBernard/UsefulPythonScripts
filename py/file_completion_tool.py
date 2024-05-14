@@ -9,8 +9,8 @@ from pathlib import Path
 from docxtpl import DocxTemplate
 from helpers import (target_dict, and_regex, address_regex, date_regex, dollar_regex,
                      postal_code_regex, ff, find_index, join_and_format_names, address_one_title_case,
-                     address_two_title_case, risk_address_title_case, unique_file_name, doc_types, content_pages, find_matching_paths)
-from PyPDF2 import PdfReader, PdfWriter
+                     address_two_title_case, risk_address_title_case, unique_file_name, doc_types, content_pages,
+                     find_matching_paths)
 from datetime import datetime
 from collections import defaultdict
 from names import producer_dict
@@ -180,7 +180,8 @@ def format_effective_date(field_dict, dict_items):
 
 
 def sum_dollar_amounts(amounts):
-    clean_amount_str = [a.replace("$", "").replace(",", "").replace(" 00", "").replace(".00", "").replace(" ", "") for a in amounts[0]]
+    clean_amount_str = [a.replace("$", "").replace(",", "").replace(" 00", "").replace(".00", "").replace(" ", "") for a
+                        in amounts[0]]
     total = sum(int(c) for c in clean_amount_str)
     return total
 
@@ -325,7 +326,7 @@ def format_condo_deductible(field_dict, dict_items, type_of_pdf):
 
 def format_condo_earthquake_deductible(field_dict, dict_items, type_of_pdf):
     if type_of_pdf == "Intact" and dict_items["earthquake_coverage"] and not dict_items[
-        "condo_earthquake_deductible"]:field_dict["condo_earthquake_deductible_1"] = "$2,500"
+        "condo_earthquake_deductible"]: field_dict["condo_earthquake_deductible_1"] = "$2,500"
     for deductibles in dict_items["condo_earthquake_deductible"]:
         for index, condo_earthquake_deductible in enumerate(deductibles):
             if type_of_pdf == "Intact" and dict_items["condo_earthquake_deductible"]:
@@ -368,25 +369,25 @@ def create_pandas_df(data_dict):
 
 
 def write_to_new_docx(docx, rows):
-    template_path = base_dir / "templates" / docx
+    template_path = base_dir / "assets" / docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
     output_path = output_dir / f"{rows["named_insured"]}.docx"
     doc.save(unique_file_name(output_path))
 
 
-def write_to_pdf(pdf, dictionary, rows):
-    pdf_path = (base_dir / "templates" / pdf)
-    output_path = base_dir / "output" / f"{rows["named_insured"]} {rows["risk_type"].title()}.pdf"
-    output_path.parent.mkdir(exist_ok=True)
-    reader = PdfReader(pdf_path)
-    writer = PdfWriter()
-    for page_num in range(len(reader.pages)):
-        page = reader.pages[page_num]
-        writer.add_page(page)
-        writer.updatePageFormFieldValues(page, dictionary)
-    with open(unique_file_name(output_path), "wb") as output_stream:
-        writer.write(output_stream)
+# def write_to_pdf(pdf, dictionary, rows):
+#     pdf_path = (base_dir / "templates" / pdf)
+#     output_path = base_dir / "output" / f"{rows["named_insured"]} {rows["risk_type"].title()}.pdf"
+#     output_path.parent.mkdir(exist_ok=True)
+#     reader = PdfReader(pdf_path)
+#     writer = PdfWriter()
+#     for page_num in range(len(reader.pages)):
+#         page = reader.pages[page_num]
+#         writer.add_page(page)
+#         writer.updatePageFormFieldValues(page, dictionary)
+#     with open(unique_file_name(output_path), "wb") as output_stream:
+#         writer.write(output_stream)
 
 
 def sort_renewal_list():
@@ -505,6 +506,12 @@ def format_icbc(dict_items, type_of_pdf):
     return field_dict
 
 
+def icbc_filename(df):
+    if df['transaction_type'].at[0] not in ["RENEW", "NEW"]:
+        return f"{df['licence_plate'].at[0]} {df['transaction_type'].at[0]}.pdf"
+    else:
+        return f"{df['licence_plate'].at[0]}.pdf"
+
 def rename_icbc(drive_letter, number_of_pdfs):
     icbc_input_directory = Path.home() / 'Downloads'
     icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
@@ -525,7 +532,8 @@ def rename_icbc(drive_letter, number_of_pdfs):
             except KeyError:
                 continue
             if doc_type and doc_type == "ICBC":
-                icbc_file_name = f"{df['licence_plate'].at[0]} Change.pdf" if df['transaction_type'].at[0] == "CHANGE" else f"{df['licence_plate'].at[0]}.pdf"
+                if doc_type and doc_type == "ICBC":
+                    icbc_file_name = icbc_filename(df)
                 icbc_output_dir = Path(icbc_output_directory) if df['name_code'].at[
                                                                      0].upper() == "HOUSE" or producer_dict.get(
                     df['name_code'].at[0].upper()) is None else Path(
@@ -545,7 +553,6 @@ def rename_icbc(drive_letter, number_of_pdfs):
                             matching_transaction_ids.append(int(target_transaction_id))
                 if int(df["transaction_timestamp"].at[0]) not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
-
 
 
 base_dir = Path(__file__).parent.parent
@@ -569,7 +576,6 @@ def main():
         sort_renewal_list()
     elif task == "Copy/Rename APV250":
         rename_icbc(drive_letter, number_of_pdfs)
-
 
 if __name__ == "__main__":
     main()

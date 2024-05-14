@@ -4,9 +4,9 @@ openpyxl
 pandas
 Pyarrow
 docxtpl
-PyPDF2
 PyCryptodome
 pdfplumber
 pymupdf
+pymupdf-fonts
 xlrd
 tabulate
