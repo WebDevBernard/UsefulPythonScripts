@@ -192,59 +192,57 @@ def write_to_icbc(doc, dict_items):
     data = get_excel_data()
     broker_code = data["broker_code"]
     company_name = data["company_name"]
-    if png_files:
+    if type(company_name) is str and png_files:
         logo_pic = png_files[0]
-        if type(company_name) is str and png_files:
-            for el in dict_items["ICBC"]["validation_stamp"]:
-                page = doc[el[0]]
-                logo_position = tuple(
-                                        x + y for x, y in zip((el[1]), (30, 2, -30, -30)))
-                broker_number_above = tuple(
-                                        x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
-                broker_number = tuple(
-                                        x + y for x, y in zip((el[1]), (0, 32, 0, 0)))
-                broker_number_below = tuple(
-                                        x + y for x, y in zip((el[1]), (0, 40, 0, 0)))
+        for el in dict_items["ICBC"]["validation_stamp"]:
+            page = doc[el[0]]
+            logo_position = tuple(
+                                    x + y for x, y in zip((el[1]), (30, 2, -30, -30)))
+            broker_number_above = tuple(
+                                    x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
+            broker_number = tuple(
+                                    x + y for x, y in zip((el[1]), (0, 32, 0, 0)))
+            broker_number_below = tuple(
+                                    x + y for x, y in zip((el[1]), (0, 40, 0, 0)))
 
-                text = f"#{broker_code}"
-                date = datetime.today().strftime("%b %d, %Y")
-                page.insert_image(rect=logo_position, filename=logo_pic, height=0, width=0, keep_proportion=True)
-                page.insert_textbox(broker_number_above, company_name, align=fitz.TEXT_ALIGN_CENTER, fontname="spacemo", fontsize=5)
-                page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname='spacembo', fontsize=6)
-                page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname='spacemo', fontsize=6)
-            if type(dict_items["ICBC"]["time_of_validation"]) is list:
-                for el1 in dict_items["ICBC"]["time_of_validation"]:
-                    page = doc[el1[0]]
-                    current_time = datetime.today().hour
-                    date = datetime.today().strftime("%I:%M")
-                    date_location = tuple(
-                        x + y for x, y in zip((el1[1]), (0, 1.7, 0, 0))) if current_time < 12 else tuple(
-                        x + y for x, y in zip((el1[1]), (0, 22.8, 0, 0)))
-                    page.insert_textbox(date_location, date, align=fitz.TEXT_ALIGN_RIGHT,
-                                        fontname="spacemo", fontsize=5)
-        else:
-            for el in dict_items["ICBC"]["validation_stamp"]:
-                page = doc[el[0]]
-                broker_number = tuple(
-                                        x + y for x, y in zip((el[1]), (0, 15, 0, 0)))
-                broker_number_below = tuple(
-                                        x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
+            text = f"#{broker_code}"
+            date = datetime.today().strftime("%b %d, %Y")
+            page.insert_image(rect=logo_position, filename=logo_pic, height=0, width=0, keep_proportion=True)
+            page.insert_textbox(broker_number_above, company_name, align=fitz.TEXT_ALIGN_CENTER, fontname="spacemo", fontsize=5)
+            page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname='spacembo', fontsize=6)
+            page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname='spacemo', fontsize=6)
+        if type(dict_items["ICBC"]["time_of_validation"]) is list:
+            for el1 in dict_items["ICBC"]["time_of_validation"]:
+                page = doc[el1[0]]
+                current_time = datetime.today().hour
+                date = datetime.today().strftime("%I:%M")
+                date_location = tuple(
+                    x + y for x, y in zip((el1[1]), (0, 1.7, 0, 0))) if current_time < 12 else tuple(
+                    x + y for x, y in zip((el1[1]), (0, 22.8, 0, 0)))
+                page.insert_textbox(date_location, date, align=fitz.TEXT_ALIGN_RIGHT,
+                                    fontname="spacemo", fontsize=5)
+    else:
+        for el in dict_items["ICBC"]["validation_stamp"]:
+            page = doc[el[0]]
+            broker_number = tuple(
+                                    x + y for x, y in zip((el[1]), (0, 15, 0, 0)))
+            broker_number_below = tuple(
+                                    x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
 
-                text = f"#{broker_code}"
-                date = datetime.today().strftime("%b %d, %Y")
-                page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname='spacembo', fontsize=6)
-                page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname='spacemo', fontsize=6)
-            if type(dict_items["ICBC"]["time_of_validation"]) is list:
-                for el1 in dict_items["ICBC"]["time_of_validation"]:
-                    page = doc[el1[0]]
-                    current_time = datetime.today().hour
-                    date = datetime.today().strftime("%I:%M")
-                    date_location = tuple(
-                        x + y for x, y in zip((el1[1]), (0, 1.7, 0, 0))) if current_time < 12 else tuple(
-                        x + y for x, y in zip((el1[1]), (0, 22.8, 0, 0)))
-                    page.insert_textbox(date_location, date, align=fitz.TEXT_ALIGN_RIGHT,
-                                        fontname="spacemo", fontsize=5)
-
+            text = f"#{broker_code}"
+            date = datetime.today().strftime("%b %d, %Y")
+            page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname='spacembo', fontsize=6)
+            page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname='spacemo', fontsize=6)
+        if type(dict_items["ICBC"]["time_of_validation"]) is list:
+            for el1 in dict_items["ICBC"]["time_of_validation"]:
+                page = doc[el1[0]]
+                current_time = datetime.today().hour
+                date = datetime.today().strftime("%I:%M")
+                date_location = tuple(
+                    x + y for x, y in zip((el1[1]), (0, 1.7, 0, 0))) if current_time < 12 else tuple(
+                    x + y for x, y in zip((el1[1]), (0, 22.8, 0, 0)))
+                page.insert_textbox(date_location, date, align=fitz.TEXT_ALIGN_RIGHT,
+                                    fontname="spacemo", fontsize=5)
 
 def toggle_customer_copy():
     data = get_excel_data()
@@ -257,14 +255,18 @@ def toggle_customer_copy():
 def copy_icbc(number_of_pdfs):
     # input directory sorting
     icbc_input_directory = Path.home() / 'Downloads'
-    pdf_files1 = list(icbc_input_directory.rglob("*.pdf"))
+    pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: Path(file).lstat().st_mtime)
     # output directory sorting
     icbc_output_directory = Path(__file__).parent.parent / 'output'
     icbc_output_directory.mkdir(exist_ok=True)
-    paths = list(Path(icbc_output_directory).rglob("*.pdf"))
+    icbc_output_directory1 = Path(__file__).parent.parent / 'output' / "Customer Copies"
+
+    paths = list(Path(icbc_output_directory).glob("*.pdf"))
     file_names = [path.stem.split()[0] for path in paths]
     toggle = toggle_customer_copy()
+    if toggle != " (Customer Copy)":
+        icbc_output_directory1.mkdir(exist_ok=True)
     for pdf in pdf_files1[-number_of_pdfs:]:
         with (fitz.open(pdf) as doc):
             doc_type = get_doc_types(doc)
@@ -279,8 +281,10 @@ def copy_icbc(number_of_pdfs):
             if doc_type and doc_type == "ICBC":
                 icbc_file_name = f"{df['licence_plate'].at[0]}{toggle}.pdf" if df["licence_plate"].at[
                     0] != "NONLIC" else f"{df["insured_name"].at[0].title()}{toggle}.pdf"
-
+                icbc_file_name1 = f"{df['licence_plate'].at[0]} (Customer Copy).pdf" if df["licence_plate"].at[
+                    0] != "NONLIC" else f"{df["insured_name"].at[0].title()} (Customer Copy).pdf"
                 icbc_output_path = icbc_output_directory / icbc_file_name
+                icbc_output_path1 = icbc_output_directory1 / icbc_file_name1
 
                 target_filename = Path(icbc_file_name).stem.split()[0]
                 matching_transaction_ids = []
@@ -302,7 +306,8 @@ def copy_icbc(number_of_pdfs):
                         doc.save(unique_file_name(icbc_output_path))
                     else:
                         doc.save(unique_file_name(icbc_output_path))
-
+                        doc.delete_pages(not_customer_copy_page_numbers(pdf))
+                        doc.save(unique_file_name(icbc_output_path1))
 
 def main():
     data = get_excel_data()
