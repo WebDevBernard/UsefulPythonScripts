@@ -1,10 +1,10 @@
 /venv
+/assets
 /output
 /input
 /py/output/
 /.venv
 /.idea
-/assets
 /samples
 /__pycache__
 *.env
