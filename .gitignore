@@ -4,7 +4,7 @@
 /py/output/
 /.venv
 /.idea
-/templates
+/assets
 /samples
 /__pycache__
 *.env
@@ -17,4 +17,5 @@
 *.xls
 *.csv
 *.xlsm
+*.png
 /py/names.py
