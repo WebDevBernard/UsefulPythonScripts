@@ -252,6 +252,7 @@ def toggle_customer_copy():
     else:
         return " (Customer Copy)"
 
+
 def copy_icbc(number_of_pdfs):
     # input directory sorting
     icbc_input_directory = Path.home() / 'Downloads'

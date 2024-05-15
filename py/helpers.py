@@ -15,7 +15,7 @@ form_fields = ["insurer", "name_and_address", "policy_number", "effective_date",
                "risk_type", "number_of_families", "number_of_units", "premium_amount", "condo_deductible",
                "condo_earthquake_deductible", "earthquake_coverage", "overland_water", "ground_water",
                "tenant_vandalism", "service_line", "licence_plate", "transaction_type", "name_code",
-               "transaction_timestamp"]
+               "transaction_timestamp", "insured_name", "owner_name"]
 FormFields = namedtuple("FormFields", form_fields, defaults=(None,) * len(form_fields))
 target_fields = ["target_keyword", "first_index", "second_index", "target_coordinates", "append_duplicates",
                  "join_list"]
@@ -29,7 +29,6 @@ doc_types = [
     DocType("Family", "Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)),
     DocType("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
     DocType("Wawanesa", "BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703)),
-    DocType("ICBC", "Owner's Certificate of Insurance", (281.5190124511719, 36.0, 557.7416381835938, 48.2890625))
 ]
 
 ContentPages = namedtuple("ContentPages", "pdf_name keyword coordinates", defaults=None)
@@ -143,12 +142,14 @@ target_dict = {
         )._asdict(),
     "ICBC":
         FormFields(
-            name_and_address=TargetFields(target_coordinates=(36.0, 111.35009765625, 200, 180)),
             licence_plate=TargetFields(target_keyword=re.compile(r"(?<!Previous )\bLicence Plate Number\b"),
                                        first_index=0, second_index=0),
             transaction_type=TargetFields(target_keyword="Transaction Type", first_index=0, second_index=0),
             name_code=TargetFields(target_coordinates=(198.0, 761.0403442382812, 255.010986328125, 769.977294921875)),
-            transaction_timestamp=TargetFields(target_keyword="Transaction Timestamp", first_index=0, second_index=0)
+            transaction_timestamp=TargetFields(target_keyword="Transaction Timestamp", first_index=0, second_index=0),
+            insured_name=TargetFields(target_keyword="Name of Insured (surname followed by given name(s))", first_index=0,
+                                        second_index=1),
+            owner_name=TargetFields(target_keyword="Owner ", first_index=0, second_index=1),
         )._asdict(),
 }
 

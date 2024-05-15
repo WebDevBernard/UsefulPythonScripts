@@ -483,6 +483,8 @@ def get_excel_data(excel_path1):
 def format_icbc(dict_items, type_of_pdf):
     field_dict = {}
     if type_of_pdf and type_of_pdf == "ICBC":
+        if not dict_items["licence_plate"]:
+            field_dict["licence_plate"] = "NONLIC"
         for license_plates in dict_items["licence_plate"]:
             for index, license_plate in enumerate(license_plates):
                 plate_number = re.sub(re.compile(r"Licence Plate Number "), "", license_plate)
@@ -502,17 +504,45 @@ def format_icbc(dict_items, type_of_pdf):
             for index, transaction_timestamp in enumerate(transaction_timestamps):
                 transaction1 = re.sub(re.compile(r"Transaction Timestamp "), "", transaction_timestamp)
                 field_dict["transaction_timestamp"] = transaction1
+        for insured_names in dict_items["insured_name"]:
+            for index, insured_name in enumerate(insured_names):
+                field_dict["insured_name"] = insured_name.rstrip('.')
+        for insured_names in dict_items["owner_name"]:
+            for index, insured_name in enumerate(insured_names):
+                field_dict["insured_name"] = insured_name.rstrip('.')
         format_named_insured(field_dict, dict_items, type_of_pdf)
     return field_dict
 
 
 def icbc_filename(df):
     if df['licence_plate'].at[0] == "NONLIC":
-        return f"{df['named_insured'].at[0]} Registration.pdf"
+        return f"{df['insured_name'].at[0].title()}.pdf"
     if df['transaction_type'].at[0] not in ["RENEW", "NEW"]:
-        return f"{df['licence_plate'].at[0]} {df['transaction_type'].at[0]}.pdf"
+        return f"{df['licence_plate'].at[0]} {df['transaction_type'].at[0].title()}.pdf"
     else:
         return f"{df['licence_plate'].at[0]}.pdf"
+
+
+def get_icbc_doc_types(doc):
+    page = doc[0]
+    text_block = page.get_text("blocks")
+    text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in text_block]
+    for text in text_boxes:
+        for item in text:
+            if "Transaction Timestamp" in item:
+                return "ICBC"
+
+
+def search_for_icbc_input_dict(doc):
+    field_dict = {}
+    for page_num in range(len(doc)):
+        page = doc[page_num - 1]
+        wlist = page.get_text("blocks")
+        text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in wlist]
+        text_coords = [inner_list[:4] for inner_list in wlist]
+        field_dict[page_num] = [[elem1, elem2] for elem1, elem2 in
+                                zip(text_boxes, text_coords)]
+    return field_dict
 
 
 def rename_icbc(drive_letter, number_of_pdfs):
@@ -520,15 +550,13 @@ def rename_icbc(drive_letter, number_of_pdfs):
     icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
     # icbc_output_directory = Path.home() / 'Desktop' / "NEW"
     # icbc_output_directory.mkdir(exist_ok=True)
-    pdf_files1 = list(icbc_input_directory.rglob("*.pdf"))
+    pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
     for pdf in pdf_files1[-number_of_pdfs:]:
         with (fitz.open(pdf) as doc):
-            print(f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} ")
-            doc_type = get_doc_types(doc)
-            print(f"This is a {doc_type} policy.")
-            pg_list = get_content_pages(doc, doc_type)
-            input_dict = search_for_input_dict(doc, pg_list)
+            doc_type = get_icbc_doc_types(doc)
+            input_dict = search_for_icbc_input_dict(doc)
+
             dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
             formatted_dict = format_icbc(ff(dict_items[doc_type]), doc_type)
             try:
@@ -543,6 +571,7 @@ def rename_icbc(drive_letter, number_of_pdfs):
                                                                      0].upper() == "HOUSE" or producer_dict.get(
                     df['name_code'].at[0].upper()) is None else Path(
                     f"{icbc_output_directory}/{producer_dict.get(df['name_code'].at[0].upper())}")
+                # icbc_output_dir.mkdir(exist_ok=True)
                 icbc_output_path = icbc_output_dir / icbc_file_name
                 paths = list(Path(icbc_output_directory).rglob("*.pdf"))
                 file_names = [path.stem.split()[0] for path in paths]
@@ -554,8 +583,9 @@ def rename_icbc(drive_letter, number_of_pdfs):
                     for path_name in matching_paths:
                         with fitz.open(path_name) as doc1:
                             target_transaction_id = doc1[0].get_text("text", clip=(
-                                502.0, 63.96209716796875, 558.0, 72.82147216796875))
-                            matching_transaction_ids.append(int(target_transaction_id))
+                                500.0, 58.0, 580.0, 73.0))
+                            match = int(re.match(re.compile(r'.*?(\d+)'), target_transaction_id).group(1))
+                            matching_transaction_ids.append(match)
                 if int(df["transaction_timestamp"].at[0]) not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
 
