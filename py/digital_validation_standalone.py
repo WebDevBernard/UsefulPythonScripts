@@ -155,7 +155,7 @@ def insert_stamp_position(page, el, data, png_files):
         x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
 
 
-    if png_files and company_name:
+    if len(png_files) >= 1 and isinstance(company_name, str):
         logo_pic = png_files[0]
         page.insert_image(rect=logo_position, filename=logo_pic, height=0, width=0, keep_proportion=True)
         page.insert_textbox(broker_number_above, company_name, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
