@@ -109,7 +109,7 @@ def get_excel_data():
     excel_path = input_dir / "BM3KXR.xlsx"
     data = {}
     try:
-        df_excel = pd.read_excel(excel_path, sheet_name="BM3KXR", header=None)
+        df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
         data["number_of_pdfs"] = int(df_excel.at[2, 1]) - 1
         data["broker_code"] = df_excel.at[4, 1]
         data["company_name"] = df_excel.at[8, 1]
@@ -135,6 +135,8 @@ def insert_stamp_position(page, el, data, png_files):
     broker_code = data["broker_code"]
     text = f"#{broker_code}"
     date = datetime.today().strftime("%b %d, %Y")
+
+
     # defines where the stamp gets placed
     fontname = "spacemo"
     fontsize = 6
@@ -161,7 +163,7 @@ def insert_stamp_position(page, el, data, png_files):
         page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname, fontsize=fontsize)
         page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
                             fontsize=fontsize)
-    if not png_files and company_name:
+    else:
         page.insert_textbox(broker_number_without_logo, text, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
                             fontsize=6)
         page.insert_textbox(date_without_logo, date, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname, fontsize=fontsize)
