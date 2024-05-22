@@ -3,8 +3,8 @@ import pdfplumber
 from pathlib import Path
 from tabulate import tabulate
 
-draw_rect_on_page_num = [2]
-draw_rect_from_coords = (421.1990051269531, 475.1189880371094, 472.557861328125, 505.1189880371094)
+draw_rect_on_page_num = [1]
+draw_rect_from_coords = (409.97900390625, 63.84881591796875, 576.0, 72.82147216796875)
 input_coords = (421.1990051269531, 319.6457214355469, 472.557861328125, 326.5304870605469)
 target_coords = (421.1990051269531, 330, 472.557861328125, 360)
 turn_on_draw_rect_all = False
@@ -108,7 +108,8 @@ def write_txt_to_file_dir(dir_path, field_dict):
         for page, data in field_dict.items():
             file.write(f"Page: {page}\n")
             try:
-                file.write(f"{tabulate(data, ["Keywords", "Coordinates"], tablefmt="grid", maxcolwidths=[50, None])}\n")
+                file.write(f"{tabulate(data, ["Keywords", "Coordinates"], tablefmt="grid", maxcolwidths=[
+                    50, None])}\n")
             except IndexError:
                 continue
 

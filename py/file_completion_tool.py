@@ -485,6 +485,8 @@ def format_icbc(dict_items, type_of_pdf):
     if type_of_pdf and type_of_pdf == "ICBC":
         if not dict_items["licence_plate"]:
             field_dict["licence_plate"] = "NONLIC"
+        if not dict_items["transaction_type"]:
+            field_dict["transaction_type"] = "NEW"
         for license_plates in dict_items["licence_plate"]:
             for index, license_plate in enumerate(license_plates):
                 plate_number = re.sub(re.compile(r"Licence Plate Number "), "", license_plate)
@@ -510,6 +512,9 @@ def format_icbc(dict_items, type_of_pdf):
         for insured_names in dict_items["owner_name"]:
             for index, insured_name in enumerate(insured_names):
                 field_dict["insured_name"] = insured_name.rstrip('.')
+        for insured_names in dict_items["applicant_name"]:
+            for index, insured_name in enumerate(insured_names):
+                field_dict["insured_name"] = insured_name.rstrip('.')
         format_named_insured(field_dict, dict_items, type_of_pdf)
     return field_dict
 
@@ -524,13 +529,11 @@ def icbc_filename(df):
 
 
 def get_icbc_doc_types(doc):
-    page = doc[0]
-    text_block = page.get_text("blocks")
-    text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in text_block]
-    for text in text_boxes:
-        for item in text:
-            if "Transaction Timestamp" in item:
-                return "ICBC"
+    for doc_type in doc_types:
+        page = doc[0]
+        text_block = page.get_text("text", clip=doc_type.coordinates)
+        if doc_type.keyword.casefold() in text_block.casefold():
+            return doc_type.pdf_name
 
 
 def search_for_icbc_input_dict(doc):
@@ -552,7 +555,7 @@ def rename_icbc(drive_letter, number_of_pdfs):
     # icbc_output_directory.mkdir(exist_ok=True)
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
-    for pdf in pdf_files1[-number_of_pdfs:]:
+    for pdf in pdf_files1[-number_of_pdfs - 1:]:
         with (fitz.open(pdf) as doc):
             doc_type = get_icbc_doc_types(doc)
             input_dict = search_for_icbc_input_dict(doc)
@@ -596,7 +599,6 @@ output_dir = base_dir / "output"
 
 
 def main():
-    output_dir.mkdir(exist_ok=True)
     excel_path = base_dir / "input.xlsx"  # name of Excel
     excel_data = get_excel_data(excel_path)
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
@@ -605,11 +607,13 @@ def main():
     number_of_pdfs = int(df_excel.at[29, 1]) - 1
     if task == "Auto Renewal Letter":
         renewal_letter(excel_path)
+        output_dir.mkdir(exist_ok=True)
     elif task == "Manual Renewal Letter":
         renewal_letter_manual(excel_data)
+        output_dir.mkdir(exist_ok=True)
     elif task == "Sort Renewal List":
         sort_renewal_list()
-    elif task == "Copy/Rename APV250":
+    elif task == "Copy/Rename ICBC Transactions":
         rename_icbc(drive_letter, number_of_pdfs)
 
 if __name__ == "__main__":

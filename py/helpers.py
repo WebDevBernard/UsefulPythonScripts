@@ -15,7 +15,8 @@ form_fields = ["insurer", "name_and_address", "policy_number", "effective_date",
                "risk_type", "number_of_families", "number_of_units", "premium_amount", "condo_deductible",
                "condo_earthquake_deductible", "earthquake_coverage", "overland_water", "ground_water",
                "tenant_vandalism", "service_line", "licence_plate", "transaction_type", "name_code",
-               "transaction_timestamp", "insured_name", "owner_name"]
+               "transaction_timestamp", "insured_name", "owner_name", "applicant_name", "validation_stamp",
+               "customer_copy", "time_of_validation"]
 FormFields = namedtuple("FormFields", form_fields, defaults=(None,) * len(form_fields))
 target_fields = ["target_keyword", "first_index", "second_index", "target_coordinates", "append_duplicates",
                  "join_list"]
@@ -29,6 +30,7 @@ doc_types = [
     DocType("Family", "Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)),
     DocType("Intact", "BROKER COPY", (250, 764.2749633789062, 360, 773.8930053710938)),
     DocType("Wawanesa", "BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703)),
+    DocType("ICBC", "Transaction Timestamp ", (409.97900390625, 63.84881591796875, 576.0, 72.82147216796875)),
 ]
 
 ContentPages = namedtuple("ContentPages", "pdf_name keyword coordinates", defaults=None)
@@ -133,8 +135,11 @@ target_dict = {
                                         first_index=0, second_index=1),
             earthquake_coverage=TargetFields(target_keyword="Earthquake Coverage", first_index=0, second_index=0),
             overland_water=TargetFields(target_keyword="Overland Water", first_index=0, second_index=0),
-            condo_deductible=TargetFields(target_keyword="Condominium Deductible Coverage-", target_coordinates=(350.89600372314453, 0.0, 103.84786987304688, -9.600006103515625)),
-            condo_earthquake_deductible=TargetFields(target_keyword="Condominium Deductible Coverage Earthquake", target_coordinates=(350.89600372314453, 0.0, 95.4251708984375, -9.5999755859375)),
+            condo_deductible=TargetFields(target_keyword="Condominium Deductible Coverage-", target_coordinates=(
+                350.89600372314453, 0.0, 103.84786987304688, -9.600006103515625)),
+            condo_earthquake_deductible=TargetFields(target_keyword="Condominium Deductible Coverage Earthquake",
+                                                     target_coordinates=(
+                                                         350.89600372314453, 0.0, 95.4251708984375, -9.5999755859375)),
             tenant_vandalism=TargetFields(target_keyword="Vandalism by Tenant Coverage -", first_index=0,
                                           second_index=0),
             service_line=TargetFields(target_keyword="Service Line Coverage", first_index=0, second_index=0),
@@ -147,9 +152,17 @@ target_dict = {
             transaction_type=TargetFields(target_keyword="Transaction Type", first_index=0, second_index=0),
             name_code=TargetFields(target_coordinates=(198.0, 761.0403442382812, 255.010986328125, 769.977294921875)),
             transaction_timestamp=TargetFields(target_keyword="Transaction Timestamp", first_index=0, second_index=0),
-            insured_name=TargetFields(target_keyword="Name of Insured (surname followed by given name(s))", first_index=0,
-                                        second_index=1),
+            insured_name=TargetFields(target_keyword="Name of Insured (surname followed by given name(s))",
+                                      first_index=0,
+                                      second_index=1),
             owner_name=TargetFields(target_keyword="Owner ", first_index=0, second_index=1),
+            applicant_name=TargetFields(target_keyword="Applicant", first_index=0, second_index=1),
+            validation_stamp=TargetFields(target_keyword="NOT VALID UNLESS STAMPED BY", target_coordinates=(
+                -4.247998046875011, 13.768768310546875, 1.5807250976562273, 58.947509765625)),
+            customer_copy=TargetFields(target_keyword="Customer Copy", target_coordinates=(
+                36.0, 761.039794921875, 560.1806640625, 769.977294921875)),
+            time_of_validation=TargetFields(target_keyword="TIME OF VALIDATION",
+                                            target_coordinates=(0.0, 10.354278564453125, 0.0, 40)),
         )._asdict(),
 }
 
@@ -211,6 +224,7 @@ def unique_file_name(path):
         path = filename + " (" + str(counter) + ")" + extension
         counter += 1
     return path
+
 
 def find_matching_paths(target_filename, paths):
     matching_paths = [path for path in paths if path.stem.split()[0] == target_filename]
