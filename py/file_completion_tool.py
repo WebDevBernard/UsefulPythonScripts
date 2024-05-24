@@ -20,11 +20,10 @@ warnings.simplefilter("ignore")
 
 def get_doc_types(doc):
     for doc_type in doc_types:
-        for page_index in range(len(doc)):
-            page = doc[page_index]
-            text_block = page.get_text("text", clip=doc_type.coordinates)
-            if doc_type.keyword.casefold() in text_block.casefold():
-                return doc_type.pdf_name
+        page = doc[0]
+        text_block = page.get_text("text", clip=doc_type.coordinates)
+        if doc_type.keyword.casefold() in text_block.casefold():
+            return doc_type.pdf_name
 
 
 def get_content_pages(doc, pdf_name):
@@ -442,6 +441,7 @@ def renewal_letter(excel_path1):
                 continue
             df["broker_name"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[8, 1]
             df["mods"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[4, 1]
+            df["on_behalf"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[10, 1]
             print(df)
             if doc_type and doc_type != "ICBC":
                 for rows in df.to_dict(orient="records"):
@@ -466,15 +466,16 @@ def get_excel_data(excel_path1):
     try:
         df = pd.read_excel(excel_path1, sheet_name=0, header=None)
         data["broker_name"] = df.at[8, 1]
-        data["risk_type_1"] = df.at[13, 1]
-        data["named_insured"] = df.at[15, 1]
-        data["insurer"] = df.at[16, 1]
-        data["policy_number"] = df.at[17, 1]
-        data["effective_date"] = df.at[18, 1]
-        data["address_line_one"] = df.at[20, 1]
-        data["address_line_two"] = df.at[21, 1]
-        data["address_line_three"] = df.at[22, 1]
-        data["risk_address_1"] = df.at[24, 1]
+        data["on_behalf"] = df.at[10, 1]
+        data["risk_type_1"] = df.at[14, 1]
+        data["named_insured"] = df.at[16, 1]
+        data["insurer"] = df.at[17, 1]
+        data["policy_number"] = df.at[18, 1]
+        data["effective_date"] = df.at[19, 1]
+        data["address_line_one"] = df.at[21, 1]
+        data["address_line_two"] = df.at[22, 1]
+        data["address_line_three"] = df.at[23, 1]
+        data["risk_address_1"] = df.at[25, 1]
     except KeyError:
         return None
     return data
@@ -554,8 +555,9 @@ def rename_icbc(drive_letter, number_of_pdfs):
     # icbc_output_directory = Path.home() / 'Desktop' / "NEW"
     # icbc_output_directory.mkdir(exist_ok=True)
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
-    pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime)
-    for pdf in pdf_files1[-number_of_pdfs - 1:]:
+    pdf_files1 = sorted(pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime, reverse=True)
+    processed_timestamps = set()
+    for pdf in pdf_files1[:number_of_pdfs]:
         with (fitz.open(pdf) as doc):
             doc_type = get_icbc_doc_types(doc)
             input_dict = search_for_icbc_input_dict(doc)
@@ -568,8 +570,13 @@ def rename_icbc(drive_letter, number_of_pdfs):
             except KeyError:
                 continue
             if doc_type and doc_type == "ICBC":
-                if doc_type and doc_type == "ICBC":
-                    icbc_file_name = icbc_filename(df)
+                timestamp = int(df["transaction_timestamp"].at[0])
+
+                if timestamp in processed_timestamps:
+                    continue
+
+                processed_timestamps.add(timestamp)
+                icbc_file_name = icbc_filename(df)
                 icbc_output_dir = Path(icbc_output_directory) if df['name_code'].at[
                                                                      0].upper() == "HOUSE" or producer_dict.get(
                     df['name_code'].at[0].upper()) is None else Path(
@@ -589,8 +596,47 @@ def rename_icbc(drive_letter, number_of_pdfs):
                                 500.0, 58.0, 580.0, 73.0))
                             match = int(re.match(re.compile(r'.*?(\d+)'), target_transaction_id).group(1))
                             matching_transaction_ids.append(match)
-                if int(df["transaction_timestamp"].at[0]) not in matching_transaction_ids:
+                # if timestamp not in matching_transaction_ids:
+                #     shutil.copy(pdf, unique_file_name(icbc_output_path))
+                if timestamp not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
+
+
+def find_pages_with_text(doc, search_text, not_search_text):
+    pages = []
+    for page_index in range(len(doc)):
+        page = doc[page_index]
+        text = page.get_text("text")
+        if not search_text and not not_search_text and not text:
+            pages.append(page_index)
+        elif search_text in text and not_search_text not in text:
+            pages.append(page_index)
+    return pages
+
+
+def delete_intact_broker_copies():
+    pdf_files = input_dir.glob("*.pdf")
+    for pdf in pdf_files:
+        with fitz.open(pdf) as doc:
+            intact_doc = get_doc_types(doc)
+            if intact_doc == "Intact":
+                broker_pages = find_pages_with_text(doc, "BROKER COPY", "Property Summary")
+                logo_pages = find_pages_with_text(doc, "KMJ", "BROKER COPY")
+                blank_pages = find_pages_with_text(doc, "", "")
+                mortgage_pages = find_pages_with_text(doc, "MORTGAGE", "BROKER COPY")
+                stat_cond_pages = find_pages_with_text(doc, "STATUTORY CONDITIONS", "KMJ")
+                pages_to_remove = set(broker_pages + blank_pages + mortgage_pages)
+                for page_num in broker_pages:
+                    if page_num + 1 in logo_pages:
+                        pages_to_remove.add(page_num + 1)
+                for page_num in mortgage_pages:
+                    if page_num + 1 in stat_cond_pages:
+                        pages_to_remove.add(page_num + 1)
+                pages_to_remove = sorted(pages_to_remove, reverse=True)
+                output_path = output_dir / f"{Path(pdf).stem}{Path(pdf).suffix}"
+                print("*************  Preparing Intact Customer Copy *************")
+                doc.delete_pages(pages_to_remove)
+                doc.save(unique_file_name(output_path), garbage=4, deflate=True)
 
 
 base_dir = Path(__file__).parent.parent
@@ -603,18 +649,26 @@ def main():
     excel_data = get_excel_data(excel_path)
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
     task = df_excel.at[2, 1]
-    drive_letter = df_excel.at[31, 1]
-    number_of_pdfs = int(df_excel.at[29, 1]) - 1
+    drive_letter = df_excel.at[32, 1]
+    number_of_pdfs = int(df_excel.at[30, 1])
     if task == "Auto Renewal Letter":
+        output_dir.mkdir(exist_ok=True)
         renewal_letter(excel_path)
-        output_dir.mkdir(exist_ok=True)
     elif task == "Manual Renewal Letter":
-        renewal_letter_manual(excel_data)
         output_dir.mkdir(exist_ok=True)
+        renewal_letter_manual(excel_data)
     elif task == "Sort Renewal List":
+        output_dir.mkdir(exist_ok=True)
         sort_renewal_list()
     elif task == "Copy/Rename ICBC Transactions":
         rename_icbc(drive_letter, number_of_pdfs)
+    elif task == "Delete Intact Broker/Mortgage Pages":
+        output_dir.mkdir(exist_ok=True)
+        delete_intact_broker_copies()
+
+
+
+
 
 if __name__ == "__main__":
     main()

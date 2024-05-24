@@ -110,10 +110,10 @@ def get_excel_data():
     data = {}
     try:
         df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
-        data["number_of_pdfs"] = int(df_excel.at[2, 1]) - 1
+        data["number_of_pdfs"] = int(df_excel.at[2, 1])
         data["broker_code"] = df_excel.at[4, 1]
-        data["company_name"] = df_excel.at[8, 1]
-        data["toggle_customer_copy"] = df_excel.at[13, 1]
+        # data["company_name"] = df_excel.at[8, 1]
+        # data["toggle_customer_copy"] = df_excel.at[13, 1]
     except KeyError:
         return None
     return data
@@ -130,64 +130,64 @@ def insert_timestamp(doc, el1):
                         fontname="spacemo", fontsize=5)
 
 
-def insert_stamp_position(page, el, data, png_files):
-    company_name = data["company_name"]
-    broker_code = data["broker_code"]
+def insert_stamp_position(page, el, data):
+    # company_name = data["company_name"]
+    broker_code = int(data["broker_code"]) if isinstance(data["broker_code"], float) else data["broker_code"]
     text = f"#{broker_code}"
     date = datetime.today().strftime("%b %d, %Y")
 
 
     # defines where the stamp gets placed
     fontname = "spacemo"
-    fontsize = 6
+    fontname_bold = "spacembo"
+    fontsize = 9
     fontsize_company_name = 5
     logo_position = tuple(
         x + y for x, y in zip((el[1]), (30, 2, -30, -30)))
     broker_number_above = tuple(
-        x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
+        x + y for x, y in zip((el[1]), (0, 22, 0, 0)))
     broker_number = tuple(
         x + y for x, y in zip((el[1]), (0, 32, 0, 0)))
     broker_number_below = tuple(
         x + y for x, y in zip((el[1]), (0, 40, 0, 0)))
     broker_number_without_logo = tuple(
-        x + y for x, y in zip((el[1]), (0, 15, 0, 0)))
+        x + y for x, y in zip((el[1]), (0, 13, 0, 0)))
     date_without_logo = tuple(
         x + y for x, y in zip((el[1]), (0, 25, 0, 0)))
-
-
-    if len(png_files) >= 1 and isinstance(company_name, str):
-        logo_pic = png_files[0]
-        page.insert_image(rect=logo_position, filename=logo_pic, height=0, width=0, keep_proportion=True)
-        page.insert_textbox(broker_number_above, company_name, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
-                            fontsize=fontsize_company_name)
-        page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname, fontsize=fontsize)
-        page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
-                            fontsize=fontsize)
-    else:
-        page.insert_textbox(broker_number_without_logo, text, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
-                            fontsize=6)
-        page.insert_textbox(date_without_logo, date, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname, fontsize=fontsize)
+    #
+    # if len(png_files) >= 1 and isinstance(company_name, str):
+    #     logo_pic = png_files[0]
+    #     page.insert_image(rect=logo_position, filename=logo_pic, height=0, width=0, keep_proportion=True)
+    #     page.insert_textbox(broker_number_above, company_name, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
+    #                         fontsize=fontsize_company_name)
+    #     page.insert_textbox(broker_number, text, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname_bold, fontsize=fontsize)
+    #     page.insert_textbox(broker_number_below, date, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname,
+    #                         fontsize=fontsize)
+    # else:
+    page.insert_textbox(broker_number_without_logo, text, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname_bold,
+                        fontsize=fontsize)
+    page.insert_textbox(date_without_logo, date, align=fitz.TEXT_ALIGN_CENTER, fontname=fontname, fontsize=fontsize)
 
 
 def write_to_icbc(doc, dict_items):
-    input_dir = Path(__file__).parent.parent / "assets"
-    png_files = list(input_dir.glob("*.png"))
+    # input_dir = Path(__file__).parent.parent / "assets"
+    # png_files = list(input_dir.glob("*.png"))
     data = get_excel_data()
-    company_name = data["company_name"]
-    if isinstance(company_name, str) and png_files:
-        for el in dict_items["ICBC"]["validation_stamp"]:
-            page = doc[el[0]]
-            insert_stamp_position(page, el, data, png_files)
-        if isinstance(dict_items["ICBC"]["time_of_validation"], list):
-            for el1 in dict_items["ICBC"]["time_of_validation"]:
-                insert_timestamp(doc, el1)
-    else:
-        for el in dict_items["ICBC"]["validation_stamp"]:
-            page = doc[el[0]]
-            insert_stamp_position(page, el, data, png_files)
-        if isinstance(dict_items["ICBC"]["time_of_validation"], list):
-            for el1 in dict_items["ICBC"]["time_of_validation"]:
-                insert_timestamp(doc, el1)
+    # company_name = data["company_name"]
+    # if isinstance(company_name, str):
+    for el in dict_items["ICBC"]["validation_stamp"]:
+        page = doc[el[0]]
+        insert_stamp_position(page, el, data)
+    if isinstance(dict_items["ICBC"]["time_of_validation"], list):
+        for el1 in dict_items["ICBC"]["time_of_validation"]:
+            insert_timestamp(doc, el1)
+    # else:
+    #     for el in dict_items["ICBC"]["validation_stamp"]:
+    #         page = doc[el[0]]
+    #         insert_stamp_position(page, el, data, png_files)
+    #     if isinstance(dict_items["ICBC"]["time_of_validation"], list):
+    #         for el1 in dict_items["ICBC"]["time_of_validation"]:
+    #             insert_timestamp(doc, el1)
 
 
 def not_customer_copy_page_numbers(pdf):
@@ -207,13 +207,13 @@ def not_customer_copy_page_numbers(pdf):
     return list(reversed(pages))
 
 
-def toggle_customer_copy():
-    data = get_excel_data()
-    toggle = data["toggle_customer_copy"]
-    if type(toggle) is str:
-        return ""
-    else:
-        return " (Customer Copy)"
+# def toggle_customer_copy():
+#     data = get_excel_data()
+#     toggle = data["toggle_customer_copy"]
+#     if type(toggle) is str:
+#         return ""
+#     else:
+#         return " (Customer Copy)"
 
 
 def copy_icbc(number_of_pdfs):
@@ -222,15 +222,18 @@ def copy_icbc(number_of_pdfs):
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(pdf_files1, key=lambda file: Path(file).lstat().st_mtime, reverse=True)
     # output directory sorting
-    icbc_output_directory = Path(__file__).parent.parent / 'output'
+    icbc_output_directory = Path.home() / "Desktop" / 'ICBC E-Stamp Copies (Yes, you can delete this folder)'
     icbc_output_directory.mkdir(exist_ok=True)
-    icbc_output_directory1 = Path(__file__).parent.parent / 'output' / "Customer Copies"
+    icbc_output_directory1 = Path.home() / "Desktop" / 'ICBC E-Stamp Copies (Yes, you can delete this folder)' / "Customer Copies"
     paths = list(Path(icbc_output_directory).glob("*.pdf"))
     file_names = [path.stem.split()[0] for path in paths]
-    toggle = toggle_customer_copy()
-    if toggle != " (Customer Copy)":
-        icbc_output_directory1.mkdir(exist_ok=True)
-    for pdf in pdf_files1[:number_of_pdfs + 1]:
+    # toggle = toggle_customer_copy()
+    # if toggle != " (Customer Copy)":
+    icbc_output_directory1.mkdir(exist_ok=True)
+
+    processed_timestamps = set()
+
+    for pdf in pdf_files1[:number_of_pdfs]:
         with (fitz.open(pdf) as doc):
             doc_type = get_doc_types(doc)
             input_dict = search_for_input_dict(doc)
@@ -242,8 +245,15 @@ def copy_icbc(number_of_pdfs):
             except KeyError:
                 continue
             if doc_type and doc_type == "ICBC":
-                icbc_file_name = f"{df['licence_plate'].at[0]}{toggle}.pdf" if df["licence_plate"].at[
-                                        0] != "NONLIC" else f"{df["insured_name"].at[0].title()}{toggle}.pdf"
+                timestamp = int(df["transaction_timestamp"].at[0])
+
+                if timestamp in processed_timestamps:
+                    continue
+
+                processed_timestamps.add(timestamp)
+
+                icbc_file_name = f"{df['licence_plate'].at[0]}.pdf" if df["licence_plate"].at[
+                                        0] != "NONLIC" else f"{df["insured_name"].at[0].title()}.pdf"
                 icbc_file_name1 = f"{df['licence_plate'].at[0]} (Customer Copy).pdf" if df["licence_plate"].at[
                                         0] != "NONLIC" else f"{df["insured_name"].at[0].title()} (Customer Copy).pdf"
 
@@ -263,15 +273,15 @@ def copy_icbc(number_of_pdfs):
                                 409.97900390625, 63.84881591796875, 576.0, 72.82147216796875))
                             match = int(re.match(re.compile(r'.*?(\d+)'), target_transaction_id).group(1))
                             matching_transaction_ids.append(match)
-                if int(df["transaction_timestamp"].at[0]) not in matching_transaction_ids:
+                if timestamp not in matching_transaction_ids:
                     write_to_icbc(doc, dict_items)
-                    if toggle == " (Customer Copy)":
-                        doc.delete_pages(not_customer_copy_page_numbers(pdf))
-                        doc.save(unique_file_name(icbc_output_path), garbage=4, deflate=True)
-                    else:
-                        doc.save(unique_file_name(icbc_output_path), garbage=4, deflate=True)
-                        doc.delete_pages(not_customer_copy_page_numbers(pdf))
-                        doc.save(unique_file_name(icbc_output_path1), garbage=4, deflate=True)
+                    # if toggle == " (Customer Copy)":
+                    #     doc.delete_pages(not_customer_copy_page_numbers(pdf))
+                    #     doc.save(unique_file_name(icbc_output_path), garbage=4, deflate=True)
+                    # else:
+                    doc.save(unique_file_name(icbc_output_path), garbage=4, deflate=True)
+                    doc.delete_pages(not_customer_copy_page_numbers(pdf))
+                    doc.save(unique_file_name(icbc_output_path1), garbage=4, deflate=True)
 
 
 def main():

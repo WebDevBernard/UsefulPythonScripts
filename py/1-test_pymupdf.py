@@ -1,12 +1,13 @@
 import fitz
 from pathlib import Path
 from file_completion_tool import (get_doc_types, get_content_pages, search_for_input_dict, search_for_matches,
-                                  format_policy, sort_renewal_list, create_pandas_df, rename_icbc)
+                                  format_policy, sort_renewal_list, create_pandas_df, rename_icbc, delete_intact_broker_copies)
 from helpers import target_dict, ff
 
 def main():
     for pdf_file in pdf_files:
         with fitz.open(pdf_file) as doc:
+            print("")
             print(Path(pdf_file).stem)
             print(f"\n<==========================>\n\nFilename is: {Path(pdf_file).stem}{Path(pdf_file).suffix} ")
 
