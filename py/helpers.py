@@ -27,11 +27,10 @@ DocType = namedtuple("DocType", "pdf_name keyword coordinates", defaults=None)
 doc_types = [
     DocType("Aviva", "Company", (171.36000061035156, 744.800048828125, 204.39999389648438, 752.7999877929688)),
     DocType("Aviva", "Aviva", (183.83999633789062, 728.4000244140625, 197.9759979248047, 734.4000244140625)),
-    DocType("Family", "Agent", (26.856000900268555, 32.67083740234375, 48.24102783203125, 40.33245849609375)),
+    DocType("Family", "Agent", (25.70400047302246, 36.369102478027344, 51.03702926635742, 45.4451789855957)),
     DocType("Intact", "KMJ", (475, 15, 576, 69)),
-    DocType("Intact", "KMJ", (33, 16, 134, 70)),
-    DocType("Intact", "KMJ", (467, 703, 552, 750)),
-    DocType("Intact", "KMJ", (478, 712, 579, 766)),
+    DocType("Intact", "Version", (36, 633.0250244140625, 576.2601318359375, 767.948974609375)),
+    DocType("Intact", "Intact", (36, 633.0250244140625, 576.2601318359375, 767.948974609375)),
     DocType("Wawanesa", "BROKER OFFICE", (36.0, 102.42981719970703, 353.2679443359375, 111.36731719970703)),
     DocType("ICBC", "Transaction Timestamp ", (409.97900390625, 63.84881591796875, 576.0, 72.82147216796875)),
 ]
@@ -70,24 +69,24 @@ target_dict = {
     "Family":
         FormFields(
             name_and_address=TargetFields(
-                target_coordinates=(37.72800064086914, 170.62953186035156, 150, 228.67138671875)),
+                target_coordinates=(35.49599838256836, 153.38099670410156, 150, 228.67138671875)),
             policy_number=TargetFields(target_keyword="POLICY NUMBER",
-                                       target_coordinates=(0, 10.913284301757812, 0, 12.68017578125)),
+                                       target_coordinates=(-1.08001708984375, 11.030815124511719, 8.86395263671875, 25.993423461914062)),
             effective_date=TargetFields(target_keyword="EFFECTIVE DATE",
-                                        target_coordinates=(0, 11.345291137695312, 0, 13.1121826171875)),
+                                        target_coordinates=(-1.00799560546875, 20.16899871826172, 24.568084716796875, 11.449417114257812)),
             risk_address=TargetFields(target_keyword="LOCATION OF INSURED PROPERTY:", first_index=0, second_index=1),
             form_type=TargetFields(target_keyword="All Perils:", first_index=0, second_index=0),
             risk_type=TargetFields(target_keyword="POLICY TYPE",
-                                   target_coordinates=(0, 11.633319854736328, 15, 13.40020751953125)),
+                                   target_coordinates=(-1.08001708984375, 11.097042083740234, -22.849456787109375, 0.0)),
             number_of_families=TargetFields(target_keyword="RENTAL SUITES", first_index=0, second_index=0),
             earthquake_coverage=TargetFields(target_keyword="EARTHQUAKE PROPERTY LIMITS", target_coordinates=(
-                46.94398498535156, 11.1737060546875, 35, 12.26593017578125)),
+                9.360000610351562, 37.858428955078125, -144.78810119628906, 39.08734130859375)),
             overland_water=TargetFields(target_keyword="Overland Water", first_index=0, second_index=0),
             condo_deductible=TargetFields(target_keyword="Deductible Coverage:", first_index=0,
                                           second_index=0),
             service_line=TargetFields(target_keyword="Service Lines", first_index=0, second_index=0),
             premium_amount=TargetFields(target_keyword="RETURN THIS PORTION WITH PAYMENT",
-                                        target_coordinates=(0, -19.8719482421875, 0, -19.8719482421875))
+                                        target_coordinates=(5.592010498046875, -22.78656005859375, -116.08038330078125, -22.19720458984375))
         )._asdict(),
     "Intact":
         FormFields(

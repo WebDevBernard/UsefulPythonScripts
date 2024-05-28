@@ -4,12 +4,12 @@ from pathlib import Path
 from tabulate import tabulate
 
 draw_rect_on_page_num = [1]
-draw_rect_from_coords = (476.8499755859375, 16.799999237060547, 575.969970703125, 68.8800048828125)
-input_coords = (421.1990051269531, 319.6457214355469, 472.557861328125, 326.5304870605469)
-target_coords = (421.1990051269531, 330, 472.557861328125, 360)
+draw_rect_from_coords = (500.0, 58.0, 580.0, 73.0)
+input_coords =  (420, 603.5182495117188, 568.423095703125, 611.7692260742188)
+target_coords = (425.5920104980469, 580.731689453125, 452.34271240234375, 589.572021484375)
 turn_on_draw_rect_all = False
 turn_on_pdf_field_names = False
-turn_on_write_text_coords = True
+turn_on_write_text_coords = False
 
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)

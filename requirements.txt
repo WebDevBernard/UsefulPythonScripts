@@ -4,7 +4,6 @@ openpyxl
 pandas
 Pyarrow
 docxtpl
-PyCryptodome
 pdfplumber
 pymupdf
 pymupdf-fonts
