@@ -1,15 +1,25 @@
-import fitz
 from pathlib import Path
-from file_completion_tool import (get_doc_types, get_content_pages, search_for_input_dict, search_for_matches,
-                                  format_policy, sort_renewal_list, create_pandas_df, rename_icbc, delete_intact_broker_copies)
+
+import fitz
+
+from file_completion_tool import (
+    get_doc_types,
+    get_content_pages,
+    search_for_input_dict,
+    search_for_matches,
+    format_policy,
+)
 from helpers import target_dict, ff
+
 
 def main():
     for pdf_file in pdf_files:
         with fitz.open(pdf_file) as doc:
             print("")
             print(Path(pdf_file).stem)
-            print(f"\n<==========================>\n\nFilename is: {Path(pdf_file).stem}{Path(pdf_file).suffix} ")
+            print(
+                f"\n<==========================>\n\nFilename is: {Path(pdf_file).stem}{Path(pdf_file).suffix} "
+            )
 
             # Look through Pdf Pages to find the matching pdf
             doc_type = get_doc_types(doc)
@@ -18,7 +28,8 @@ def main():
             # Look for pages with the content for each field
             pg_list = get_content_pages(doc, doc_type)
             print(
-                f"\nBroker copies / coverage summary / certificate of property insurance located on pages:\n{pg_list}\n")
+                f"\nBroker copies / coverage summary / certificate of property insurance located on pages:\n{pg_list}\n"
+            )
 
             # Extract the dictionary containing for all the strings and corresponding coordinates:
             input_dict = search_for_input_dict(doc, pg_list)

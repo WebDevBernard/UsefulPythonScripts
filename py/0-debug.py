@@ -1,15 +1,21 @@
+from pathlib import Path
+
 import fitz
 import pdfplumber
-from pathlib import Path
 from tabulate import tabulate
 
 draw_rect_on_page_num = [1]
-draw_rect_from_coords = (500.0, 58.0, 580.0, 73.0)
-input_coords =  (420, 603.5182495117188, 568.423095703125, 611.7692260742188)
-target_coords = (425.5920104980469, 580.731689453125, 452.34271240234375, 589.572021484375)
+draw_rect_from_coords = (429.9360046386719, 36.0, 575.8493041992188, 48.2890625)
+input_coords = (420, 603.5182495117188, 568.423095703125, 611.7692260742188)
+target_coords = (
+    425.5920104980469,
+    580.731689453125,
+    452.34271240234375,
+    589.572021484375,
+)
 turn_on_draw_rect_all = False
 turn_on_pdf_field_names = False
-turn_on_write_text_coords = False
+turn_on_write_text_coords = True
 
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)
@@ -18,7 +24,7 @@ def get_pdf_fieldnames(filename, doc):
         output_dir = base_dir / "output" / Path(filename).stem
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / f"(FieldNames) {Path(filename).stem}.txt"
-        with open(output_path, 'w', encoding="utf-8") as file:
+        with open(output_path, "w", encoding="utf-8") as file:
             for index, page in enumerate(doc):
                 file.write(f"\nPage: {index + 1}\n")
                 print(f"\nPage {index + 1}\n")
@@ -41,8 +47,15 @@ def calculate_target_coords(input_coords, target_coords):
         result_y_0 = y0_2 - y0_1
         result_y_1 = y1_2 - y1_1
         x_y_relative = (result_x_0, result_y_0, result_x_1, result_y_1)
-        debug_relative = (debug_result_x_0, debug_result_y_0, debug_result_x_1, debug_result_y_1)
-        print(f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}")
+        debug_relative = (
+            debug_result_x_0,
+            debug_result_y_0,
+            debug_result_x_1,
+            debug_result_y_1,
+        )
+        print(
+            f"Coordinates Drawn On: {debug_relative}\nCoordinates to Copy/Paste: {x_y_relative}"
+        )
         return debug_relative
 
 
@@ -52,10 +65,13 @@ def get_text_blocks(doc):
     for page_number in range(doc.page_count):
         page = doc[page_number]
         wlist = page.get_text("blocks")
-        text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in wlist]
+        text_boxes = [
+            list(filter(None, inner_list[4].split("\n"))) for inner_list in wlist
+        ]
         text_coords = [inner_list[:4] for inner_list in wlist]
-        field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                       zip(text_boxes, text_coords)]
+        field_dict[page_number + 1] = [
+            [elem1, elem2] for elem1, elem2 in zip(text_boxes, text_coords)
+        ]
     return field_dict
 
 
@@ -65,10 +81,13 @@ def get_text_words(doc):
     for page_number in range(doc.page_count):
         page = doc[page_number]
         wlist = page.get_text("words")
-        text_boxes = [list(filter(None, inner_list[4].split("\n"))) for inner_list in wlist]
+        text_boxes = [
+            list(filter(None, inner_list[4].split("\n"))) for inner_list in wlist
+        ]
         text_coords = [inner_list[:4] for inner_list in wlist]
-        field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                       zip(text_boxes, text_coords)]
+        field_dict[page_number + 1] = [
+            [elem1, elem2] for elem1, elem2 in zip(text_boxes, text_coords)
+        ]
     return field_dict
 
 
@@ -83,8 +102,9 @@ def find_table_dict(doc):
         for table in find_tables:
             tlist.extend(table.extract())
             row_coords.append(table.bbox)
-        field_dict[page_number + 1] = field_dict[page_number + 1] = [[elem1, elem2] for elem1, elem2 in
-                                                                     zip(tlist, row_coords)]
+        field_dict[page_number + 1] = field_dict[page_number + 1] = [
+            [elem1, elem2] for elem1, elem2 in zip(tlist, row_coords)
+        ]
     return field_dict
 
 
@@ -93,7 +113,9 @@ def plumber_draw_rect(doc, field_dict, dpi):
     if turn_on_draw_rect_all:
         for page_number in range(len(doc.pages)):
             dict_list = field_dict[page_number + 1]
-            doc.pages[page_number].to_image(resolution=dpi).draw_rects([x[1] for x in dict_list]).show()
+            doc.pages[page_number].to_image(resolution=dpi).draw_rects(
+                [x[1] for x in dict_list]
+            ).show()
 
 
 # Same as above but based on specified coordinates instead
@@ -104,12 +126,14 @@ def plumber_draw_from_pg_and_coords(doc, pages, coords1, dpi):
 
 
 def write_txt_to_file_dir(dir_path, field_dict):
-    with open(dir_path, 'w', encoding="utf-8") as file:
+    with open(dir_path, "w", encoding="utf-8") as file:
         for page, data in field_dict.items():
             file.write(f"Page: {page}\n")
             try:
-                file.write(f"{tabulate(data, ["Keywords", "Coordinates"], tablefmt="grid", maxcolwidths=[
-                    50, None])}\n")
+                file.write(
+                    f"{tabulate(data, ["Keywords", "Coordinates"], tablefmt="grid", maxcolwidths=[
+                    50, None])}\n"
+                )
             except IndexError:
                 continue
 
@@ -142,7 +166,9 @@ def main():
 
         with pdfplumber.open(pdf) as doc:
             plumber_draw_rect(doc, b, 300)
-            plumber_draw_from_pg_and_coords(doc, draw_rect_on_page_num, draw_rect_from_coords, 300)
+            plumber_draw_from_pg_and_coords(
+                doc, draw_rect_on_page_num, draw_rect_from_coords, 300
+            )
 
 
 base_dir = Path(__file__).parent.parent

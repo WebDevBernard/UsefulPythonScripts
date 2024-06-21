@@ -2,6 +2,7 @@ import os
 import pathlib
 import re
 import shutil
+import time
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -268,8 +269,8 @@ def sum_dollar_amounts(amounts):
         .replace(" ", "")
         for a in amounts[0]
     ]
-    total = sum(int(c) for c in clean_amount_str)
-    return total
+    total = sum(float(c) for c in clean_amount_str)
+    return int(total)
 
 
 def format_premium_amount(field_dict, dict_items):
@@ -287,13 +288,9 @@ def format_additional_coverage(field_dict, dict_items, type_of_pdf):
         and re.search(dollar_regex, dict_items["earthquake_coverage"][0][0])
     ):
         field_dict["earthquake_coverage"] = True
-    if (
-        type_of_pdf == "Aviva"
-        or type_of_pdf == "Intact"
-        or type_of_pdf == "Wawanesa"
-        and dict_items["earthquake_coverage"]
-    ):
-        field_dict["earthquake_coverage"] = True
+    if type_of_pdf == "Aviva" or type_of_pdf == "Intact" or type_of_pdf == "Wawanesa":
+        if dict_items["earthquake_coverage"]:
+            field_dict["earthquake_coverage"] = True
     if type_of_pdf == "Intact" and dict_items["ground_water"]:
         field_dict["ground_water"] = True
     if type_of_pdf == "Wawanesa" and dict_items["tenant_vandalism"]:
@@ -538,8 +535,18 @@ def sort_renewal_list():
     xlsx_files = Path(input_dir).glob("*.xlsx")
     xls_files = Path(input_dir).glob("*.xls")
     files = list(xlsx_files) + list(xls_files)
-    excel_paths = list(files)[0]
-    output_path = base_dir / "output" / f"{Path(excel_paths).stem}.xlsx"
+    all_dfs = []
+    for file in files:
+        df = (
+            pd.read_excel(file, engine="xlrd")
+            if file.suffix == ".XLS"
+            else pd.read_excel(file, engine="openpyxl")
+        )
+        all_dfs.append(df)
+
+    df = pd.concat(all_dfs, ignore_index=True)
+
+    output_path = base_dir / "output" / "renewal_list.xlsx"
     output_path = unique_file_name(output_path)
     try:
         column_list = [
@@ -554,11 +561,7 @@ def sort_renewal_list():
             "Pulled",
             "D/L",
         ]
-        df = (
-            pd.read_excel(excel_paths, engine="xlrd")
-            if Path(excel_paths).suffix == ".XLS"
-            else pd.read_excel(excel_paths, engine="openpyxl")
-        )
+
         df = df.reindex(columns=column_list)
         df = df.drop_duplicates(subset=["policynum"], keep=False)
         df["renewal_1"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime(
@@ -679,7 +682,26 @@ def renewal_letter(excel_path1):
                 pg_list = get_content_pages(doc, doc_type)
                 input_dict = search_for_input_dict(doc, pg_list)
                 dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
-                formatted_dict = format_policy(ff(dict_items[doc_type]), doc_type)
+                try:
+                    formatted_dict = format_policy(ff(dict_items[doc_type]), doc_type)
+                except AttributeError:
+                    if doc_type == "Family":
+                        try:
+                            formatted_dict = format_policy(
+                                ff(
+                                    search_for_matches(
+                                        doc,
+                                        search_for_input_dict(
+                                            doc, get_content_pages(doc, "Family_Legal")
+                                        ),
+                                        "Family_Legal",
+                                        target_dict,
+                                    )["Family_Legal"]
+                                ),
+                                "Family",
+                            )
+                        except AttributeError:
+                            print("Problem reading pdf")
                 try:
                     df = create_pandas_df(formatted_dict)
                 except KeyError:
@@ -741,7 +763,7 @@ def format_icbc(dict_items, type_of_pdf):
         if not dict_items["licence_plate"]:
             field_dict["licence_plate"] = "NONLIC"
         if not dict_items["transaction_type"]:
-            field_dict["transaction_type"] = "NEW"
+            field_dict["transaction_type"] = "PLACEHOLDER"
         for license_plates in dict_items["licence_plate"]:
             for index, license_plate in enumerate(license_plates):
                 plate_number = re.sub(
@@ -754,6 +776,18 @@ def format_icbc(dict_items, type_of_pdf):
                     re.compile(r"Transaction Type "), "", transaction_type
                 )
                 field_dict["transaction_type"] = transaction
+        for cancellations in dict_items["cancellation"]:
+            for index, cancellation in enumerate(cancellations):
+                if isinstance(cancellation, str):
+                    field_dict["transaction_type"] = "CANCEL"
+        for storages in dict_items["storage"]:
+            for index, storage in enumerate(storages):
+                if isinstance(storage, str):
+                    field_dict["transaction_type"] = "STORAGE"
+        for tops in dict_items["top"]:
+            for index, top in enumerate(tops):
+                if isinstance(top, str):
+                    field_dict["transaction_type"] = "TOP"
         for name_codes in dict_items["name_code"]:
             for index, name_code in enumerate(name_codes):
                 name = re.search(re.compile(r"(?<= - )\b\w{2,3}\b(?= - )"), name_code)
@@ -781,9 +815,25 @@ def format_icbc(dict_items, type_of_pdf):
 
 
 def icbc_filename(df):
-    if df["licence_plate"].at[0] == "NONLIC":
+    if df["licence_plate"].at[0] == "NONLIC" and df["transaction_type"].at[0] not in [
+        "RENEW",
+        "NEW",
+        "CHANGE",
+        "CANCEL",
+        "STORAGE",
+        "TOP",
+    ]:
         return f"{df['insured_name'].at[0].title()}.pdf"
-    if df["transaction_type"].at[0] not in ["RENEW", "NEW"]:
+    elif df["licence_plate"].at[0] == "NONLIC" and df["transaction_type"].at[0] not in [
+        "CANCEL"
+    ]:
+        return f"{df['insured_name'].at[0].title()} {df['transaction_type'].at[0].title()}.pdf"
+    elif df["transaction_type"].at[0] not in [
+        "RENEW",
+        "NEW",
+        "STORAGE",
+        "TOP",
+    ]:
         return f"{df['licence_plate'].at[0]} {df['transaction_type'].at[0].title()}.pdf"
     else:
         return f"{df['licence_plate'].at[0]}.pdf"
@@ -815,7 +865,7 @@ def search_for_icbc_input_dict(doc):
 def rename_icbc(drive_letter, number_of_pdfs):
     icbc_input_directory = Path.home() / "Downloads"
     icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
-    # icbc_output_directory = Path.home() / 'Desktop' / "NEW"
+    # icbc_output_directory = Path.home() / "Desktop" / "NEW"
     # icbc_output_directory.mkdir(exist_ok=True)
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(
@@ -824,22 +874,32 @@ def rename_icbc(drive_letter, number_of_pdfs):
     processed_timestamps = set()
     for pdf in pdf_files1[:number_of_pdfs]:
         with fitz.open(pdf) as doc:
+            pp = False
+            pp_block = doc[0].get_text(
+                "text",
+                clip=(
+                    425.40240478515625,
+                    35.96635437011719,
+                    557.9161376953125,
+                    48.300140380859375,
+                ),
+            )
+            if "Payment Plan Agreement".casefold() in pp_block.casefold():
+                pp = True
             doc_type = get_icbc_doc_types(doc)
-            if doc_type and doc_type == "ICBC":
+            if doc_type and not pp and doc_type == "ICBC":
                 input_dict = search_for_icbc_input_dict(doc)
-
                 dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
                 formatted_dict = format_icbc(ff(dict_items[doc_type]), doc_type)
+
                 try:
                     df = pd.DataFrame([formatted_dict])
                     print(df)
                 except KeyError:
                     continue
                 timestamp = int(df["transaction_timestamp"].at[0])
-
                 if timestamp in processed_timestamps:
                     continue
-
                 processed_timestamps.add(timestamp)
                 icbc_file_name = icbc_filename(df)
                 icbc_output_dir = (
@@ -862,7 +922,13 @@ def rename_icbc(drive_letter, number_of_pdfs):
                     for path_name in matching_paths:
                         with fitz.open(path_name) as doc1:
                             target_transaction_id = doc1[0].get_text(
-                                "text", clip=(500.0, 58.0, 580.0, 73.0)
+                                "text",
+                                clip=(
+                                    409.97900390625,
+                                    63.84881591796875,
+                                    576.0,
+                                    72.82147216796875,
+                                ),
                             )
                             if target_transaction_id:
                                 match = int(
@@ -949,20 +1015,24 @@ def main():
     task = df_excel.at[2, 1]
     drive_letter = df_excel.at[32, 1]
     number_of_pdfs = int(df_excel.at[30, 1])
-    if task == "Auto Renewal Letter":
-        output_dir.mkdir(exist_ok=True)
-        renewal_letter(excel_path)
-    elif task == "Manual Renewal Letter":
-        output_dir.mkdir(exist_ok=True)
-        renewal_letter_manual(excel_data)
-    elif task == "Sort Renewal List":
-        output_dir.mkdir(exist_ok=True)
-        sort_renewal_list()
-    elif task == "Copy/Rename ICBC Transactions":
-        rename_icbc(drive_letter, number_of_pdfs)
-    elif task == "Delete Intact Broker/Mortgage Pages":
-        output_dir.mkdir(exist_ok=True)
-        delete_intact_broker_copies()
+    try:
+        if task == "Auto Renewal Letter":
+            output_dir.mkdir(exist_ok=True)
+            renewal_letter(excel_path)
+        elif task == "Manual Renewal Letter":
+            output_dir.mkdir(exist_ok=True)
+            renewal_letter_manual(excel_data)
+        elif task == "Sort Renewal List":
+            output_dir.mkdir(exist_ok=True)
+            sort_renewal_list()
+        elif task == "Copy/Rename ICBC Transactions":
+            rename_icbc(drive_letter, number_of_pdfs)
+        elif task == "Delete Intact Broker/Mortgage Pages":
+            output_dir.mkdir(exist_ok=True)
+            delete_intact_broker_copies()
+    except Exception as e:
+        print(str(e))
+        time.sleep(3)
 
 
 if __name__ == "__main__":

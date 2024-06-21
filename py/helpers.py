@@ -45,6 +45,9 @@ form_fields = [
     "validation_stamp",
     "customer_copy",
     "time_of_validation",
+    "cancellation",
+    "storage",
+    "top",
 ]
 FormFields = namedtuple("FormFields", form_fields, defaults=(None,) * len(form_fields))
 target_fields = [
@@ -248,6 +251,61 @@ target_dict = {
             ),
         ),
     )._asdict(),
+    "Family_Legal": FormFields(
+        name_and_address=TargetFields(
+            target_coordinates=(
+                37.72800064086914,
+                170.62953186035156,
+                150,
+                228.67138671875,
+            )
+        ),
+        policy_number=TargetFields(
+            target_keyword="POLICY NUMBER",
+            target_coordinates=(0, 10.913284301757812, 0, 12.68017578125),
+        ),
+        effective_date=TargetFields(
+            target_keyword="EFFECTIVE DATE",
+            target_coordinates=(0, 11.345291137695312, 0, 13.1121826171875),
+        ),
+        risk_address=TargetFields(
+            target_keyword="LOCATION OF INSURED PROPERTY:",
+            first_index=0,
+            second_index=1,
+        ),
+        form_type=TargetFields(
+            target_keyword="All Perils:", first_index=0, second_index=0
+        ),
+        risk_type=TargetFields(
+            target_keyword="POLICY TYPE",
+            target_coordinates=(0, 11.633319854736328, 15, 13.40020751953125),
+        ),
+        number_of_families=TargetFields(
+            target_keyword="RENTAL SUITES", first_index=0, second_index=0
+        ),
+        earthquake_coverage=TargetFields(
+            target_keyword="EARTHQUAKE PROPERTY LIMITS",
+            target_coordinates=(
+                46.94398498535156,
+                11.1737060546875,
+                35,
+                12.26593017578125,
+            ),
+        ),
+        overland_water=TargetFields(
+            target_keyword="Overland Water", first_index=0, second_index=0
+        ),
+        condo_deductible=TargetFields(
+            target_keyword="Deductible Coverage:", first_index=0, second_index=0
+        ),
+        service_line=TargetFields(
+            target_keyword="Service Lines", first_index=0, second_index=0
+        ),
+        premium_amount=TargetFields(
+            target_keyword="RETURN THIS PORTION WITH PAYMENT",
+            target_coordinates=(0, -19.8719482421875, 0, -19.8719482421875),
+        ),
+    )._asdict(),
     "Intact": FormFields(
         name_and_address=TargetFields(
             target_coordinates=(
@@ -433,6 +491,17 @@ target_dict = {
         time_of_validation=TargetFields(
             target_keyword="TIME OF VALIDATION",
             target_coordinates=(0.0, 10.354278564453125, 0.0, 40),
+        ),
+        cancellation=TargetFields(
+            target_keyword="Application for Cancellation", first_index=0, second_index=0
+        ),
+        storage=TargetFields(
+            target_keyword="Storage Policy", first_index=0, second_index=0
+        ),
+        top=TargetFields(
+            target_keyword="Temporary Operation Permit and Owner’s Certificate of Insurance",
+            first_index=0,
+            second_index=0,
         ),
     )._asdict(),
 }
