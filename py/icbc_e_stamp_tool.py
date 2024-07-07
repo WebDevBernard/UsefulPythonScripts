@@ -125,13 +125,13 @@ def format_icbc(dict_items, type_of_pdf):
                     re.compile(r"Transaction Timestamp "), "", transaction_timestamp
                 )
                 field_dict["transaction_timestamp"] = transaction1
-        for insured_names in dict_items["insured_name"]:
-            for index, insured_name in enumerate(insured_names):
-                field_dict["insured_name"] = insured_name.rstrip(".")
         for insured_names in dict_items["owner_name"]:
             for index, insured_name in enumerate(insured_names):
                 field_dict["insured_name"] = insured_name.rstrip(".")
         for insured_names in dict_items["applicant_name"]:
+            for index, insured_name in enumerate(insured_names):
+                field_dict["insured_name"] = insured_name.rstrip(".")
+        for insured_names in dict_items["insured_name"]:
             for index, insured_name in enumerate(insured_names):
                 field_dict["insured_name"] = insured_name.rstrip(".")
     return field_dict

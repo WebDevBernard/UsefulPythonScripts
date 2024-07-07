@@ -5,7 +5,7 @@ import pdfplumber
 from tabulate import tabulate
 
 draw_rect_on_page_num = [1]
-draw_rect_from_coords = (429.9360046386719, 36.0, 575.8493041992188, 48.2890625)
+draw_rect_from_coords = (409.97900390625, 63.84881591796875, 576.0, 72.82147216796875)
 input_coords = (420, 603.5182495117188, 568.423095703125, 611.7692260742188)
 target_coords = (
     425.5920104980469,

@@ -392,7 +392,7 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
         "1": 1,
         "2": 2,
         "3": 3,
-        "001 Additional Family": 2,
+        "Additional Family": 2,
         "002 Additional Family": 3,
     }
     if (
@@ -560,6 +560,8 @@ def sort_renewal_list():
             "renewal",
             "Pulled",
             "D/L",
+            # "agen_dir",
+            # "prem_amt",
         ]
 
         df = df.reindex(columns=column_list)
@@ -801,13 +803,13 @@ def format_icbc(dict_items, type_of_pdf):
                     re.compile(r"Transaction Timestamp "), "", transaction_timestamp
                 )
                 field_dict["transaction_timestamp"] = transaction1
-        for insured_names in dict_items["insured_name"]:
-            for index, insured_name in enumerate(insured_names):
-                field_dict["insured_name"] = insured_name.rstrip(".")
         for insured_names in dict_items["owner_name"]:
             for index, insured_name in enumerate(insured_names):
                 field_dict["insured_name"] = insured_name.rstrip(".")
         for insured_names in dict_items["applicant_name"]:
+            for index, insured_name in enumerate(insured_names):
+                field_dict["insured_name"] = insured_name.rstrip(".")
+        for insured_names in dict_items["insured_name"]:
             for index, insured_name in enumerate(insured_names):
                 field_dict["insured_name"] = insured_name.rstrip(".")
         format_named_insured(field_dict, dict_items, type_of_pdf)

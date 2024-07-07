@@ -159,7 +159,7 @@ target_dict = {
             target_keyword="Extended Liability", first_index=1, second_index=0
         ),
         earthquake_coverage=TargetFields(
-            target_keyword="Earthquake Endorsement", first_index=0, second_index=0
+            target_keyword="Earthquake", first_index=0, second_index=0
         ),
         overland_water=TargetFields(
             target_keyword="Overland Water", first_index=0, second_index=0
