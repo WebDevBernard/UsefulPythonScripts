@@ -17,7 +17,7 @@ warnings.simplefilter("ignore")
 def get_doc_types(doc):
     page = doc[0]
     text_block = page.get_text(
-        "text", clip=(409.97900390625, 63.84881591796875, 576.0, 72.82147216796875)
+        "text", clip=(409.97900390625, 63.84881591796875, 576.0, 83.7454833984375)
     )
     if "Transaction Timestamp ".casefold() in text_block.casefold():
         return "ICBC"
@@ -196,7 +196,7 @@ def insert_stamp_position(page, el, data, date):
         if isinstance(data["broker_code"], float)
         else data["broker_code"]
     )
-    text = f"#{broker_code}"
+    text = f"{broker_code}"
     date = (
         date.strftime("%b %d, %Y")
         if data["toggle_timestamp"] == "Timestamp"
@@ -278,7 +278,7 @@ def not_customer_copy_page_numbers(pdf):
             top = True
         for page_num in range(len(doc)):
             page = doc[page_num]
-            text_block = page.get_text("text", clip=(480, 760, 580, 780))
+            text_block = page.get_text("text", clip=(480, 750, 580, 780))
             if not "Customer Copy".casefold() in text_block.casefold():
                 pages.append(page_num)
         if top:
@@ -378,7 +378,7 @@ def copy_icbc(number_of_pdfs):
                                     409.97900390625,
                                     63.84881591796875,
                                     576.0,
-                                    72.82147216796875,
+                                    83.7454833984375,
                                 ),
                             )
                             if target_transaction_id:

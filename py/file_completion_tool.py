@@ -33,8 +33,8 @@ from helpers import (
     doc_types,
     content_pages,
     find_matching_paths,
+    progressbar,
 )
-from names import producer_dict
 
 warnings.simplefilter("ignore")
 
@@ -188,6 +188,7 @@ def search_for_matches(doc, input_dict, type_of_pdf, target_dict):
 def format_named_insured(field_dict, dict_items, type_of_pdf):
     for name_and_address in dict_items["name_and_address"]:
         address_index = find_index(address_regex, name_and_address)
+
         if type_of_pdf == "Intact":
             names = [i.split(" & ") for i in name_and_address[:address_index]]
             join_same_last_names = [
@@ -196,7 +197,8 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
                     if ", " in i
                     else (i + " " + names[0][0]).split(", ")[0]
                 )
-                for i in names[0]
+                for sublist in names
+                for i in sublist
             ]
             field_dict["named_insured"] = join_and_format_names(join_same_last_names)
         else:
@@ -335,6 +337,8 @@ def format_form_type(field_dict, dict_items, type_of_pdf):
                 field_dict[f"form_type_{index + 1}"] = "Basic Form"
             if "fire & extended".casefold() in form_type.casefold():
                 field_dict[f"form_type_{index + 1}"] = "Fire + EC"
+            if "DOLCE VITA".casefold() in form_type.casefold():
+                field_dict[f"form_type_{index + 1}"] = "Comprehensive Form"
             if type_of_pdf == "Family":
                 if "included".casefold() in form_type.casefold():
                     field_dict[f"form_type_{index + 1}"] = "Comprehensive Form"
@@ -381,6 +385,7 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                 field_dict[f"risk_type_{index + 1}"] = "rented_condo"
             elif "tenant".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "tenant"
+
     return field_dict
 
 
@@ -536,7 +541,7 @@ def sort_renewal_list():
     xls_files = Path(input_dir).glob("*.xls")
     files = list(xlsx_files) + list(xls_files)
     all_dfs = []
-    for file in files:
+    for file in progressbar(files, prefix="Progress: ", size=40):
         df = (
             pd.read_excel(file, engine="xlrd")
             if file.suffix == ".XLS"
@@ -583,7 +588,7 @@ def sort_renewal_list():
             )
         df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
         # df = df[((df['pcode'] == 'FS') | (df['csrcode'] == 'FS')) & (df['buscode'] == 'COMM')]
-        print(df)
+        # print(df)
         if not os.path.isfile(output_path):
             writer = pd.ExcelWriter(output_path, engine="openpyxl")
         else:
@@ -669,17 +674,19 @@ def sort_renewal_list():
         wb.save(output_path)
     except TypeError:
         return
+    print(f"******** Sort Renewal List ran successfully ********")
+    time.sleep(3)
 
 
 def renewal_letter(excel_path1):
     pdf_files = input_dir.glob("*.pdf")
-    for pdf in pdf_files:
+    for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
         with fitz.open(pdf) as doc:
-            print(
-                f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} "
-            )
+            # print(
+            #     f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} "
+            # )
             doc_type = get_doc_types(doc)
-            print(f"This is a {doc_type} policy.")
+            # print(f"This is a {doc_type} policy.")
             if doc_type:
                 pg_list = get_content_pages(doc, doc_type)
                 input_dict = search_for_input_dict(doc, pg_list)
@@ -717,11 +724,14 @@ def renewal_letter(excel_path1):
                 df["on_behalf"] = pd.read_excel(
                     excel_path1, sheet_name=0, header=None
                 ).at[10, 1]
-                print(df)
+                # print(df)
                 if doc_type and doc_type != "ICBC":
                     for rows in df.to_dict(orient="records"):
                         write_to_new_docx("Renewal Letter New.docx", rows)
-                print(f"\n<==========================>\n")
+                        write_to_new_docx("Renewal Letter New.docx", rows)
+                # print(f"\n<==========================>\n")
+    print(f"******** Auto Renewal Letter ran successfully ********")
+    time.sleep(3)
 
 
 def renewal_letter_manual(excel_data1):
@@ -734,9 +744,11 @@ def renewal_letter_manual(excel_data1):
     )
     df["risk_address_1"] = df["risk_address_1"].fillna(df["mailing_address"])
     df["effective_date"] = pd.to_datetime(df["effective_date"]).dt.strftime("%B %d, %Y")
-    print(df)
-    for rows in df.to_dict(orient="records"):
+    # print(df)
+    for rows in progressbar(df.to_dict(orient="records"), prefix="Progress: ", size=40):
         write_to_new_docx("Renewal Letter New.docx", rows)
+    print(f"******** Manual Renewal Letter ran successfully ********")
+    time.sleep(3)
 
 
 def get_excel_data(excel_path1):
@@ -864,9 +876,22 @@ def search_for_icbc_input_dict(doc):
     return field_dict
 
 
-def rename_icbc(drive_letter, number_of_pdfs):
+def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
+    loop_counter = 0
+    scan_counter = 0
+    copy_counter = 0
     icbc_input_directory = Path.home() / "Downloads"
-    icbc_output_directory = f"{drive_letter}:\\ICBC Copies"
+    icbc_output_directory = f"{drive_letter}:\\{icbc_folder_name}"
+    if not Path(drive_letter).exists():
+        print(
+            "Change the drive letter in 'input.xlsx' to the same one as the 'Shared' Drive."
+        )
+        os.system("pause")
+        return
+    if not Path(icbc_output_directory).exists():
+        print("Check if the ICBC folder name is correct.")
+        os.system("pause")
+        return
     # icbc_output_directory = Path.home() / "Desktop" / "NEW"
     # icbc_output_directory.mkdir(exist_ok=True)
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
@@ -874,7 +899,8 @@ def rename_icbc(drive_letter, number_of_pdfs):
         pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime, reverse=True
     )
     processed_timestamps = set()
-    for pdf in pdf_files1[:number_of_pdfs]:
+    for pdf in progressbar(pdf_files1[:number_of_pdfs], prefix="Progress: ", size=40):
+        loop_counter += 1
         with fitz.open(pdf) as doc:
             pp = False
             pp_block = doc[0].get_text(
@@ -890,13 +916,13 @@ def rename_icbc(drive_letter, number_of_pdfs):
                 pp = True
             doc_type = get_icbc_doc_types(doc)
             if doc_type and not pp and doc_type == "ICBC":
+                scan_counter += 1
                 input_dict = search_for_icbc_input_dict(doc)
                 dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
                 formatted_dict = format_icbc(ff(dict_items[doc_type]), doc_type)
 
                 try:
                     df = pd.DataFrame([formatted_dict])
-                    print(df)
                 except KeyError:
                     continue
                 timestamp = int(df["transaction_timestamp"].at[0])
@@ -907,13 +933,20 @@ def rename_icbc(drive_letter, number_of_pdfs):
                 icbc_output_dir = (
                     Path(icbc_output_directory)
                     if df["name_code"].at[0].upper() == "HOUSE"
-                    or producer_dict.get(df["name_code"].at[0].upper()) is None
+                    or names.get(df["name_code"].at[0].upper()) is None
                     else Path(
-                        f"{icbc_output_directory}/{producer_dict.get(df['name_code'].at[0].upper())}"
+                        f"{icbc_output_directory}/{names.get(df['name_code'].at[0].upper())}"
                     )
                 )
+                # TESTING VAR HERE COMMENT OUT:
                 # icbc_output_dir.mkdir(exist_ok=True)
                 icbc_output_path = icbc_output_dir / icbc_file_name
+                if not Path(icbc_output_path).exists():
+                    print(
+                        "The producer folder does not exists in 'ICBC Copies', check if mappings in 'input.xlsx' is correct."
+                    )
+                    os.system("pause")
+                    return
                 paths = list(Path(icbc_output_directory).rglob("*.pdf"))
                 file_names = [path.stem.split()[0] for path in paths]
                 target_filename = Path(icbc_file_name).stem.split()[0]
@@ -943,6 +976,11 @@ def rename_icbc(drive_letter, number_of_pdfs):
                 #     shutil.copy(pdf, unique_file_name(icbc_output_path))
                 if timestamp not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
+                    copy_counter += 1
+    else:
+        print(f"Scanned: {scan_counter} out of {loop_counter} documents")
+        print(f"Copied: {copy_counter} out of {scan_counter} documents")
+        time.sleep(3)
 
 
 def find_pages_with_text(doc, search_text, not_search_text):
@@ -970,13 +1008,13 @@ def find_blank_pages_no_images(doc):
 
 def delete_intact_broker_copies():
     pdf_files = input_dir.glob("*.pdf")
-    for pdf in pdf_files:
+    for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
         with fitz.open(pdf) as doc:
-            print(
-                f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} "
-            )
+            # print(
+            #     f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} "
+            # )
             intact_doc = get_doc_types(doc)
-            print(f"This is a {intact_doc} policy.")
+            # print(f"This is a {intact_doc} policy.")
             if intact_doc == "Intact":
                 broker_pages = find_pages_with_text(
                     doc, "BROKER COPY", "Property Summary"
@@ -1000,9 +1038,11 @@ def delete_intact_broker_copies():
                         pages_to_remove.add(page_num + 1)
                 pages_to_remove = sorted(pages_to_remove, reverse=True)
                 output_path = output_dir / f"{Path(pdf).stem}{Path(pdf).suffix}"
-                print("*************  Preparing Intact Customer Copy *************")
+                # print("*************  Preparing Intact Customer Copy *************")
                 doc.delete_pages(pages_to_remove)
                 doc.save(unique_file_name(output_path), garbage=4, deflate=True)
+    print(f"******** Delete Intact Broker/Mortgage Pages ran successfully ********")
+    time.sleep(3)
 
 
 base_dir = Path(__file__).parent.parent
@@ -1014,6 +1054,10 @@ def main():
     excel_path = base_dir / "input.xlsx"  # name of Excel
     excel_data = get_excel_data(excel_path)
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
+    names = {}
+    icbc_folder_name = df_excel.at[16, 9]
+    for i in range(18, 34):
+        names[df_excel.at[i, 9]] = df_excel.at[i, 10]
     task = df_excel.at[2, 1]
     drive_letter = df_excel.at[32, 1]
     number_of_pdfs = int(df_excel.at[30, 1])
@@ -1028,7 +1072,7 @@ def main():
             output_dir.mkdir(exist_ok=True)
             sort_renewal_list()
         elif task == "Copy/Rename ICBC Transactions":
-            rename_icbc(drive_letter, number_of_pdfs)
+            rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
         elif task == "Delete Intact Broker/Mortgage Pages":
             output_dir.mkdir(exist_ok=True)
             delete_intact_broker_copies()

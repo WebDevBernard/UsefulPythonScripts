@@ -4,15 +4,15 @@ import fitz
 import pdfplumber
 from tabulate import tabulate
 
-draw_rect_on_page_num = [1]
-draw_rect_from_coords = (409.97900390625, 63.84881591796875, 576.0, 72.82147216796875)
-input_coords = (420, 603.5182495117188, 568.423095703125, 611.7692260742188)
-target_coords = (
-    425.5920104980469,
-    580.731689453125,
-    452.34271240234375,
-    589.572021484375,
+draw_rect_on_page_num = [11]
+draw_rect_from_coords = (86.14999389648438, 534.875, 90.0419921875, 544.4930419921875)
+input_coords = (
+    86.14999389648438,
+    507.9750061035156,
+    118.82598876953125,
+    525.7430419921875,
 )
+target_coords = (86.14999389648438, 534.875, 90.0419921875, 544.4930419921875)
 turn_on_draw_rect_all = False
 turn_on_pdf_field_names = False
 turn_on_write_text_coords = True

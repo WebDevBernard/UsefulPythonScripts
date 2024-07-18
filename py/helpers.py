@@ -1,5 +1,7 @@
 import os
 import re
+import sys
+import time
 from collections import namedtuple
 from pathlib import Path
 
@@ -48,6 +50,7 @@ form_fields = [
     "cancellation",
     "storage",
     "top",
+    "risk_type_dolce",
 ]
 FormFields = namedtuple("FormFields", form_fields, defaults=(None,) * len(form_fields))
 target_fields = [
@@ -138,20 +141,20 @@ target_dict = {
             target_keyword="Policy Effective From:", first_index=0, second_index=1
         ),
         risk_address=TargetFields(
-            target_keyword="FORM",
-            first_index=-1,
+            target_keyword="Location ",
+            first_index=0,
             second_index=remaining_index,
             join_list=True,
         ),
         form_type=TargetFields(
-            target_keyword=re.compile(r".* - .*form$", flags=re.IGNORECASE),
-            first_index=0,
+            target_keyword="Residence Locations: ",
+            first_index=2,
             second_index=0,
             append_duplicates=True,
         ),
         risk_type=TargetFields(
-            target_keyword=re.compile(r".* - .*form$", flags=re.IGNORECASE),
-            first_index=0,
+            target_keyword="Residence Locations: ",
+            first_index=2,
             second_index=0,
             append_duplicates=True,
         ),
@@ -312,7 +315,7 @@ target_dict = {
                 49.650001525878906,
                 152.64999389648438,
                 214.1199951171875,
-                200.99000549316406,
+                212.49000549316406,
             )
         ),
         policy_number=TargetFields(
@@ -335,7 +338,7 @@ target_dict = {
         ),
         number_of_families=TargetFields(
             target_keyword="Families",
-            target_coordinates=(0, 18.699981689453125, 0, 10.54998779296875),
+            target_coordinates=(0, 18.699981689453125, 0, 18.75),
         ),
         premium_amount=TargetFields(
             target_keyword="Total for Policy", first_index=0, second_index=1
@@ -483,8 +486,8 @@ target_dict = {
             target_keyword="Customer Copy",
             target_coordinates=(
                 36.0,
-                761.039794921875,
-                560.1806640625,
+                750.434814453125,
+                578.1806640625,
                 769.977294921875,
             ),
         ),
@@ -573,3 +576,28 @@ def unique_file_name(path):
 def find_matching_paths(target_filename, paths):
     matching_paths = [path for path in paths if path.stem.split()[0] == target_filename]
     return matching_paths
+
+
+# https://stackoverflow.com/questions/3160699/python-progress-bar
+def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
+    count = len(it)
+    start = time.time()  # time estimate start
+
+    def show(j):
+        x = int(size * j / count)
+        # time estimate calculation and string
+        remaining = ((time.time() - start) / j) * (count - j)
+        mins, sec = divmod(remaining, 60)  # limited to minutes
+        time_str = f"{int(mins):02}:{sec:03.1f}"
+        print(
+            f"{prefix}[{u'█'*x}{('.'*(size-x))}] {j}/{count} Est wait {time_str}",
+            end="\r",
+            file=out,
+            flush=True,
+        )
+
+    show(0.1)  # avoid div/0
+    for i, item in enumerate(it):
+        yield item
+        show(i + 1)
+    print(flush=True, file=out)
