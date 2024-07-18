@@ -876,7 +876,7 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
     copy_counter = 0
     icbc_input_directory = Path.home() / "Downloads"
     icbc_output_directory = f"{drive_letter}:\\{icbc_folder_name}"
-    if not Path(drive_letter).exists():
+    if not Path(f"{drive_letter}:\\").exists():
         print(
             "Change the drive letter in 'input.xlsx' to the same one as the 'Shared' drive."
         )

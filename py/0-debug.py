@@ -4,8 +4,13 @@ import fitz
 import pdfplumber
 from tabulate import tabulate
 
-draw_rect_on_page_num = [11]
-draw_rect_from_coords = (86.14999389648438, 534.875, 90.0419921875, 544.4930419921875)
+draw_rect_on_page_num = [1]
+draw_rect_from_coords = (
+    49.650001525878906,
+    152.64999389648438,
+    250,
+    212.49000549316406,
+)
 input_coords = (
     86.14999389648438,
     507.9750061035156,
