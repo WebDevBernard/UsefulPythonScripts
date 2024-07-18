@@ -5,6 +5,8 @@
 /py/output/
 /.venv
 /.idea
+/py/.idea
+./idea
 /samples
 /py/__pycache__
 *.env
