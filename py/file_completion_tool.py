@@ -779,17 +779,15 @@ def format_icbc(dict_items, type_of_pdf):
         if not dict_items["transaction_type"]:
             field_dict["transaction_type"] = "PLACEHOLDER"
         for license_plates in dict_items["licence_plate"]:
-            for index, license_plate in enumerate(license_plates):
-                plate_number = re.sub(
-                    re.compile(r"Licence Plate Number "), "", license_plate
-                )
-                field_dict["licence_plate"] = plate_number
+            plate_number = re.sub(
+                re.compile(r"Licence Plate Number "), "", license_plates[0]
+            )
+            field_dict["licence_plate"] = plate_number
         for transaction_types in dict_items["transaction_type"]:
-            for index, transaction_type in enumerate(transaction_types):
-                transaction = re.sub(
-                    re.compile(r"Transaction Type "), "", transaction_type
-                )
-                field_dict["transaction_type"] = transaction
+            transaction = re.sub(
+                re.compile(r"Transaction Type "), "", transaction_types[0]
+            )
+            field_dict["transaction_type"] = transaction
         for cancellations in dict_items["cancellation"]:
             for index, cancellation in enumerate(cancellations):
                 if isinstance(cancellation, str):
@@ -810,20 +808,16 @@ def format_icbc(dict_items, type_of_pdf):
                 else:
                     field_dict["name_code"] = "HOUSE"
         for transaction_timestamps in dict_items["transaction_timestamp"]:
-            for index, transaction_timestamp in enumerate(transaction_timestamps):
-                transaction1 = re.sub(
-                    re.compile(r"Transaction Timestamp "), "", transaction_timestamp
-                )
-                field_dict["transaction_timestamp"] = transaction1
+            transaction1 = re.sub(
+                re.compile(r"Transaction Timestamp "), "", transaction_timestamps[0]
+            )
+            field_dict["transaction_timestamp"] = transaction1
         for insured_names in dict_items["owner_name"]:
-            for index, insured_name in enumerate(insured_names):
-                field_dict["insured_name"] = insured_name.rstrip(".")
+            field_dict["insured_name"] = insured_names[0].rstrip(".")
         for insured_names in dict_items["applicant_name"]:
-            for index, insured_name in enumerate(insured_names):
-                field_dict["insured_name"] = insured_name.rstrip(".")
+            field_dict["insured_name"] = insured_names[0].rstrip(".")
         for insured_names in dict_items["insured_name"]:
-            for index, insured_name in enumerate(insured_names):
-                field_dict["insured_name"] = insured_name.rstrip(".")
+            field_dict["insured_name"] = insured_names[0].rstrip(".")
         format_named_insured(field_dict, dict_items, type_of_pdf)
     return field_dict
 
@@ -884,7 +878,7 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
     icbc_output_directory = f"{drive_letter}:\\{icbc_folder_name}"
     if not Path(drive_letter).exists():
         print(
-            "Change the drive letter in 'input.xlsx' to the same one as the 'Shared' Drive."
+            "Change the drive letter in 'input.xlsx' to the same one as the 'Shared' drive."
         )
         os.system("pause")
         return
