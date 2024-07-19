@@ -3,6 +3,7 @@ import pathlib
 import re
 import shutil
 import time
+import timeit
 import warnings
 from collections import defaultdict
 from datetime import datetime
@@ -37,6 +38,9 @@ from helpers import (
 )
 
 warnings.simplefilter("ignore")
+
+testing = []
+timer = 0
 
 
 def get_doc_types(doc):
@@ -537,6 +541,7 @@ def write_to_new_docx(docx, rows):
 
 
 def sort_renewal_list():
+    global timer
     xlsx_files = Path(input_dir).glob("*.xlsx")
     xls_files = Path(input_dir).glob("*.xls")
     files = list(xlsx_files) + list(xls_files)
@@ -675,10 +680,11 @@ def sort_renewal_list():
     except TypeError:
         return
     print(f"******** Sort Renewal List ran successfully ********")
-    time.sleep(3)
+    timer = 3
 
 
 def renewal_letter(excel_path1):
+    global timer
     pdf_files = input_dir.glob("*.pdf")
     for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
         with fitz.open(pdf) as doc:
@@ -731,10 +737,11 @@ def renewal_letter(excel_path1):
                         write_to_new_docx("Renewal Letter New.docx", rows)
                 # print(f"\n<==========================>\n")
     print(f"******** Auto Renewal Letter ran successfully ********")
-    time.sleep(3)
+    timer = 3
 
 
 def renewal_letter_manual(excel_data1):
+    global timer
     df = pd.DataFrame([excel_data1])
     df["today"] = datetime.today().strftime("%B %d, %Y")
     df["mailing_address"] = (
@@ -748,7 +755,7 @@ def renewal_letter_manual(excel_data1):
     for rows in progressbar(df.to_dict(orient="records"), prefix="Progress: ", size=40):
         write_to_new_docx("Renewal Letter New.docx", rows)
     print(f"******** Manual Renewal Letter ran successfully ********")
-    time.sleep(3)
+    timer = 3
 
 
 def get_excel_data(excel_path1):
@@ -871,27 +878,36 @@ def search_for_icbc_input_dict(doc):
 
 
 def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
+    global testing, timer
     loop_counter = 0
     scan_counter = 0
     copy_counter = 0
+    # icbc_output_directory.mkdir(exist_ok=True)
     icbc_input_directory = Path.home() / "Downloads"
-    icbc_output_directory = f"{drive_letter}:\\{icbc_folder_name}"
-    if not Path(f"{drive_letter}:\\").exists():
+    icbc_output_directory = (
+        f"{drive_letter}:\\{icbc_folder_name}"
+        if not testing
+        else Path.home() / "Desktop" / "ICBC Copies"
+    )
+    if testing:
+        icbc_output_directory.mkdir(exist_ok=True)
+    if not testing and not Path(f"{drive_letter}:\\").exists():
         print(
             "Change the drive letter in 'input.xlsx' to the same one as the 'Shared' drive."
         )
         os.system("pause")
         return
-    if not Path(icbc_output_directory).exists():
+    if not testing and not Path(icbc_output_directory).exists():
         print("Check if the ICBC folder name is correct.")
         os.system("pause")
         return
-    # icbc_output_directory = Path.home() / "Desktop" / "NEW"
-    # icbc_output_directory.mkdir(exist_ok=True)
+
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(
         pdf_files1, key=lambda file: pathlib.Path(file).lstat().st_mtime, reverse=True
     )
+    paths = list(Path(icbc_output_directory).rglob("*.pdf"))
+    file_names = [path.stem.split()[0] for path in paths]
     processed_timestamps = set()
     for pdf in progressbar(pdf_files1[:number_of_pdfs], prefix="Progress: ", size=40):
         loop_counter += 1
@@ -932,17 +948,18 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
                         f"{icbc_output_directory}/{names.get(df['name_code'].at[0].upper())}"
                     )
                 )
-                # TESTING VAR HERE COMMENT OUT:
-                # icbc_output_dir.mkdir(exist_ok=True)
+
+                if testing:
+                    icbc_output_dir.mkdir(exist_ok=True)
+
                 icbc_output_path = icbc_output_dir / icbc_file_name
-                if not Path(icbc_output_path).exists():
+                if not testing and not Path(icbc_output_dir).exists():
                     print(
-                        "The producer folder does not exists in 'ICBC Copies', check if mappings in 'input.xlsx' is correct."
+                        "The producer folder does not exists, check if mappings in 'input.xlsx' is correct."
                     )
                     os.system("pause")
                     return
-                paths = list(Path(icbc_output_directory).rglob("*.pdf"))
-                file_names = [path.stem.split()[0] for path in paths]
+
                 target_filename = Path(icbc_file_name).stem.split()[0]
                 matching_transaction_ids = []
                 if target_filename in file_names:
@@ -966,15 +983,13 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
                                     ).group(1)
                                 )
                                 matching_transaction_ids.append(match)
-                # if timestamp not in matching_transaction_ids:
-                #     shutil.copy(pdf, unique_file_name(icbc_output_path))
                 if timestamp not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
                     copy_counter += 1
     else:
         print(f"Scanned: {scan_counter} out of {loop_counter} documents")
         print(f"Copied: {copy_counter} out of {scan_counter} documents")
-        time.sleep(3)
+        timer = 3
 
 
 def find_pages_with_text(doc, search_text, not_search_text):
@@ -1001,6 +1016,7 @@ def find_blank_pages_no_images(doc):
 
 
 def delete_intact_broker_copies():
+    global timer
     pdf_files = input_dir.glob("*.pdf")
     for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
         with fitz.open(pdf) as doc:
@@ -1036,7 +1052,7 @@ def delete_intact_broker_copies():
                 doc.delete_pages(pages_to_remove)
                 doc.save(unique_file_name(output_path), garbage=4, deflate=True)
     print(f"******** Delete Intact Broker/Mortgage Pages ran successfully ********")
-    time.sleep(3)
+    timer = 3
 
 
 base_dir = Path(__file__).parent.parent
@@ -1076,4 +1092,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    time_taken = timeit.timeit(lambda: main(), number=1)
+    try:
+        print(f"Time taken: {time_taken} seconds")
+        if timer > 0:
+            time.sleep(timer)
+    except Exception as e:
+        print(str(e))
+        time.sleep(3)
