@@ -3,12 +3,12 @@ import pathlib
 import re
 import shutil
 import time
-import timeit
 import warnings
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+import FreeSimpleGUI as sg
 import fitz
 import pandas as pd
 from docxtpl import DocxTemplate
@@ -39,8 +39,8 @@ from helpers import (
 
 warnings.simplefilter("ignore")
 
-testing = []
-timer = 0
+testing = [1]
+
 
 
 def get_doc_types(doc):
@@ -541,7 +541,6 @@ def write_to_new_docx(docx, rows):
 
 
 def sort_renewal_list():
-    global timer
     xlsx_files = Path(input_dir).glob("*.xlsx")
     xls_files = Path(input_dir).glob("*.xls")
     files = list(xlsx_files) + list(xls_files)
@@ -556,7 +555,7 @@ def sort_renewal_list():
 
     df = pd.concat(all_dfs, ignore_index=True)
 
-    output_path = base_dir / "output" / "renewal_list.xlsx"
+    output_path = output_dir / "renewal_list.xlsx"
     output_path = unique_file_name(output_path)
     try:
         column_list = [
@@ -679,12 +678,14 @@ def sort_renewal_list():
         wb.save(output_path)
     except TypeError:
         return
-    print(f"******** Sort Renewal List ran successfully ********")
-    timer = 3
+    if len(files) == 0:
+        print("Missing renewal list in 'Input' folder.")
+    else:
+        print(f"******** Sort Renewal List ran successfully ********")
 
 
 def renewal_letter(excel_path1):
-    global timer
+    doc_found = 0
     pdf_files = input_dir.glob("*.pdf")
     for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
         with fitz.open(pdf) as doc:
@@ -694,6 +695,7 @@ def renewal_letter(excel_path1):
             doc_type = get_doc_types(doc)
             # print(f"This is a {doc_type} policy.")
             if doc_type:
+                doc_found += 1
                 pg_list = get_content_pages(doc, doc_type)
                 input_dict = search_for_input_dict(doc, pg_list)
                 dict_items = search_for_matches(doc, input_dict, doc_type, target_dict)
@@ -734,14 +736,16 @@ def renewal_letter(excel_path1):
                 if doc_type and doc_type != "ICBC":
                     for rows in df.to_dict(orient="records"):
                         write_to_new_docx("Renewal Letter New.docx", rows)
-                        write_to_new_docx("Renewal Letter New.docx", rows)
                 # print(f"\n<==========================>\n")
-    print(f"******** Auto Renewal Letter ran successfully ********")
-    timer = 3
+    if doc_found > 0:
+        print(f"******** Auto Renewal Letter ran successfully ********")
+    else:
+        print("Missing insurance policy documents in 'Input' folder")
+
 
 
 def renewal_letter_manual(excel_data1):
-    global timer
+
     df = pd.DataFrame([excel_data1])
     df["today"] = datetime.today().strftime("%B %d, %Y")
     df["mailing_address"] = (
@@ -755,7 +759,7 @@ def renewal_letter_manual(excel_data1):
     for rows in progressbar(df.to_dict(orient="records"), prefix="Progress: ", size=40):
         write_to_new_docx("Renewal Letter New.docx", rows)
     print(f"******** Manual Renewal Letter ran successfully ********")
-    timer = 3
+
 
 
 def get_excel_data(excel_path1):
@@ -878,7 +882,7 @@ def search_for_icbc_input_dict(doc):
 
 
 def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
-    global testing, timer
+    global testing
     loop_counter = 0
     scan_counter = 0
     copy_counter = 0
@@ -986,10 +990,12 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
                 if timestamp not in matching_transaction_ids:
                     shutil.copy(pdf, unique_file_name(icbc_output_path))
                     copy_counter += 1
-    else:
+    if scan_counter > 0:
         print(f"Scanned: {scan_counter} out of {loop_counter} documents")
         print(f"Copied: {copy_counter} out of {scan_counter} documents")
-        timer = 3
+    else:
+        print("There are no policy documents in the Downloads folder")
+
 
 
 def find_pages_with_text(doc, search_text, not_search_text):
@@ -1016,7 +1022,7 @@ def find_blank_pages_no_images(doc):
 
 
 def delete_intact_broker_copies():
-    global timer
+    doc_found = 0
     pdf_files = input_dir.glob("*.pdf")
     for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
         with fitz.open(pdf) as doc:
@@ -1024,8 +1030,10 @@ def delete_intact_broker_copies():
             #     f"\n<==========================>\n\nFilename is: {Path(pdf).stem}{Path(pdf).suffix} "
             # )
             intact_doc = get_doc_types(doc)
+
             # print(f"This is a {intact_doc} policy.")
             if intact_doc == "Intact":
+                doc_found += 1
                 broker_pages = find_pages_with_text(
                     doc, "BROKER COPY", "Property Summary"
                 )
@@ -1051,14 +1059,34 @@ def delete_intact_broker_copies():
                 # print("*************  Preparing Intact Customer Copy *************")
                 doc.delete_pages(pages_to_remove)
                 doc.save(unique_file_name(output_path), garbage=4, deflate=True)
-    print(f"******** Delete Intact Broker/Mortgage Pages ran successfully ********")
-    timer = 3
+    if doc_found > 0:
+        print(f"******** Delete Intact Broker/Mortgage Pages ran successfully ********")
+    else:
+        print("Missing Intact policy documents in the 'Input' folder")
+
 
 
 base_dir = Path(__file__).parent.parent
-input_dir = base_dir / "input"
-output_dir = base_dir / "output"
+input_dir = Path.home() / "Desktop" / "Input (this folder can be deleted)"
+output_dir = Path.home() / "Desktop"
 
+font = ("Arial", 11)
+font2 = ("Arial", 8)
+button_size = (18, 1)
+layout = [
+    [sg.Multiline(size=(47, 4), echo_stdout_stderr=True, reroute_stdout=True, autoscroll=True, background_color="LightYellow", text_color='indigo', key='-MLINE-', font=font2),
+
+     sg.Column([
+         [sg.Button("Sort Renewal List", font=font, button_color="MediumSeaGreen", size=button_size),],
+         [sg.Button("Intact Customer Copy", font=font, button_color="MediumSeaGreen", size=button_size)]
+     ], background_color="LightYellow", element_justification='right')
+    ],
+    [sg.Exit(s=16, button_color="tomato", font=font),
+    sg.Button("Auto Renewal Letter", font=font, button_color="MediumSeaGreen"),
+    sg.Button("Copy Rename ICBC", font=font, button_color="Indigo", size=button_size),
+    ]
+]
+window = sg.Window("File Completion Tool", layout, background_color="LightYellow")
 
 def main():
     excel_path = base_dir / "input.xlsx"  # name of Excel
@@ -1072,31 +1100,48 @@ def main():
     drive_letter = df_excel.at[32, 1]
     number_of_pdfs = int(df_excel.at[30, 1])
     try:
-        if task == "Auto Renewal Letter":
-            output_dir.mkdir(exist_ok=True)
+        if not Path(input_dir).exists():
+            input_dir.mkdir(exist_ok=True)
+            return
+        if task == "PySimpleGUI":
+            while True:
+                try:
+                    event, values = window.read()
+                    if event in (sg.WINDOW_CLOSED, "Exit"):
+                        break
+                    if event == "Auto Renewal Letter":
+                        renewal_letter(excel_path)
+                        time.sleep(3)
+                    if event == "Sort Renewal List":
+                        sort_renewal_list()
+                        time.sleep(3)
+                    if event == "Intact Customer Copy":
+                        delete_intact_broker_copies()
+                        time.sleep(3)
+                    if event == "Copy Rename ICBC":
+                        rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
+                        time.sleep(3)
+                except ZeroDivisionError as y:
+                    print("You forgot to put something in the 'Input' folder.")
+            window.close()
+        elif task == "Auto Renewal Letter":
+            # output_dir.mkdir(exist_ok=True)
             renewal_letter(excel_path)
         elif task == "Manual Renewal Letter":
-            output_dir.mkdir(exist_ok=True)
+            # output_dir.mkdir(exist_ok=True)
             renewal_letter_manual(excel_data)
         elif task == "Sort Renewal List":
-            output_dir.mkdir(exist_ok=True)
+            # output_dir.mkdir(exist_ok=True)
             sort_renewal_list()
         elif task == "Copy/Rename ICBC Transactions":
             rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
         elif task == "Delete Intact Broker/Mortgage Pages":
-            output_dir.mkdir(exist_ok=True)
+            # output_dir.mkdir(exist_ok=True)
             delete_intact_broker_copies()
-    except Exception as e:
-        print(str(e))
+    except ZeroDivisionError as z:
+        print("You forgot to put something in the 'Input' folder.")
         time.sleep(3)
 
 
 if __name__ == "__main__":
-    time_taken = timeit.timeit(lambda: main(), number=1)
-    try:
-        print(f"Time taken: {time_taken} seconds")
-        if timer > 0:
-            time.sleep(timer)
-    except Exception as e:
-        print(str(e))
-        time.sleep(3)
+    main()

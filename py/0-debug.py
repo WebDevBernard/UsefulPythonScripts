@@ -14,9 +14,9 @@ target_coords = (
     -1.5807250976562273,
     -58.947509765625,
 )
-turn_on_draw_rect_all = False
-turn_on_pdf_field_names = False
-turn_on_write_text_coords = True
+turn_on_draw_rect_all = []
+turn_on_pdf_field_names = []
+turn_on_write_text_coords = [1]
 
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)
@@ -155,21 +155,25 @@ def write_text_coords(file_name, block_dict, table_dict, word_dict):
 
 
 def main():
-    calculate_target_coords(input_coords, target_coords)
-    for pdf in pdf_files:
-        with fitz.open(pdf) as doc:
-            get_pdf_fieldnames(pdf, doc)
+    if not Path(input_dir).exists():
+        input_dir.mkdir(exist_ok=True)
+        return
+    else:
+        calculate_target_coords(input_coords, target_coords)
+        for pdf in pdf_files:
+            with fitz.open(pdf) as doc:
+                get_pdf_fieldnames(pdf, doc)
 
-            b = get_text_blocks(doc)  # 1 find by text blocks
-            # t = find_table_dict(doc)  # 2 find by table
-            w = get_text_words(doc)  # 3 find by individual words
-            write_text_coords(pdf, b, 0, w)
+                b = get_text_blocks(doc)  # 1 find by text blocks
+                # t = find_table_dict(doc)  # 2 find by table
+                w = get_text_words(doc)  # 3 find by individual words
+                write_text_coords(pdf, b, 0, w)
 
-        with pdfplumber.open(pdf) as doc:
-            plumber_draw_rect(doc, b, 300)
-            plumber_draw_from_pg_and_coords(
-                doc, draw_rect_on_page_num, draw_rect_from_coords, 300
-            )
+            with pdfplumber.open(pdf) as doc:
+                plumber_draw_rect(doc, b, 300)
+                plumber_draw_from_pg_and_coords(
+                    doc, draw_rect_on_page_num, draw_rect_from_coords, 300
+                )
 
 
 base_dir = Path(__file__).parent.parent
