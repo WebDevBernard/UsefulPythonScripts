@@ -21,9 +21,3 @@ Python Scripts
 }
 
 ```
-```
-producer_dict = {
-    "name_code" : "folder_name"
-}
-
-```

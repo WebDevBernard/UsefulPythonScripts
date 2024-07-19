@@ -9,3 +9,4 @@ pymupdf
 pymupdf-fonts
 xlrd
 tabulate
+FreeSimpleGui

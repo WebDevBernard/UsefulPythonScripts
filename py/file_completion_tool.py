@@ -39,8 +39,7 @@ from helpers import (
 
 warnings.simplefilter("ignore")
 
-testing = [1]
-
+testing = []
 
 
 def get_doc_types(doc):
@@ -743,7 +742,6 @@ def renewal_letter(excel_path1):
         print("Missing insurance policy documents in 'Input' folder")
 
 
-
 def renewal_letter_manual(excel_data1):
 
     df = pd.DataFrame([excel_data1])
@@ -759,7 +757,6 @@ def renewal_letter_manual(excel_data1):
     for rows in progressbar(df.to_dict(orient="records"), prefix="Progress: ", size=40):
         write_to_new_docx("Renewal Letter New.docx", rows)
     print(f"******** Manual Renewal Letter ran successfully ********")
-
 
 
 def get_excel_data(excel_path1):
@@ -997,7 +994,6 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
         print("There are no policy documents in the Downloads folder")
 
 
-
 def find_pages_with_text(doc, search_text, not_search_text):
     pages = []
     for page_index in range(len(doc)):
@@ -1065,7 +1061,6 @@ def delete_intact_broker_copies():
         print("Missing Intact policy documents in the 'Input' folder")
 
 
-
 base_dir = Path(__file__).parent.parent
 input_dir = Path.home() / "Desktop" / "Input (this folder can be deleted)"
 output_dir = Path.home() / "Desktop"
@@ -1074,19 +1069,50 @@ font = ("Arial", 11)
 font2 = ("Arial", 8)
 button_size = (18, 1)
 layout = [
-    [sg.Multiline(size=(47, 4), echo_stdout_stderr=True, reroute_stdout=True, autoscroll=True, background_color="LightYellow", text_color='indigo', key='-MLINE-', font=font2),
-
-     sg.Column([
-         [sg.Button("Sort Renewal List", font=font, button_color="MediumSeaGreen", size=button_size),],
-         [sg.Button("Intact Customer Copy", font=font, button_color="MediumSeaGreen", size=button_size)]
-     ], background_color="LightYellow", element_justification='right')
+    [
+        sg.Multiline(
+            size=(47, 4),
+            echo_stdout_stderr=True,
+            reroute_stdout=True,
+            autoscroll=True,
+            background_color="LightYellow",
+            text_color="indigo",
+            key="-MLINE-",
+            font=font2,
+        ),
+        sg.Column(
+            [
+                [
+                    sg.Button(
+                        "Sort Renewal List",
+                        font=font,
+                        button_color="MediumSeaGreen",
+                        size=button_size,
+                    ),
+                ],
+                [
+                    sg.Button(
+                        "Intact Customer Copy",
+                        font=font,
+                        button_color="MediumSeaGreen",
+                        size=button_size,
+                    )
+                ],
+            ],
+            background_color="LightYellow",
+            element_justification="right",
+        ),
     ],
-    [sg.Exit(s=16, button_color="tomato", font=font),
-    sg.Button("Auto Renewal Letter", font=font, button_color="MediumSeaGreen"),
-    sg.Button("Copy Rename ICBC", font=font, button_color="Indigo", size=button_size),
-    ]
+    [
+        sg.Exit(s=16, button_color="tomato", font=font),
+        sg.Button("Auto Renewal Letter", font=font, button_color="MediumSeaGreen"),
+        sg.Button(
+            "Copy Rename ICBC", font=font, button_color="Indigo", size=button_size
+        ),
+    ],
 ]
 window = sg.Window("File Completion Tool", layout, background_color="LightYellow")
+
 
 def main():
     excel_path = base_dir / "input.xlsx"  # name of Excel
@@ -1119,7 +1145,9 @@ def main():
                         delete_intact_broker_copies()
                         time.sleep(3)
                     if event == "Copy Rename ICBC":
-                        rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
+                        rename_icbc(
+                            drive_letter, number_of_pdfs, names, icbc_folder_name
+                        )
                         time.sleep(3)
                 except ZeroDivisionError as y:
                     print("You forgot to put something in the 'Input' folder.")
