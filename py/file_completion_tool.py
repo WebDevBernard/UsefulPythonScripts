@@ -544,139 +544,144 @@ def sort_renewal_list():
     xls_files = Path(input_dir).glob("*.xls")
     files = list(xlsx_files) + list(xls_files)
     all_dfs = []
-    for file in progressbar(files, prefix="Progress: ", size=40):
-        df = (
-            pd.read_excel(file, engine="xlrd")
-            if file.suffix == ".XLS"
-            else pd.read_excel(file, engine="openpyxl")
-        )
-        all_dfs.append(df)
-
-    df = pd.concat(all_dfs, ignore_index=True)
-
-    output_path = output_dir / "renewal_list.xlsx"
-    output_path = unique_file_name(output_path)
-    try:
-        column_list = [
-            "policynum",
-            "ccode",
-            "name",
-            "pcode",
-            "csrcode",
-            "insurer",
-            "buscode",
-            "renewal",
-            "Pulled",
-            "D/L",
-            # "agen_dir",
-            # "prem_amt",
-        ]
-
-        df = df.reindex(columns=column_list)
-        df = df.drop_duplicates(subset=["policynum"], keep=False)
-        df["renewal_1"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime(
-            "%d-%b"
-        )
-        df["renewal"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime("%m%d")
-        df.sort_values(
-            ["insurer", "renewal", "name"], ascending=[True, True, True], inplace=True
-        )
-        df["renewal"] = df["renewal_1"]
-        df = df.drop("renewal_1", axis=1)
-        list_with_spaces = []
-        for x, y in df.groupby("insurer", sort=False):
-            list_with_spaces.append(y)
-            list_with_spaces.append(
-                pd.DataFrame([[float("NaN")] * len(y.columns)], columns=y.columns)
+    if len(files) > 0:
+        for file in progressbar(files, prefix="Progress: ", size=40):
+            df = (
+                pd.read_excel(file, engine="xlrd")
+                if file.suffix == ".XLS"
+                else pd.read_excel(file, engine="openpyxl")
             )
-        df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
-        # df = df[((df['pcode'] == 'FS') | (df['csrcode'] == 'FS')) & (df['buscode'] == 'COMM')]
-        # print(df)
-        if not os.path.isfile(output_path):
-            writer = pd.ExcelWriter(output_path, engine="openpyxl")
-        else:
-            writer = pd.ExcelWriter(
-                output_path, mode="a", if_sheet_exists="replace", engine="openpyxl"
+            all_dfs.append(df)
+
+        df = pd.concat(all_dfs, ignore_index=True)
+
+        output_path = output_dir / "renewal_list.xlsx"
+        output_path = unique_file_name(output_path)
+        try:
+            column_list = [
+                "policynum",
+                "ccode",
+                "name",
+                "pcode",
+                "csrcode",
+                "insurer",
+                "buscode",
+                "renewal",
+                "Pulled",
+                "D/L",
+                # "agen_dir",
+                # "prem_amt",
+            ]
+
+            df = df.reindex(columns=column_list)
+            df = df.drop_duplicates(subset=["policynum"], keep=False)
+            df["renewal_1"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime(
+                "%d-%b"
             )
-
-        df.to_excel(writer, sheet_name="Sheet1", index=False)
-        writer.close()
-        # Load the workbook and get the sheet
-        wb = load_workbook(output_path)
-        ws = wb.active
-
-        # Set font size and alignment for all cells
-        for row in ws.iter_rows():
-            for cell in row:
-                cell.font = Font(size=12)
-                cell.alignment = Alignment(horizontal="left")
-
-        # Define the reference for the table
-        ref = f"A1:{chr(65 + df.shape[1] - 1)}{df.shape[0] + 1}"
-
-        # Create an Excel table
-        tab = Table(displayName="Table1", ref=ref)
-        style = TableStyleInfo(
-            name="TableStyleLight1",  # This style alternates grey for each row
-            showFirstColumn=False,
-            showLastColumn=False,
-            showRowStripes=True,
-            showColumnStripes=False,
-        )
-        tab.tableStyleInfo = style
-
-        # Add the table to the worksheet
-        ws.add_table(tab)
-
-        # Adjust column widths for specified columns
-        for i, col in enumerate(column_list, 1):
-            max_length = max(df[col].astype(str).map(len).max(), len(col)) + 4
-
-            med_length = max(df[col].astype(str).map(len).max(), len(col)) + 2.5
-            min_length = max(df[col].astype(str).map(len).max(), len(col))
-            if col in ["pcode", "csrcode", "Pulled", "D/L"]:
-                ws.column_dimensions[chr(64 + i)].width = (
-                    5.0  # Set fixed width for Pulled and D/L columns
+            df["renewal"] = pd.to_datetime(df["renewal"], dayfirst=True).dt.strftime(
+                "%m%d"
+            )
+            df.sort_values(
+                ["insurer", "renewal", "name"],
+                ascending=[True, True, True],
+                inplace=True,
+            )
+            df["renewal"] = df["renewal_1"]
+            df = df.drop("renewal_1", axis=1)
+            list_with_spaces = []
+            for x, y in df.groupby("insurer", sort=False):
+                list_with_spaces.append(y)
+                list_with_spaces.append(
+                    pd.DataFrame([[float("NaN")] * len(y.columns)], columns=y.columns)
                 )
-            elif col in ["ccode"]:
-                ws.column_dimensions[chr(64 + i)].width = max_length
-            elif col in ["policynum"]:
-                ws.column_dimensions[chr(64 + i)].width = med_length
+            df = pd.concat(list_with_spaces, ignore_index=True).iloc[:-1]
+            # df = df[((df['pcode'] == 'FS') | (df['csrcode'] == 'FS')) & (df['buscode'] == 'COMM')]
+            # print(df)
+            if not os.path.isfile(output_path):
+                writer = pd.ExcelWriter(output_path, engine="openpyxl")
             else:
-                ws.column_dimensions[chr(64 + i)].width = min_length
+                writer = pd.ExcelWriter(
+                    output_path, mode="a", if_sheet_exists="replace", engine="openpyxl"
+                )
 
-        border = Border(
-            left=Side(style="thin"),
-            right=Side(style="thin"),
-            top=Side(style="thin"),
-            bottom=Side(style="thin"),
-        )
+            df.to_excel(writer, sheet_name="Sheet1", index=False)
+            writer.close()
+            # Load the workbook and get the sheet
+            wb = load_workbook(output_path)
+            ws = wb.active
 
-        for col in ["Pulled", "D/L"]:
-            col_index = column_list.index(col) + 1
-            for row in range(1, df.shape[0] + 2):  # +2 to include the header
-                ws.cell(row=row, column=col_index).border = border
+            # Set font size and alignment for all cells
+            for row in ws.iter_rows():
+                for cell in row:
+                    cell.font = Font(size=12)
+                    cell.alignment = Alignment(horizontal="left")
 
-        # Set the first row to repeat on each printed page
-        ws.print_title_rows = "1:1"
+            # Define the reference for the table
+            ref = f"A1:{chr(65 + df.shape[1] - 1)}{df.shape[0] + 1}"
 
-        # Set print area to fit all columns on one page
-        ws.page_setup.fitToWidth = 1
-        ws.page_setup.fitToHeight = False
-        ws.page_setup.fitToPage = True
+            # Create an Excel table
+            tab = Table(displayName="Table1", ref=ref)
+            style = TableStyleInfo(
+                name="TableStyleLight1",  # This style alternates grey for each row
+                showFirstColumn=False,
+                showLastColumn=False,
+                showRowStripes=True,
+                showColumnStripes=False,
+            )
+            tab.tableStyleInfo = style
 
-        # Set margins
-        ws.page_margins = PageMargins(
-            top=1.91 / 2.54,  # Convert cm to inches
-            bottom=1.91 / 2.54,  # Convert cm to inches
-            left=1.78 / 2.54,  # Convert cm to inches
-            right=0.64 / 2.54,  # Convert cm to inches
-        )
+            # Add the table to the worksheet
+            ws.add_table(tab)
 
-        # Save the workbook
-        wb.save(output_path)
-    except TypeError:
-        return
+            # Adjust column widths for specified columns
+            for i, col in enumerate(column_list, 1):
+                max_length = max(df[col].astype(str).map(len).max(), len(col)) + 4
+
+                med_length = max(df[col].astype(str).map(len).max(), len(col)) + 2.5
+                min_length = max(df[col].astype(str).map(len).max(), len(col))
+                if col in ["pcode", "csrcode", "Pulled", "D/L"]:
+                    ws.column_dimensions[chr(64 + i)].width = (
+                        5.0  # Set fixed width for Pulled and D/L columns
+                    )
+                elif col in ["ccode"]:
+                    ws.column_dimensions[chr(64 + i)].width = max_length
+                elif col in ["policynum"]:
+                    ws.column_dimensions[chr(64 + i)].width = med_length
+                else:
+                    ws.column_dimensions[chr(64 + i)].width = min_length
+
+            border = Border(
+                left=Side(style="thin"),
+                right=Side(style="thin"),
+                top=Side(style="thin"),
+                bottom=Side(style="thin"),
+            )
+
+            for col in ["Pulled", "D/L"]:
+                col_index = column_list.index(col) + 1
+                for row in range(1, df.shape[0] + 2):  # +2 to include the header
+                    ws.cell(row=row, column=col_index).border = border
+
+            # Set the first row to repeat on each printed page
+            ws.print_title_rows = "1:1"
+
+            # Set print area to fit all columns on one page
+            ws.page_setup.fitToWidth = 1
+            ws.page_setup.fitToHeight = False
+            ws.page_setup.fitToPage = True
+
+            # Set margins
+            ws.page_margins = PageMargins(
+                top=1.91 / 2.54,  # Convert cm to inches
+                bottom=1.91 / 2.54,  # Convert cm to inches
+                left=1.78 / 2.54,  # Convert cm to inches
+                right=0.64 / 2.54,  # Convert cm to inches
+            )
+
+            # Save the workbook
+            wb.save(output_path)
+        except TypeError:
+            return
     if len(files) == 0:
         print("Missing renewal list in 'Input' folder.")
     else:
@@ -724,13 +729,10 @@ def renewal_letter(excel_path1):
                     continue
                 df["broker_name"] = pd.read_excel(
                     excel_path1, sheet_name=0, header=None
-                ).at[8, 1]
-                df["mods"] = pd.read_excel(excel_path1, sheet_name=0, header=None).at[
-                    4, 1
-                ]
+                ).at[6, 1]
                 df["on_behalf"] = pd.read_excel(
                     excel_path1, sheet_name=0, header=None
-                ).at[10, 1]
+                ).at[8, 1]
                 # print(df)
                 if doc_type and doc_type != "ICBC":
                     for rows in df.to_dict(orient="records"):
@@ -763,17 +765,17 @@ def get_excel_data(excel_path1):
     data = {}
     try:
         df = pd.read_excel(excel_path1, sheet_name=0, header=None)
-        data["broker_name"] = df.at[8, 1]
-        data["on_behalf"] = df.at[10, 1]
-        data["risk_type_1"] = df.at[14, 1]
-        data["named_insured"] = df.at[16, 1]
-        data["insurer"] = df.at[17, 1]
-        data["policy_number"] = df.at[18, 1]
-        data["effective_date"] = df.at[19, 1]
-        data["address_line_one"] = df.at[21, 1]
-        data["address_line_two"] = df.at[22, 1]
-        data["address_line_three"] = df.at[23, 1]
-        data["risk_address_1"] = df.at[25, 1]
+        data["broker_name"] = df.at[6, 1]
+        data["on_behalf"] = df.at[8, 1]
+        data["risk_type_1"] = df.at[12, 1]
+        data["named_insured"] = df.at[14, 1]
+        data["insurer"] = df.at[15, 1]
+        data["policy_number"] = df.at[16, 1]
+        data["effective_date"] = df.at[17, 1]
+        data["address_line_one"] = df.at[19, 1]
+        data["address_line_two"] = df.at[20, 1]
+        data["address_line_three"] = df.at[21, 1]
+        data["risk_address_1"] = df.at[23, 1]
     except KeyError:
         return None
     return data
@@ -896,12 +898,12 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
         print(
             "Change the drive letter in 'input.xlsx' to the same one as the 'Shared' drive."
         )
-        os.system("pause")
-        return
+        # os.system("pause")
+        # return
     if not testing and not Path(icbc_output_directory).exists():
         print("Check if the ICBC folder name is correct.")
-        os.system("pause")
-        return
+        # os.system("pause")
+        # return
 
     pdf_files1 = list(icbc_input_directory.glob("*.pdf"))
     pdf_files1 = sorted(
@@ -958,8 +960,8 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
                     print(
                         "The producer folder does not exists, check if mappings in 'input.xlsx' is correct."
                     )
-                    os.system("pause")
-                    return
+                    # os.system("pause")
+                    # return
 
                 target_filename = Path(icbc_file_name).stem.split()[0]
                 matching_transaction_ids = []
@@ -985,8 +987,13 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
                                 )
                                 matching_transaction_ids.append(match)
                 if timestamp not in matching_transaction_ids:
-                    shutil.copy(pdf, unique_file_name(icbc_output_path))
-                    copy_counter += 1
+                    try:
+                        shutil.copy(pdf, unique_file_name(icbc_output_path))
+                        copy_counter += 1
+                    except FileNotFoundError:
+                        print(
+                            "*****************Correct the above errors.*****************"
+                        )
     if scan_counter > 0:
         print(f"Scanned: {scan_counter} out of {loop_counter} documents")
         print(f"Copied: {copy_counter} out of {scan_counter} documents")
@@ -1111,7 +1118,9 @@ layout = [
         ),
     ],
 ]
-window = sg.Window("File Completion Tool", layout, background_color="LightYellow")
+window = sg.Window(
+    "GUI Interface using Visual Basic", layout, background_color="LightYellow"
+)
 
 
 def main():
@@ -1119,56 +1128,47 @@ def main():
     excel_data = get_excel_data(excel_path)
     df_excel = pd.read_excel(excel_path, sheet_name=0, header=None)
     names = {}
-    icbc_folder_name = df_excel.at[16, 9]
-    for i in range(18, 34):
-        names[df_excel.at[i, 9]] = df_excel.at[i, 10]
+    icbc_folder_name = df_excel.at[31, 1]
+    for i in range(33, 49):
+        names[df_excel.at[i, 1]] = df_excel.at[i, 2]
     task = df_excel.at[2, 1]
-    drive_letter = df_excel.at[32, 1]
-    number_of_pdfs = int(df_excel.at[30, 1])
-    try:
-        if not Path(input_dir).exists():
-            input_dir.mkdir(exist_ok=True)
-            return
-        if task == "PySimpleGUI":
-            while True:
-                try:
-                    event, values = window.read()
-                    if event in (sg.WINDOW_CLOSED, "Exit"):
-                        break
-                    if event == "Auto Renewal Letter":
-                        renewal_letter(excel_path)
-                        time.sleep(3)
-                    if event == "Sort Renewal List":
-                        sort_renewal_list()
-                        time.sleep(3)
-                    if event == "Intact Customer Copy":
-                        delete_intact_broker_copies()
-                        time.sleep(3)
-                    if event == "Copy Rename ICBC":
-                        rename_icbc(
-                            drive_letter, number_of_pdfs, names, icbc_folder_name
-                        )
-                        time.sleep(3)
-                except ZeroDivisionError as y:
-                    print("You forgot to put something in the 'Input' folder.")
-            window.close()
-        elif task == "Auto Renewal Letter":
-            # output_dir.mkdir(exist_ok=True)
-            renewal_letter(excel_path)
-        elif task == "Manual Renewal Letter":
-            # output_dir.mkdir(exist_ok=True)
-            renewal_letter_manual(excel_data)
-        elif task == "Sort Renewal List":
-            # output_dir.mkdir(exist_ok=True)
-            sort_renewal_list()
-        elif task == "Copy/Rename ICBC Transactions":
-            rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
-        elif task == "Delete Intact Broker/Mortgage Pages":
-            # output_dir.mkdir(exist_ok=True)
-            delete_intact_broker_copies()
-    except ZeroDivisionError as z:
-        print("You forgot to put something in the 'Input' folder.")
-        time.sleep(3)
+    drive_letter = df_excel.at[29, 1]
+    number_of_pdfs = int(df_excel.at[27, 1])
+    if not Path(input_dir).exists():
+        input_dir.mkdir(exist_ok=True)
+        return
+    if task == "GUI Interface using Visual Basic":
+        while True:
+            event, values = window.read()
+            if event in (sg.WINDOW_CLOSED, "Exit"):
+                break
+            if event == "Auto Renewal Letter":
+                renewal_letter(excel_path)
+                time.sleep(3)
+            if event == "Sort Renewal List":
+                sort_renewal_list()
+                time.sleep(3)
+            if event == "Intact Customer Copy":
+                delete_intact_broker_copies()
+                time.sleep(3)
+            if event == "Copy Rename ICBC":
+                rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
+                time.sleep(3)
+        window.close()
+    elif task == "Auto Renewal Letter":
+        # output_dir.mkdir(exist_ok=True)
+        renewal_letter(excel_path)
+    elif task == "Manual Renewal Letter":
+        # output_dir.mkdir(exist_ok=True)
+        renewal_letter_manual(excel_data)
+    elif task == "Sort Renewal List":
+        # output_dir.mkdir(exist_ok=True)
+        sort_renewal_list()
+    elif task == "Copy/Rename ICBC Transactions":
+        rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name)
+    elif task == "Delete Intact Broker/Mortgage Pages":
+        # output_dir.mkdir(exist_ok=True)
+        delete_intact_broker_copies()
 
 
 if __name__ == "__main__":

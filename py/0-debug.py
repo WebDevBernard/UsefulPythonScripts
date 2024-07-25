@@ -4,7 +4,7 @@ import fitz
 import pdfplumber
 from tabulate import tabulate
 
-draw_rect_on_page_num = [1]
+draw_rect_on_page_num = []
 draw_rect_from_coords = (471.2, 471.9364929199219, 558.4, 524.0)
 input_coords = (475.447998046875, 458.167724609375, 556.8192749023438, 465.052490234375)
 # set target coords to (+, -, -, -) to get the reverse
@@ -15,8 +15,8 @@ target_coords = (
     -58.947509765625,
 )
 turn_on_draw_rect_all = []
-turn_on_pdf_field_names = []
-turn_on_write_text_coords = [1]
+turn_on_pdf_field_names = [1]
+turn_on_write_text_coords = []
 
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)
@@ -32,6 +32,24 @@ def get_pdf_fieldnames(filename, doc):
                 for index1, widget in enumerate(page.widgets()):
                     file.write(f"{widget.field_name}")
                     print(f"{index1}{" " * 9}{widget.field_name}")
+
+
+# def get_pdf_annot(doc):
+#     for page_number in range(doc.page_count):
+#         page = doc[page_number]
+#         page.clean_contents()
+#         xref = page.get_contents()[0]
+#         cont = bytearray(page.read_contents())
+#
+#         print(cont)
+#         while True:
+#             i1 = cont.find(b"/Artifact")  # start of definition
+#             if i1 < 0:
+#                 break  # none more left: done
+#             i2 = cont.find(b"EMC", i1)  # end of definition
+#             cont[i1 - 2 : i2 + 3] = b""  # remove the full definition source "q ... EMC"
+#         doc.update_stream(xref, cont)  # replace the original source
+#         doc.ez_save(Path.home() / "Desktop" / "x.pdf")
 
 
 # prints coordinates using input and target
@@ -168,6 +186,7 @@ def main():
                 # t = find_table_dict(doc)  # 2 find by table
                 w = get_text_words(doc)  # 3 find by individual words
                 write_text_coords(pdf, b, 0, w)
+                get_pdf_annot(doc)
 
             with pdfplumber.open(pdf) as doc:
                 plumber_draw_rect(doc, b, 300)

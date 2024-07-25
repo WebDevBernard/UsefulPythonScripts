@@ -596,8 +596,9 @@ def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
             flush=True,
         )
 
-    show(0.1)  # avoid div/0
-    for i, item in enumerate(it):
-        yield item
-        show(i + 1)
-    print(flush=True, file=out)
+    if len(it) > 0:
+        show(0.1)  # avoid div/0
+        for i, item in enumerate(it):
+            yield item
+            show(i + 1)
+        print(flush=True, file=out)
