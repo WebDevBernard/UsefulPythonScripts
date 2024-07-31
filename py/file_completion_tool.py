@@ -362,7 +362,7 @@ def format_risk_type(field_dict, dict_items, type_of_pdf):
                 and "condominium".casefold() in risk_type.casefold()
             ):
                 field_dict[f"risk_type_{index + 1}"] = "condo"
-            elif type_of_pdf == "Family" and "condo".casefold() in risk_type.casefold():
+            elif type_of_pdf == "Family" and "Condominium".casefold() in risk_type.casefold():
                 field_dict[f"risk_type_{index + 1}"] = "condo"
             elif (
                 type_of_pdf == "Intact"

@@ -4,19 +4,16 @@ import fitz
 import pdfplumber
 from tabulate import tabulate
 
-draw_rect_on_page_num = []
-draw_rect_from_coords = (471.2, 471.9364929199219, 558.4, 524.0)
-input_coords = (475.447998046875, 458.167724609375, 556.8192749023438, 465.052490234375)
+draw_rect_on_page_num = [1]
+draw_rect_from_coords = (284.2560119628906, 35.721092224121094, 329.5166015625, 44.79716873168945)
+input_coords = (284.2560119628906, 35.721092224121094, 329.5166015625, 44.79716873168945)
 # set target coords to (+, -, -, -) to get the reverse
 target_coords = (
-    4.247998046875011,
-    -13.768768310546875,
-    -1.5807250976562273,
-    -58.947509765625,
+    283.32000732421875, 46.81807327270508, 337.2813720703125, 56.24658203125
 )
 turn_on_draw_rect_all = []
-turn_on_pdf_field_names = [1]
-turn_on_write_text_coords = []
+turn_on_pdf_field_names = []
+turn_on_write_text_coords = [1]
 
 
 # Gets pdf key for fillable pdfs (pymupdf debugging)
@@ -186,7 +183,7 @@ def main():
                 # t = find_table_dict(doc)  # 2 find by table
                 w = get_text_words(doc)  # 3 find by individual words
                 write_text_coords(pdf, b, 0, w)
-                get_pdf_annot(doc)
+
 
             with pdfplumber.open(pdf) as doc:
                 plumber_draw_rect(doc, b, 300)

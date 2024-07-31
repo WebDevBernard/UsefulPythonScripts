@@ -216,12 +216,7 @@ target_dict = {
         ),
         risk_type=TargetFields(
             target_keyword="POLICY TYPE",
-            target_coordinates=(
-                -1.08001708984375,
-                11.097042083740234,
-                -22.849456787109375,
-                0.0,
-            ),
+            target_coordinates=(-0.936004638671875, 11.096981048583984, 7.7647705078125, 11.449413299560547)
         ),
         number_of_families=TargetFields(
             target_keyword="RENTAL SUITES", first_index=0, second_index=0
