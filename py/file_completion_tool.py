@@ -980,12 +980,12 @@ def rename_icbc(drive_letter, number_of_pdfs, names, icbc_folder_name):
                                 ),
                             )
                             if target_transaction_id:
-                                match = int(
-                                    re.match(
-                                        re.compile(r".*?(\d+)"), target_transaction_id
-                                    ).group(1)
-                                )
-                                matching_transaction_ids.append(match)
+                                if target_transaction_id:
+                                    match = re.match(r".*?(\d+)", target_transaction_id)
+                                    if match:  # Check if the match was successful
+                                        temp_match = int(match.group(1))
+                                        matching_transaction_ids.append(temp_match)
+
                 if timestamp not in matching_transaction_ids:
                     try:
                         shutil.copy(pdf, unique_file_name(icbc_output_path))
