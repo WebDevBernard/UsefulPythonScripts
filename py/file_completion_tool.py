@@ -193,17 +193,17 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
         address_index = find_index(address_regex, name_and_address)
 
         if type_of_pdf == "Intact":
-            names = [i.split(" & ") for i in name_and_address[:address_index]]
+            names = [first_name.split(" & ") for first_name in name_and_address[:address_index]]
             join_same_last_names = [
                 (
-                    " ".join(reversed(i.split(", ")))
-                    if ", " in i
-                    else (i + " " + names[0][0]).split(", ")[0]
+                    " ".join(reversed(first_name.split(", ")))
+                    if ", " in first_name
+                    else (first_name + " " + names[0][0]).split(", ")[0]
                 )
                 for sublist in names
-                for i in sublist
+                for first_name in sublist
             ]
-            field_dict["named_insured"] = join_and_format_names(join_same_last_names)
+            field_dict["named_insured"] = join_and_format_names(join_same_last_names) if len(names[0]) > 1 else join_and_format_names(names[0])
         else:
             names = re.sub(and_regex, "", ", ".join(name_and_address[:address_index]))
             field_dict["named_insured"] = join_and_format_names(
@@ -442,10 +442,16 @@ def format_condo_deductible(field_dict, dict_items, type_of_pdf):
             field_dict["condo_deductible_1"] = re.search(
                 dollar_regex, deductibles[0]
             ).group()
-            if re.search(dollar_regex, deductibles[1]):
-                field_dict["condo_earthquake_deductible_1"] = re.search(
-                    dollar_regex, deductibles[1]
-                ).group()
+            if len(deductibles) > 1:
+                if re.search(dollar_regex, deductibles[1]):
+                    field_dict["condo_earthquake_deductible_1"] = re.search(
+                        dollar_regex, deductibles[1]
+                    ).group()
+            else:
+                if re.search(dollar_regex, deductibles[0]):
+                    field_dict["condo_earthquake_deductible_1"] = re.search(
+                        dollar_regex, deductibles[0]
+                    ).group()
         for index, condo_deductible in enumerate(deductibles):
             if dict_items["condo_deductible"] and type_of_pdf != "Family":
                 field_dict[f"condo_deductible_{index + 1}"] = re.search(
