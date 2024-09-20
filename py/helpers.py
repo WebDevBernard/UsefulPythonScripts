@@ -219,15 +219,12 @@ target_dict = {
             target_coordinates=(-0.936004638671875, 11.096981048583984, 7.7647705078125, 11.449413299560547)
         ),
         number_of_families=TargetFields(
-            target_keyword="RENTAL SUITES", first_index=0, second_index=0
+            target_keyword="RENTAL SUITES", first_index=0, second_index=remaining_index,
         ),
         earthquake_coverage=TargetFields(
             target_keyword="EARTHQUAKE PROPERTY LIMITS",
             target_coordinates=(
-                9.360000610351562,
-                37.858428955078125,
-                -144.78810119628906,
-                39.08734130859375,
+                112.4046630859375, 12.743927001953125, 42, 12.3653564453125
             ),
         ),
         overland_water=TargetFields(
@@ -279,7 +276,7 @@ target_dict = {
             target_coordinates=(0, 11.633319854736328, 15, 13.40020751953125),
         ),
         number_of_families=TargetFields(
-            target_keyword="RENTAL SUITES", first_index=0, second_index=0
+            target_keyword="RENTAL SUITES", first_index=0, second_index=remaining_index,
         ),
         earthquake_coverage=TargetFields(
             target_keyword="EARTHQUAKE PROPERTY LIMITS",
@@ -530,8 +527,10 @@ def join_and_format_names(names):
 
 
 def address_one_title_case(sentence):
+    ordinal_pattern = re.compile(r"\b\d+(st|nd|rd|th)\b")
+
     return " ".join(
-        word.lower() if word[-2:] in {"th", "rd", "nd", "st"} else word.capitalize()
+        word.lower() if ordinal_pattern.match(word) else word.capitalize()
         for word in sentence.split()
     )
 

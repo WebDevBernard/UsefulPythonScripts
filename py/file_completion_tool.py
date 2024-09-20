@@ -194,16 +194,22 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
 
         if type_of_pdf == "Intact":
             names = [first_name.split(" & ") for first_name in name_and_address[:address_index]]
+            if "," in names[0][0]:
+                print("yes")
             join_same_last_names = [
                 (
-                    " ".join(reversed(first_name.split(", ")))
-                    if ", " in first_name
-                    else (first_name + " " + names[0][0]).split(", ")[0]
+                    " ".join(reversed(first_name.split(", ")))  # If there's a comma, reverse the name
+                    if ", " in first_name  # Check if there's a comma
+                    else (
+                        (first_name + " " + names[0][0]).split(", ")[0]  # Second condition logic
+                        if ", " in names[0][0]  # Additional condition (similar to else if)
+                        else first_name  # If neither condition is met, use first_name as is
+                    )
                 )
                 for sublist in names
                 for first_name in sublist
             ]
-            field_dict["named_insured"] = join_and_format_names(join_same_last_names) if len(names[0]) > 1 else join_and_format_names(names[0])
+            field_dict["named_insured"] = join_and_format_names(join_same_last_names)
         else:
             names = re.sub(and_regex, "", ", ".join(name_and_address[:address_index]))
             field_dict["named_insured"] = join_and_format_names(
@@ -274,7 +280,14 @@ def sum_dollar_amounts(amounts):
         .replace(" ", "")
         for a in amounts[0]
     ]
-    total = sum(float(c) for c in clean_amount_str)
+
+    def isDigit(x):
+        try:
+            float(x)
+            return True
+        except ValueError:
+            return False
+    total = sum(float(c) if isDigit(c) else 0 for c in clean_amount_str)
     return int(total)
 
 
