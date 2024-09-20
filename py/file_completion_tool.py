@@ -194,8 +194,6 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
 
         if type_of_pdf == "Intact":
             names = [first_name.split(" & ") for first_name in name_and_address[:address_index]]
-            if "," in names[0][0]:
-                print("yes")
             join_same_last_names = [
                 (
                     " ".join(reversed(first_name.split(", ")))  # If there's a comma, reverse the name
@@ -540,7 +538,7 @@ def write_to_new_docx(docx, rows):
     template_path = base_dir / "assets" / docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
-    output_path = output_dir / f"{rows["named_insured"]}.docx"
+    output_path = output_dir / f"{rows["named_insured"].rstrip(".")}.docx"
     doc.save(unique_file_name(output_path))
 
 
