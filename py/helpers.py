@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 from collections import namedtuple
 from pathlib import Path
 
@@ -596,3 +597,32 @@ def progressbar(it, prefix="", size=60, out=sys.stdout):  # Python3.6+
             yield item
             show(i + 1)
         print(flush=True, file=out)
+
+
+def format_postal_code(postal_code: str) -> str:
+    if re.match(postal_code_regex, postal_code):
+        formatted_code = postal_code.replace(" ", "")
+        return f"{formatted_code[:3]} {formatted_code[3:]}"
+    else:
+        return "M2P 0A2"
+
+
+def get_month_day(date):
+    # Define the possible date formats
+    date_formats = ["%B %d, %Y", "%d-%b-%y", "%d-%b"]
+
+    for fmt in date_formats:
+        try:
+            # Try to parse the date with the current format
+            date_obj = datetime.strptime(date, fmt)
+            # If successful, return the formatted date in "01-Nov" format
+            return date_obj.strftime("%d-%b")
+        except ValueError:
+            # If the format doesn't match, move to the next one
+            pass
+
+    # Raise an error if none of the formats match
+    raise ValueError("Date format not recognized")
+
+def currency_to_float(currency_str):
+    return float(currency_str.replace('$', '').replace(',', '').strip())

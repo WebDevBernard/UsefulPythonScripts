@@ -35,6 +35,9 @@ from helpers import (
     content_pages,
     find_matching_paths,
     progressbar,
+    format_postal_code,
+    get_month_day,
+    currency_to_float
 )
 
 warnings.simplefilter("ignore")
@@ -428,7 +431,6 @@ def format_number_families(field_dict, dict_items, type_of_pdf):
                 field_dict[f"number_of_families_{index + 1}"] = keywords.get(
                     number_of_families, None
                 )
-                print(keywords.get(number_of_families, None))
             match = re.search(r"\b(\d+)\b", number_of_families)
             if type_of_pdf == "Family" and match:
                 field_dict[f"number_of_families_{index + 1}"] = keywords.get(
@@ -588,6 +590,7 @@ def sort_renewal_list():
                 "D/L",
                 # "agen_dir",
                 # "prem_amt",
+                # "h_postzip"
             ]
 
             df = df.reindex(columns=column_list)
@@ -706,6 +709,25 @@ def sort_renewal_list():
 
 
 def renewal_letter(excel_path1):
+    excel_folder = base_dir / "assets"
+    xlsx_files = excel_folder.rglob("*.xlsx")
+    xls_files = excel_folder.rglob("*.xls")
+    all_dfs = []
+    files = list(xlsx_files) + list(xls_files)
+    def get_glass_policy():
+        for file in files:
+            df = (
+                pd.read_excel(file, engine="xlrd")
+                if file.suffix == ".XLS"
+                else pd.read_excel(file, engine="openpyxl")
+            )
+            all_dfs.append(df)
+            df = pd.concat(all_dfs, ignore_index=True)
+            df["postal_code"] = df["h_postzip"].apply(format_postal_code)
+            return df
+    df_glass = get_glass_policy()
+    if df_glass is not None:
+        df_glass = df_glass.drop_duplicates(subset=["policynum"], keep=False)
     doc_found = 0
     pdf_files = input_dir.glob("*.pdf")
     for pdf in progressbar(list(pdf_files), prefix="Progress: ", size=40):
@@ -750,11 +772,28 @@ def renewal_letter(excel_path1):
                 df["on_behalf"] = pd.read_excel(
                     excel_path1, sheet_name=0, header=None
                 ).at[8, 1]
-                # print(df)
                 if doc_type and doc_type != "ICBC":
+                    if df_glass is not None:
+
+                        # Create a new column for glass_policynum
+                        df["glass_policynum"] = None
+                        df["glass"] = False
+                        # Perform row-by-row comparison
+                        for _, row in df_glass.iterrows():
+                            if row["insurer"] == "REL":  # Check if insurer is "REL"
+                                for i, row2 in df.iterrows():
+                                    if row2["risk_type_1"] == "home":
+
+                                        if row["postal_code"] == row2["address_line_three"]:
+                                            if get_month_day(row["renewal"]) == get_month_day(row2["expiry_date"]):
+                                                df.at[i, "glass_policynum"] = row["policynum"]
+                                                if row["policynum"]:
+                                                    df.at[i, "glass"] = True
+                                                df.at[
+                                                    i, "premium_amount"] = f"${currency_to_float(row2['premium_amount']) + float(row['prem_amt']):.2f}"
                     for rows in df.to_dict(orient="records"):
                         write_to_new_docx("Renewal Letter New.docx", rows)
-                # print(f"\n<==========================>\n")
+
     if doc_found > 0:
         print(f"******** Auto Renewal Letter ran successfully ********")
     else:
