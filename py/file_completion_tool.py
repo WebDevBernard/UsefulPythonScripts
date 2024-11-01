@@ -196,26 +196,34 @@ def format_named_insured(field_dict, dict_items, type_of_pdf):
         address_index = find_index(address_regex, name_and_address)
 
         if type_of_pdf == "Intact":
-            names = [first_name.split(" & ") for first_name in name_and_address[:address_index]]
-            join_same_last_names = [
-                (
-                    " ".join(reversed(first_name.split(", ")))  # If there's a comma, reverse the name
-                    if ", " in first_name  # Check if there's a comma
-                    else (
-                        (first_name + " " + names[0][0]).split(", ")[0]  # Second condition logic
-                        if ", " in names[0][0]  # Additional condition (similar to else if)
-                        else first_name  # If neither condition is met, use first_name as is
-                    )
-                )
-                for sublist in names
-                for first_name in sublist
-            ]
-            field_dict["named_insured"] = join_and_format_names(join_same_last_names)
+            # Join the list into a string so it can be processed
+            name_string = " ".join(name_and_address[:address_index])
+
+            # Split the string on '&' first to separate individuals
+            individual_names = name_string.split("&")
+
+            processed_names = []
+            for name in individual_names:
+                # Clean up spaces and split by commas
+                name_parts = [part.strip().replace(":", "") for part in name.split(",")]
+
+                if len(name_parts) == 2:
+                    # Reverse "Last, First" to "First Last"
+                    processed_names.append(f"{name_parts[1]} {name_parts[0]}".title())
+                else:
+                    # Already in "First Last" format, just strip and add
+                    processed_names.append(name_parts[0].title())
+
+            # Join names with ' & ' for the final output
+            field_dict["named_insured"] = " and ".join(processed_names)
+
         else:
+            # For non-"Intact" PDFs, handle differently
             names = re.sub(and_regex, "", ", ".join(name_and_address[:address_index]))
             field_dict["named_insured"] = join_and_format_names(
                 names.split(", ")
-            ).replace("  ", " ")
+            ).replace("  ", " ").replace(":", "")
+
     return field_dict
 
 
@@ -540,7 +548,7 @@ def write_to_new_docx(docx, rows):
     template_path = base_dir / "assets" / docx
     doc = DocxTemplate(template_path)
     doc.render(rows)
-    output_path = output_dir / f"{rows["named_insured"].rstrip(".")}.docx"
+    output_path = output_dir / f"{rows["named_insured"].rstrip(".").rstrip(":")}.docx"
     doc.save(unique_file_name(output_path))
 
 
