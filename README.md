@@ -4,7 +4,7 @@ This project contains various scripts I use at work.  I use it to automate the f
 - Create renewal letters using policy declarations
 - Copy and paste ICBC policy documents
 - Sort renewal list in Excel
-- Delete broker copies in Intact policy documents
+- Delete broker copies in Intact home policy declarations
 
 ## Setup
 
@@ -14,6 +14,7 @@ python -m auto_py_to_exe
 pip freeze | xargs pip uninstall -y`
 ```
 
+## Pycharm
 Copy idea.properties to `\Pycharm\bin`
 
 ```bash
