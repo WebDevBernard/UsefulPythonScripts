@@ -11,7 +11,12 @@ This project contains various scripts I use at work.  I use it to automate the f
 ```bash
 pip install -r requirements.txt
 python -m auto_py_to_exe
-pip freeze | xargs pip uninstall -y`
+```
+
+Deleting all packages
+
+```bash
+pip freeze | xargs pip uninstall -y
 ```
 
 ## PyCharm
