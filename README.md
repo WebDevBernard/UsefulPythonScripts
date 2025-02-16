@@ -14,7 +14,7 @@ python -m auto_py_to_exe
 pip freeze | xargs pip uninstall -y`
 ```
 
-## Pycharm
+## PyCharm
 Copy idea.properties to `\Pycharm\bin`
 
 ```bash
