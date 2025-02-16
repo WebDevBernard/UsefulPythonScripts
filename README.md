@@ -1,4 +1,4 @@
-<h1 align="center">UsefulPythonScripts</h1>
+<h1 align="center">Useful_Python_Scripts</h1>
 
 This project contains various scripts I use at work.  I use it to automate the following:
 - Create renewal letters using policy declarations
@@ -13,13 +13,13 @@ pip install -r requirements.txt
 python -m auto_py_to_exe
 ```
 
-Deleting all packages
+### Deleting all packages
 
 ```bash
 pip freeze | xargs pip uninstall -y
 ```
 
-## PyCharm
+## PyCharm External Disk Setup
 Copy idea.properties to `\Pycharm\bin`
 
 ```bash
