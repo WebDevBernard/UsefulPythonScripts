@@ -31,22 +31,22 @@ def get_pdf_fieldnames(filename, doc):
                     print(f"{index1}{" " * 9}{widget.field_name}")
 
 
-# def get_pdf_annot(doc):
-#     for page_number in range(doc.page_count):
-#         page = doc[page_number]
-#         page.clean_contents()
-#         xref = page.get_contents()[0]
-#         cont = bytearray(page.read_contents())
-#
-#         print(cont)
-#         while True:
-#             i1 = cont.find(b"/Artifact")  # start of definition
-#             if i1 < 0:
-#                 break  # none more left: done
-#             i2 = cont.find(b"EMC", i1)  # end of definition
-#             cont[i1 - 2 : i2 + 3] = b""  # remove the full definition source "q ... EMC"
-#         doc.update_stream(xref, cont)  # replace the original source
-#         doc.ez_save(Path.home() / "Desktop" / "x.pdf")
+def get_pdf_annot(doc):
+    for page_number in range(doc.page_count):
+        page = doc[page_number]
+        page.clean_contents()
+        xref = page.get_contents()[0]
+        cont = bytearray(page.read_contents())
+
+        print(cont)
+        while True:
+            i1 = cont.find(b"/Artifact")  # start of definition
+            if i1 < 0:
+                break  # none more left: done
+            i2 = cont.find(b"EMC", i1)  # end of definition
+            cont[i1 - 2 : i2 + 3] = b""  # remove the full definition source "q ... EMC"
+        doc.update_stream(xref, cont)  # replace the original source
+        doc.ez_save(Path.home() / "Desktop" / "x.pdf")
 
 
 # prints coordinates using input and target

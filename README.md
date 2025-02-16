@@ -1,14 +1,22 @@
-## How to use this file?
+<h1 align="center">UsefulPythonScripts</h1>
 
-Python Scripts
+This project contains various scripts I use at work.  I use it to automate the following:
+- Create renewal letters using policy declarations
+- Copy and paste ICBC policy documents
+- Sort renewal list in Excel
+- Delete broker copies in Intact policy documents
 
-- `install PortableGit, Python, Pycharm, copy and paste idea.properties to \Pycharm\bin`
-- `install VScode keymap, add python venv, set gitbash to terminal`
-- `pip install -r requirements.txt`
-- `python -m auto_py_to_exe`
-- `pip freeze | xargs pip uninstall -y`
+## Setup
 
+```bash
+pip install -r requirements.txt
+python -m auto_py_to_exe
+pip freeze | xargs pip uninstall -y`
 ```
+
+Copy idea.properties to `\Pycharm\bin`
+
+```bash
 {
     "terminal.integrated.profiles.windows": {
         "GitBash": {
